@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getImageUrl, getLocalized } from "@/lib/utils";
-import { UserProfileModal } from "@/components/dashboard/users-roles/user-profile-modal";
+
 import {
   Dialog,
   DialogContent,
@@ -70,9 +70,8 @@ export interface IUserActivityStats {
 
 export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
   const { t, language } = useLanguage();
+  const router = useRouter();
   const [isActiveUsersModalOpen, setIsActiveUsersModalOpen] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [searchUserTerm, setSearchUserTerm] = useState("");
 
   const activeUsers = data?.activeUsersList || [];
@@ -88,8 +87,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
 
   const handleOpenUserProfile = (userId?: string) => {
     if (!userId) return;
-    setSelectedUserId(userId);
-    setIsProfileModalOpen(true);
+    router.push(`/dashboard/users-roles/${userId}`);
   };
 
   const metrics = [
@@ -280,15 +278,6 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
         </DialogContent>
       </Dialog>
 
-      {/* User Profile Modal */}
-      <UserProfileModal
-        userId={selectedUserId}
-        isOpen={isProfileModalOpen}
-        onClose={() => {
-          setIsProfileModalOpen(false);
-          setSelectedUserId(null);
-        }}
-      />
 
       {/* Engagement Quick Strip */}
       <div className="bg-white dark:bg-[#131b2e] rounded-xl border border-gray-200 dark:border-slate-800 p-4 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -344,16 +333,14 @@ export function RecentUserActivityLog({
   activities?: IUserActivityItem[];
 }) {
   const { t, language } = useLanguage();
+  const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const visibleActivities = isExpanded ? activities : activities.slice(0, 5);
 
   const handleOpenUser = (userId?: string) => {
     if (!userId) return;
-    setSelectedUserId(userId);
-    setIsProfileModalOpen(true);
+    router.push(`/dashboard/users-roles/${userId}`);
   };
 
   const formatActivityTime = (dateInput: string | Date) => {
@@ -568,15 +555,6 @@ export function RecentUserActivityLog({
         </div>
       )}
 
-      {/* User Profile Modal */}
-      <UserProfileModal
-        userId={selectedUserId}
-        isOpen={isProfileModalOpen}
-        onClose={() => {
-          setIsProfileModalOpen(false);
-          setSelectedUserId(null);
-        }}
-      />
     </div>
   );
 }

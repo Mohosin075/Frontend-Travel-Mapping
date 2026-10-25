@@ -72,6 +72,15 @@ const userApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["User"],
     }),
+
+    updateUserMapAccess: builder.mutation({
+      query: ({ userId, mapId, action }) => ({
+        url: `/user/map-access/${userId}`,
+        method: "PATCH",
+        body: { mapId, action },
+      }),
+      invalidatesTags: ["User"],
+    }),
   }),
 });
 
@@ -85,5 +94,7 @@ export const {
   useUpdateUserRoleMutation,
   useInviteUserMutation,
   useAssignEditorAccessMutation,
+  useUpdateUserMapAccessMutation,
 } = userApi;
+
 

@@ -1,7 +1,7 @@
 "use client";
 
+import Link from "next/link";
 import { Trash2, Search, Map, Eye, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { UserProfileModal } from "./user-profile-modal";
 import { Card } from "@/components/ui/card";
 import {
   useGetAllUsersQuery,
@@ -77,15 +77,6 @@ export function UsersTable(): React.ReactElement {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [tempRole, setTempRole] = useState("");
   const [selectedMaps, setSelectedMaps] = useState<string[]>([]);
-
-  // User Profile Modal State
-  const [profileUserId, setProfileUserId] = useState<string | null>(null);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-
-  const handleViewProfile = (userId: string) => {
-    setProfileUserId(userId);
-    setIsProfileModalOpen(true);
-  };
 
   // Search state for Modal
   const [modalMapSearch, setModalMapSearch] = useState("");
@@ -340,12 +331,12 @@ export function UsersTable(): React.ReactElement {
                   >
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-slate-100 font-medium">
                       <div className="flex flex-col">
-                        <span
-                          onClick={() => handleViewProfile(user._id)}
-                          className="cursor-pointer hover:underline font-semibold hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                        <Link
+                          href={`/dashboard/users-roles/${user._id}`}
+                          className="hover:underline font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                         >
                           {user.name || "Unknown User"}
-                        </span>
+                        </Link>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-300">
@@ -407,14 +398,14 @@ export function UsersTable(): React.ReactElement {
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleViewProfile(user._id)}
-                          className="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors p-2 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded"
+                        <Link
+                          href={`/dashboard/users-roles/${user._id}`}
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors p-2 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded inline-flex items-center"
                           title={t("users_admin.view_profile") || "View User Profile"}
                           aria-label={t("users_admin.view_profile") || "View User Profile"}
                         >
                           <Eye size={18} />
-                        </button>
+                        </Link>
                         {user.role === "map_editor" &&
                           canManageUserRole(currentUser?.role, user.role) && (
                             <button
@@ -652,16 +643,6 @@ export function UsersTable(): React.ReactElement {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* User Detailed Profile Modal */}
-      <UserProfileModal
-        userId={profileUserId}
-        isOpen={isProfileModalOpen}
-        onClose={() => {
-          setIsProfileModalOpen(false);
-          setProfileUserId(null);
-        }}
-      />
     </div>
   );
 }
