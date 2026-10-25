@@ -116,6 +116,19 @@ export const PlaceFormContent = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuFileInputRef = useRef<HTMLInputElement>(null);
   const typeTouchedRef = useRef(false);
+  const imagesTouchedRef = useRef(false);
+  const menuImagesTouchedRef = useRef(false);
+  const placeKey = (initialData as any)?._id || (initialData as any)?.id || initialData?.name;
+  const prevPlaceKeyRef = useRef(placeKey);
+
+  useEffect(() => {
+    if (placeKey && placeKey !== prevPlaceKeyRef.current) {
+      prevPlaceKeyRef.current = placeKey;
+      imagesTouchedRef.current = false;
+      menuImagesTouchedRef.current = false;
+    }
+  }, [placeKey]);
+
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [menuFiles, setMenuFiles] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>(
@@ -146,6 +159,7 @@ export const PlaceFormContent = ({
   };
 
   const moveExistingImage = (from: number, to: number) => {
+    imagesTouchedRef.current = true;
     setExistingImages((prev) => moveArrayItem(prev, from, to));
   };
 
@@ -155,6 +169,7 @@ export const PlaceFormContent = ({
   };
 
   const moveExistingMenuImage = (from: number, to: number) => {
+    menuImagesTouchedRef.current = true;
     setExistingMenuImages((prev) => moveArrayItem(prev, from, to));
   };
 
@@ -245,12 +260,16 @@ export const PlaceFormContent = ({
         accessibility: resolvedAccessibility,
       };
     });
-    const initImgs = initialData.images || (initialData as any).media;
-    if (initImgs && Array.isArray(initImgs) && initImgs.length > 0) {
-      setExistingImages(asMediaUrls(initImgs));
+    if (!imagesTouchedRef.current) {
+      const initImgs = initialData.images || (initialData as any).media;
+      if (initImgs && Array.isArray(initImgs)) {
+        setExistingImages(asMediaUrls(initImgs));
+      }
     }
-    if (initialData.menuImages && Array.isArray(initialData.menuImages) && initialData.menuImages.length > 0) {
-      setExistingMenuImages(asMediaUrls(initialData.menuImages));
+    if (!menuImagesTouchedRef.current) {
+      if (initialData.menuImages && Array.isArray(initialData.menuImages)) {
+        setExistingMenuImages(asMediaUrls(initialData.menuImages));
+      }
     }
   }, [
     initialData,
@@ -384,10 +403,12 @@ export const PlaceFormContent = ({
   };
 
   const removeExistingImage = (index: number) => {
+    imagesTouchedRef.current = true;
     setExistingImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const removeExistingMenuImage = (index: number) => {
+    menuImagesTouchedRef.current = true;
     setExistingMenuImages((prev) => prev.filter((_, i) => i !== index));
   };
 

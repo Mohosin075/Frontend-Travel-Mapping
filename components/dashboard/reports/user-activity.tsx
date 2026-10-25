@@ -54,6 +54,10 @@ export interface IActiveUserSummary {
   points?: number;
   lastActive: string | Date;
   activityType?: string;
+  isActiveToday?: boolean;
+  isActiveWeek?: boolean;
+  isActiveMonth?: boolean;
+  periods?: ('today' | 'week' | 'month' | 'all')[];
 }
 
 export interface IUserActivityStats {
@@ -66,16 +70,46 @@ export interface IUserActivityStats {
   totalReviews: number;
   recentActivities: IUserActivityItem[];
   activeUsersList?: IActiveUserSummary[];
+  activeTodayList?: IActiveUserSummary[];
+  activeWeekList?: IActiveUserSummary[];
+  activeMonthList?: IActiveUserSummary[];
+  allUsersList?: IActiveUserSummary[];
 }
 
 export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
   const { t, language } = useLanguage();
   const router = useRouter();
   const [isActiveUsersModalOpen, setIsActiveUsersModalOpen] = useState(false);
+  const [activeTimeframe, setActiveTimeframe] = useState<"today" | "week" | "month" | "all">("today");
   const [searchUserTerm, setSearchUserTerm] = useState("");
 
-  const activeUsers = data?.activeUsersList || [];
-  const filteredUsers = activeUsers.filter((u) => {
+  const getSelectedUsers = (): IActiveUserSummary[] => {
+    if (activeTimeframe === "today") {
+      if (data?.activeTodayList !== undefined) return data.activeTodayList;
+      return (data?.activeUsersList || []).filter(
+        (u) => u.isActiveToday || u.periods?.includes("today")
+      );
+    }
+    if (activeTimeframe === "week") {
+      if (data?.activeWeekList !== undefined) return data.activeWeekList;
+      return (data?.activeUsersList || []).filter(
+        (u) => u.isActiveWeek || u.periods?.includes("week")
+      );
+    }
+    if (activeTimeframe === "month") {
+      if (data?.activeMonthList !== undefined) return data.activeMonthList;
+      return (data?.activeUsersList || []).filter(
+        (u) => u.isActiveMonth || u.periods?.includes("month")
+      );
+    }
+    // "all"
+    if (data?.allUsersList !== undefined) return data.allUsersList;
+    return data?.activeUsersList || [];
+  };
+
+  const currentTabUsers = getSelectedUsers();
+
+  const filteredUsers = currentTabUsers.filter((u) => {
     if (!searchUserTerm.trim()) return true;
     const term = searchUserTerm.toLowerCase();
     return (
@@ -90,8 +124,15 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
     router.push(`/dashboard/users-roles/${userId}`);
   };
 
+  const handleOpenModalWithFilter = (timeframe: "today" | "week" | "month" | "all") => {
+    setActiveTimeframe(timeframe);
+    setSearchUserTerm("");
+    setIsActiveUsersModalOpen(true);
+  };
+
   const metrics = [
     {
+      timeframe: "today" as const,
       label: t("reports_admin.active_today") || "Active Today (24h)",
       value: data?.activeUsersToday?.toLocaleString() || "0",
       subtext: t("reports_admin.active_today_sub") || "Active users in last 24h",
@@ -100,6 +141,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
       clickable: true,
     },
     {
+      timeframe: "week" as const,
       label: t("reports_admin.active_this_week") || "Active This Week (7d)",
       value: data?.activeUsersThisWeek?.toLocaleString() || "0",
       subtext: t("reports_admin.active_week_sub") || "Active users in last 7 days",
@@ -108,6 +150,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
       clickable: true,
     },
     {
+      timeframe: "month" as const,
       label: t("reports_admin.active_this_month") || "Active This Month (30d)",
       value: data?.activeUsersThisMonth?.toLocaleString() || "0",
       subtext: t("reports_admin.active_month_sub") || "Active users in last 30 days",
@@ -116,6 +159,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
       clickable: true,
     },
     {
+      timeframe: "all" as const,
       label: t("reports_admin.total_registered") || "Total Registered Users",
       value: data?.totalRegisteredUsers?.toLocaleString() || "0",
       subtext: t("reports_admin.total_users_sub") || "Total platform accounts",
@@ -124,6 +168,13 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
       clickable: true,
     },
   ];
+
+  const timeframeTitles = {
+    today: t("reports_admin.active_today_title") || "Active Users Today (Last 24h)",
+    week: t("reports_admin.active_week_title") || "Active Users This Week (Last 7 Days)",
+    month: t("reports_admin.active_month_title") || "Active Users This Month (Last 30 Days)",
+    all: t("reports_admin.all_users_title") || "All Registered Users",
+  };
 
   return (
     <div className="space-y-4">
@@ -137,7 +188,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
         </div>
         <button
           type="button"
-          onClick={() => setIsActiveUsersModalOpen(true)}
+          onClick={() => handleOpenModalWithFilter("today")}
           className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 rounded-lg border border-amber-500/20 transition-all inline-flex items-center gap-1.5 cursor-pointer"
         >
           <UserCheck size={13} />
@@ -150,13 +201,13 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
         {metrics.map((stat, idx) => (
           <div
             key={idx}
-            onClick={() => stat.clickable && setIsActiveUsersModalOpen(true)}
+            onClick={() => stat.clickable && handleOpenModalWithFilter(stat.timeframe)}
             className={`bg-white dark:bg-[#131b2e] p-5 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm transition-all ${
               stat.clickable
                 ? "cursor-pointer hover:border-amber-400/80 hover:shadow-md hover:-translate-y-0.5 group"
                 : ""
             }`}
-            title={stat.clickable ? (t("reports_admin.click_to_view_users") || "Click to view active users") : undefined}
+            title={stat.clickable ? (t("reports_admin.click_to_view_users") || "Click to view relevant users") : undefined}
           >
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
@@ -192,17 +243,96 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                 </div>
                 <div>
                   <DialogTitle className="text-lg font-black text-gray-900 dark:text-white">
-                    {t("reports_admin.active_users_list_title") || "Active Users"}
+                    {timeframeTitles[activeTimeframe]}
                   </DialogTitle>
                   <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                    {filteredUsers.length} {t("reports_admin.active_users_found") || "active user(s) recorded"}
+                    {filteredUsers.length} {t("reports_admin.active_users_found") || "user(s) found"}
                   </p>
                 </div>
               </div>
             </div>
 
+            {/* Timeframe Filter Tabs */}
+            <div className="grid grid-cols-4 gap-1 p-1 bg-gray-100 dark:bg-slate-900 rounded-xl mt-3">
+              <button
+                type="button"
+                onClick={() => setActiveTimeframe("today")}
+                className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activeTimeframe === "today"
+                    ? "bg-white dark:bg-[#131b2e] text-amber-600 dark:text-amber-400 shadow-xs border border-gray-200/50 dark:border-slate-800"
+                    : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
+                }`}
+              >
+                <span>{t("reports_admin.tab_today") || "Today"}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                  activeTimeframe === "today"
+                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                    : "bg-gray-200 dark:bg-slate-800 text-gray-600 dark:text-slate-400"
+                }`}>
+                  {data?.activeUsersToday ?? (data?.activeTodayList?.length || 0)}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTimeframe("week")}
+                className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activeTimeframe === "week"
+                    ? "bg-white dark:bg-[#131b2e] text-amber-600 dark:text-amber-400 shadow-xs border border-gray-200/50 dark:border-slate-800"
+                    : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
+                }`}
+              >
+                <span>{t("reports_admin.tab_week") || "7 Days"}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                  activeTimeframe === "week"
+                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                    : "bg-gray-200 dark:bg-slate-800 text-gray-600 dark:text-slate-400"
+                }`}>
+                  {data?.activeUsersThisWeek ?? (data?.activeWeekList?.length || 0)}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTimeframe("month")}
+                className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activeTimeframe === "month"
+                    ? "bg-white dark:bg-[#131b2e] text-amber-600 dark:text-amber-400 shadow-xs border border-gray-200/50 dark:border-slate-800"
+                    : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
+                }`}
+              >
+                <span>{t("reports_admin.tab_month") || "30 Days"}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                  activeTimeframe === "month"
+                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                    : "bg-gray-200 dark:bg-slate-800 text-gray-600 dark:text-slate-400"
+                }`}>
+                  {data?.activeUsersThisMonth ?? (data?.activeMonthList?.length || 0)}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTimeframe("all")}
+                className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activeTimeframe === "all"
+                    ? "bg-white dark:bg-[#131b2e] text-amber-600 dark:text-amber-400 shadow-xs border border-gray-200/50 dark:border-slate-800"
+                    : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
+                }`}
+              >
+                <span>{t("reports_admin.tab_all") || "All Users"}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                  activeTimeframe === "all"
+                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                    : "bg-gray-200 dark:bg-slate-800 text-gray-600 dark:text-slate-400"
+                }`}>
+                  {data?.totalRegisteredUsers ?? (data?.allUsersList?.length || 0)}
+                </span>
+              </button>
+            </div>
+
             {/* Search Input */}
-            <div className="relative mt-3">
+            <div className="relative mt-2.5">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
@@ -218,7 +348,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
           <div className="p-4 sm:p-5 overflow-y-auto max-h-[60vh] space-y-2.5">
             {filteredUsers.length === 0 ? (
               <div className="text-center py-10 text-xs text-gray-400 dark:text-slate-500">
-                {t("reports_admin.no_active_users_found") || "No active users matching your search."}
+                {t("reports_admin.no_active_users_found") || "No users found in this time period."}
               </div>
             ) : (
               filteredUsers.map((user) => (
@@ -243,7 +373,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                     </div>
 
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <button
                           type="button"
                           onClick={() => handleOpenUserProfile(user._id)}
@@ -256,6 +386,19 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                             {user.role}
                           </span>
                         )}
+                        {user.isActiveToday ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            {t("reports_admin.active_today_tag") || "Active Today"}
+                          </span>
+                        ) : user.isActiveWeek ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                            {t("reports_admin.active_week_tag") || "Active This Week"}
+                          </span>
+                        ) : user.isActiveMonth ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                            {t("reports_admin.active_month_tag") || "Active This Month"}
+                          </span>
+                        ) : null}
                       </div>
                       <p className="text-xs text-gray-500 dark:text-slate-400 truncate mt-0.5">
                         {user.email || "No email"} · {user.points ?? 0} pts · Level {user.level ?? 0}
