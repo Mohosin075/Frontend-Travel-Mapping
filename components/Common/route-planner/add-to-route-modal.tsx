@@ -11,6 +11,7 @@ import {
   Loader2,
   ExternalLink,
   Route as RouteIcon,
+  Lock,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SafeImage } from "@/components/shared/safe-image";
@@ -89,6 +90,46 @@ export default function AddToRouteModal({
   }, [isOpen]);
 
   if (!isOpen || !location) return null;
+
+  if (location.isLocked) {
+    const pMapId = typeof location.map === "object" ? (location.map?._id || location.map?.id) : location.map;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="relative w-full max-w-md bg-white dark:bg-[#131b2e] rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-100 dark:border-slate-800 text-center space-y-5">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-500 hover:text-gray-700 dark:hover:text-slate-300 flex items-center justify-center transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="w-16 h-16 bg-amber-500/10 dark:bg-amber-400/10 text-amber-500 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto">
+            <Lock className="w-8 h-8" />
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-gray-950 dark:text-white">
+              {t("map.unlock_full_map") || "Desbloquear mapa"}
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-2 leading-relaxed">
+              {t("place.locked_alert_desc") ||
+                "Esta atracción turística es exclusiva de los mapas adquiridos. Compra el mapa para planificar rutas con este lugar."}
+            </p>
+          </div>
+          <Link
+            href={pMapId ? `/catalog/${pMapId}` : "/catalog"}
+            onClick={onClose}
+            className="w-full inline-block"
+          >
+            <button
+              type="button"
+              className="w-full py-3.5 px-4 rounded-xl bg-[#fabf13] hover:bg-[#e6ad06] text-gray-950 font-bold text-sm shadow-md transition-all cursor-pointer"
+            >
+              {t("map.buy_map") || "Comprar mapa"}
+            </button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const placeName = getLocalized(location.name, language) || "Lugar sin nombre";
   const catName = getLocalized(location.category?.name, language);

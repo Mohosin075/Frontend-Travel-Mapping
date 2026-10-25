@@ -1272,11 +1272,11 @@ export default function MapPage() {
     const isGuest = !isLoggedIn;
     const isNewLocation = isNewlyAddedLocation(place);
 
-    // Requirement 2: Newly added locations visible to users without an account, but name hidden
-    if (isGuest && isNewLocation && isLocked) {
+    // Point 1: Locked pins should not display the name of the location
+    if (isLocked) {
       name = {
-        en: "A location was added to the map...",
-        es: "Se agregó una ubicación al mapa...",
+        en: "Premium Location",
+        es: "Ubicación Premium",
       };
     }
 

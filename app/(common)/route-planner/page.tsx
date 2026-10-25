@@ -238,6 +238,15 @@ export function RoutePlannerInner() {
 
   // Handle adding place
   const handleAddPlace = (place: any) => {
+    if (place.isLocked) {
+      toast.error(
+        language === "es"
+          ? "Esta atracción turística requiere la compra del mapa para añadirse a la ruta."
+          : "This tourist attraction requires map purchase to be added to your route."
+      );
+      return;
+    }
+
     const placeId = place._id || place.id;
     const exists = stops.some((s) => s.placeId === placeId);
     if (exists) {

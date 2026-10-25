@@ -165,7 +165,7 @@ export default function LocationDialog({ id, onClose, mapId, initialData }: Prop
               {t("map.unlock_full_map")}
             </span>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-slate-100 leading-tight">
-              {getLocalized(location?.name, language) || t("map.unlock_full_map")}
+              {t("map.premium_location", "Premium Location")}
             </h2>
             <p className="text-gray-500 dark:text-slate-400 text-sm leading-relaxed px-4">
               {message}

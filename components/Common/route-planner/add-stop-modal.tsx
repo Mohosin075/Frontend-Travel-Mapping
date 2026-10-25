@@ -14,10 +14,13 @@ import {
   List,
   Sparkles,
   RotateCcw,
+  Lock,
 } from "lucide-react";
+import Link from "next/link";
 import { useGetPlacesQuery } from "@/redux/features/place/placeApi";
 import { useGetCategoriesQuery } from "@/redux/features/category/categoryApi";
 import { useGetMapsQuery } from "@/redux/features/map/mapApi";
+import { useGetProfileQuery } from "@/redux/features/user/userApi";
 import { SafeImage } from "@/components/shared/safe-image";
 import { NoImage } from "@/lib/others/others";
 import { getUsableMediaUrl, getLocalized } from "@/lib/utils";
@@ -130,14 +133,50 @@ export default function AddStopModal({
     { skip: !isOpen }
   );
 
-  // Filter places based on unadded toggle if enabled
+  // User profile & map ownership check
+  const { data: profileRes } = useGetProfileQuery({}, { skip: !isOpen });
+  const profile = profileRes?.data || profileRes;
+  const purchasedMaps = useMemo(() => {
+    return Array.isArray(profile?.purchasedMaps) ? profile.purchasedMaps : [];
+  }, [profile?.purchasedMaps]);
+  const isAdminOrEditor = ["super_admin", "admin", "map_editor"].includes(profile?.role || "");
+
+  const isBusinessLocation = (p: any) =>
+    p?.type === "business" || p?.type === "Business" || p?.placeType === "Business";
+
+  const isPlaceAccessible = (place: any) => {
+    if (isAdminOrEditor) return true;
+    if (isBusinessLocation(place)) return true;
+
+    const pMapId = typeof place?.map === "object" ? (place?.map?._id || place?.map?.id) : place?.map;
+    if (!pMapId) return true;
+
+    const mapObj = mapsList.find((m: any) => String(m._id || m.id) === String(pMapId));
+    if (mapObj && mapObj.isPaid === false) return true;
+
+    const isPurchased = purchasedMaps.some((m: any) => {
+      const mid = typeof m === "object" ? (m._id || m.id) : m;
+      return String(mid) === String(pMapId);
+    });
+
+    return isPurchased;
+  };
+
+  // Filter places based on unadded toggle if enabled and compute isLocked
   const places = useMemo(() => {
     const rawPlaces = placesRes?.data?.data || placesRes?.data || [];
-    if (!onlyUnadded) return rawPlaces;
-    return rawPlaces.filter(
-      (p: any) => !selectedPlaceIds.includes(p._id || p.id)
-    );
-  }, [placesRes, onlyUnadded, selectedPlaceIds]);
+    const filtered = onlyUnadded
+      ? rawPlaces.filter((p: any) => !selectedPlaceIds.includes(p._id || p.id))
+      : rawPlaces;
+
+    return filtered.map((p: any) => {
+      const isLocked = !isPlaceAccessible(p);
+      return {
+        ...p,
+        isLocked,
+      };
+    });
+  }, [placesRes, onlyUnadded, selectedPlaceIds, isAdminOrEditor, mapsList, purchasedMaps]);
 
   const activeFiltersCount =
     (selectedCategory !== "all" ? 1 : 0) +
@@ -368,8 +407,12 @@ export default function AddStopModal({
                   {places.map((place: any) => {
                     const placeId = place._id || place.id;
                     const isSelected = selectedPlaceIds.includes(placeId);
+                    const isLocked = Boolean(place.isLocked);
+                    const pMapId = typeof place.map === "object" ? (place.map?._id || place.map?.id) : place.map;
                     const cover = getUsableMediaUrl(place.media);
-                    const placeName = getLocalized(place.name, language);
+                    const placeName = isLocked
+                      ? t("map.premium_location", "Premium Location")
+                      : getLocalized(place.name, language);
                     const catName = getLocalized(place.category?.name, language);
                     const catIcon = place.category?.icon;
                     const isCustomCatImg =
@@ -381,9 +424,19 @@ export default function AddStopModal({
                     return (
                       <div
                         key={placeId}
-                        onClick={() => !isSelected && onSelectPlace(place)}
+                        onClick={() => {
+                          if (isLocked) {
+                            if (typeof window !== "undefined") {
+                              window.location.href = pMapId ? `/catalog/${pMapId}` : "/catalog";
+                            }
+                            return;
+                          }
+                          if (!isSelected) onSelectPlace(place);
+                        }}
                         className={`group flex items-center gap-3 p-3 rounded-2xl border transition-all cursor-pointer ${
-                          isSelected
+                          isLocked
+                            ? "bg-slate-50/70 dark:bg-slate-900/40 border-gray-200 dark:border-slate-800/80 hover:border-amber-400/60"
+                            : isSelected
                             ? "bg-amber-500/5 dark:bg-amber-500/10 border-[#fabf13]/50 ring-1 ring-[#fabf13]/40"
                             : "bg-white dark:bg-[#151e33] border-gray-100 dark:border-slate-800 hover:border-[#fabf13] hover:shadow-md"
                         }`}
@@ -391,14 +444,34 @@ export default function AddStopModal({
                         {/* Thumbnail */}
                         <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-slate-800">
                           {cover ? (
-                            <SafeImage
-                              src={cover}
-                              alt={placeName}
-                              fill
-                              className="object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
+                            <div
+                              className={`w-full h-full relative ${
+                                isLocked ? "select-none pointer-events-none" : "group-hover:scale-105"
+                              } transition-transform duration-300`}
+                              style={
+                                isLocked
+                                  ? {
+                                      filter: "blur(14px)",
+                                      WebkitFilter: "blur(14px)",
+                                      transform: "scale(1.15)",
+                                    }
+                                  : undefined
+                              }
+                            >
+                              <SafeImage
+                                src={cover}
+                                alt={placeName}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
                           ) : (
                             <NoImage />
+                          )}
+                          {isLocked && (
+                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                              <Lock className="w-5 h-5 text-[#fabf13] drop-shadow-md" />
+                            </div>
                           )}
                         </div>
 
@@ -427,41 +500,56 @@ export default function AddStopModal({
                               </span>
                             </div>
                           )}
-                          <h4 className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate group-hover:text-[#fabf13] transition-colors">
-                            {placeName}
+                          <h4 className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate group-hover:text-[#fabf13] transition-colors flex items-center gap-1.5">
+                            {isLocked && <Lock className="w-3.5 h-3.5 text-[#fabf13] shrink-0" />}
+                            <span>{placeName}</span>
                           </h4>
                           <p className="text-xs text-gray-500 dark:text-slate-400 truncate flex items-center gap-1 mt-0.5">
                             <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
                             <span className="truncate">
-                              {place.address || "Puerto Rico"}
+                              {isLocked
+                                ? (typeof place.map === "object" ? getLocalized(place.map?.name, language) : "") || place.country || "Puerto Rico"
+                                : (place.address || "Puerto Rico")}
                             </span>
                           </p>
                         </div>
 
-                        {/* Add Button */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!isSelected) onSelectPlace(place);
-                          }}
-                          title={
-                            isSelected
-                              ? t("route_planner.in_your_route") || "En tu ruta"
-                              : t("route_planner.add_place_btn") || "Añadir"
-                          }
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
-                            isSelected
-                              ? "bg-[#fabf13] text-gray-950 font-bold shadow-md"
-                              : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 group-hover:bg-[#fabf13] group-hover:text-gray-950"
-                          }`}
-                        >
-                          {isSelected ? (
-                            <Check className="w-4 h-4 stroke-[3]" />
-                          ) : (
-                            <Plus className="w-4 h-4 stroke-[2.5]" />
-                          )}
-                        </button>
+                        {/* Add or Buy Button */}
+                        {isLocked ? (
+                          <Link
+                            href={pMapId ? `/catalog/${pMapId}` : "/catalog"}
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-8 px-2.5 rounded-xl bg-amber-500/15 hover:bg-[#fabf13] hover:text-gray-950 text-amber-600 dark:text-amber-400 font-bold text-xs flex items-center gap-1 transition-all shrink-0 border border-amber-500/30"
+                            title={t("map.buy_map") || "Comprar mapa"}
+                          >
+                            <Lock className="w-3 h-3" />
+                            <span className="hidden sm:inline">{t("map.buy_map") || "Comprar"}</span>
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!isSelected) onSelectPlace(place);
+                            }}
+                            title={
+                              isSelected
+                                ? t("route_planner.in_your_route") || "En tu ruta"
+                                : t("route_planner.add_place_btn") || "Añadir"
+                            }
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+                              isSelected
+                                ? "bg-[#fabf13] text-gray-950 font-bold shadow-md"
+                                : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 group-hover:bg-[#fabf13] group-hover:text-gray-950"
+                            }`}
+                          >
+                            {isSelected ? (
+                              <Check className="w-4 h-4 stroke-[3]" />
+                            ) : (
+                              <Plus className="w-4 h-4 stroke-[2.5]" />
+                            )}
+                          </button>
+                        )}
                       </div>
                     );
                   })}
@@ -489,6 +577,7 @@ export default function AddStopModal({
                   if (!pos) return null;
 
                   const isSelected = selectedPlaceIds.includes(placeId);
+                  const isLocked = Boolean(place.isLocked);
                   const isCurrentActive =
                     activePinPlace && (activePinPlace._id || activePinPlace.id) === placeId;
 
@@ -499,7 +588,7 @@ export default function AddStopModal({
                       onClick={() => setActivePinPlace(place)}
                     >
                       <div
-                        title={getLocalized(place.name, language)}
+                        title={isLocked ? (language === "es" ? "Ubicación Premium" : "Premium Location") : getLocalized(place.name, language)}
                         className={`relative flex items-center justify-center cursor-pointer transition-all duration-200 transform select-none ${
                           isCurrentActive ? "scale-125 z-40" : "hover:scale-115 z-10"
                         }`}
@@ -508,11 +597,15 @@ export default function AddStopModal({
                           className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 transition-all ${
                             isSelected
                               ? "bg-[#fabf13] text-gray-950 border-white ring-2 ring-[#fabf13]/50 shadow-amber-500/30"
+                              : isLocked
+                              ? "bg-slate-900 text-amber-400 border-amber-400 shadow-md"
                               : "bg-white dark:bg-[#131b2e] text-amber-500 border-amber-400 dark:border-amber-400/80 hover:border-amber-500"
                           }`}
                         >
                           {isSelected ? (
                             <Check className="w-4.5 h-4.5 stroke-[3]" />
+                          ) : isLocked ? (
+                            <Lock className="w-4 h-4 text-amber-400" />
                           ) : place.category?.icon ? (
                             <CategoryIcon
                               icon={place.category.icon}
@@ -529,6 +622,8 @@ export default function AddStopModal({
                           className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 rounded-[1px] transition-colors ${
                             isSelected
                               ? "bg-[#fabf13]"
+                              : isLocked
+                              ? "bg-slate-900 border-r-2 border-b-2 border-amber-400"
                               : "bg-white dark:bg-[#131b2e] border-r-2 border-b-2 border-amber-400 dark:border-amber-400/80"
                           }`}
                         />
@@ -539,83 +634,124 @@ export default function AddStopModal({
               </Map>
 
               {/* Floating Active Place Preview Card on Map */}
-              {activePinPlace && (
-                <div className="absolute bottom-4 left-4 right-4 z-20 max-w-sm mx-auto animate-in slide-in-from-bottom-2 duration-200">
-                  <div className="bg-white/95 dark:bg-[#131b2e]/95 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-gray-200 dark:border-slate-800 flex items-center gap-3">
-                    <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-slate-800">
-                      {getUsableMediaUrl(activePinPlace.media) ? (
-                        <SafeImage
-                          src={getUsableMediaUrl(activePinPlace.media)!}
-                          alt={getLocalized(activePinPlace.name, language)}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <NoImage />
-                      )}
-                    </div>
+              {activePinPlace && (() => {
+                const isLocked = Boolean(activePinPlace.isLocked);
+                const pMapId = typeof activePinPlace.map === "object" ? (activePinPlace.map?._id || activePinPlace.map?.id) : activePinPlace.map;
+                const activeCover = getUsableMediaUrl(activePinPlace.media);
+                const activeDisplayName = isLocked
+                  ? t("map.premium_location", "Premium Location")
+                  : getLocalized(activePinPlace.name, language);
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1">
-                        <div className="flex items-center gap-1.5 truncate">
-                          {activePinPlace.category?.icon && (
-                            <div
-                              className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
-                              style={{
-                                backgroundColor: activePinPlace.category.color || "#FA7B17",
-                              }}
-                            >
-                              <CategoryIcon
-                                icon={activePinPlace.category.icon}
-                                size={13}
-                                color="#FFFFFF"
-                              />
-                            </div>
-                          )}
-                          <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 truncate">
-                            {getLocalized(activePinPlace.category?.name, language) || "Lugar"}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setActivePinPlace(null)}
-                          className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 p-0.5"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 truncate">
-                        {getLocalized(activePinPlace.name, language)}
-                      </h4>
-                      <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate mt-0.5">
-                        {activePinPlace.address || "Puerto Rico"}
-                      </p>
-
-                      <div className="mt-2">
-                        {selectedPlaceIds.includes(activePinPlace._id || activePinPlace.id) ? (
-                          <div className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400">
-                            <Check className="w-3.5 h-3.5 stroke-[3]" />
-                            <span>{t("route_planner.in_your_route") || "En tu ruta"}</span>
+                return (
+                  <div className="absolute bottom-4 left-4 right-4 z-20 max-w-sm mx-auto animate-in slide-in-from-bottom-2 duration-200">
+                    <div className="bg-white/95 dark:bg-[#131b2e]/95 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-gray-200 dark:border-slate-800 flex items-center gap-3">
+                      <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-slate-800">
+                        {activeCover ? (
+                          <div
+                            className={`w-full h-full relative ${
+                              isLocked ? "select-none pointer-events-none" : ""
+                            }`}
+                            style={
+                              isLocked
+                                ? {
+                                    filter: "blur(14px)",
+                                    WebkitFilter: "blur(14px)",
+                                    transform: "scale(1.15)",
+                                  }
+                                : undefined
+                            }
+                          >
+                            <SafeImage
+                              src={activeCover}
+                              alt={activeDisplayName}
+                              fill
+                              className="object-cover"
+                            />
                           </div>
                         ) : (
+                          <NoImage />
+                        )}
+                        {isLocked && (
+                          <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                            <Lock className="w-5 h-5 text-[#fabf13] drop-shadow-md" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <div className="flex items-center gap-1.5 truncate">
+                            {activePinPlace.category?.icon && (
+                              <div
+                                className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
+                                style={{
+                                  backgroundColor: activePinPlace.category.color || "#FA7B17",
+                                }}
+                              >
+                                <CategoryIcon
+                                  icon={activePinPlace.category.icon}
+                                  size={13}
+                                  color="#FFFFFF"
+                                />
+                              </div>
+                            )}
+                            <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 truncate">
+                              {getLocalized(activePinPlace.category?.name, language) || "Lugar"}
+                            </span>
+                          </div>
                           <button
                             type="button"
-                            onClick={() => {
-                              onSelectPlace(activePinPlace);
-                              setActivePinPlace(null);
-                            }}
-                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-[#fabf13] hover:bg-[#e0ac10] text-gray-950 font-bold text-xs transition-colors shadow-sm"
+                            onClick={() => setActivePinPlace(null)}
+                            className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 p-0.5"
                           >
-                            <Plus className="w-3 h-3 stroke-[3]" />
-                            <span>{t("route_planner.add_place_btn") || "Añadir a la ruta"}</span>
+                            <X className="w-3.5 h-3.5" />
                           </button>
-                        )}
+                        </div>
+
+                        <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 truncate flex items-center gap-1">
+                          {isLocked && <Lock className="w-3 h-3 text-[#fabf13] shrink-0" />}
+                          <span>{activeDisplayName}</span>
+                        </h4>
+                        <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate mt-0.5">
+                          {isLocked
+                            ? (typeof activePinPlace.map === "object" ? getLocalized(activePinPlace.map?.name, language) : "") || activePinPlace.country || "Puerto Rico"
+                            : (activePinPlace.address || "Puerto Rico")}
+                        </p>
+
+                        <div className="mt-2">
+                          {isLocked ? (
+                            <Link
+                              href={pMapId ? `/catalog/${pMapId}` : "/catalog"}
+                              onClick={() => setActivePinPlace(null)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#fabf13] hover:bg-[#e0ac10] text-gray-950 font-bold text-xs transition-colors shadow-sm"
+                            >
+                              <Lock className="w-3 h-3" />
+                              <span>{t("map.buy_map") || "Comprar mapa"}</span>
+                            </Link>
+                          ) : selectedPlaceIds.includes(activePinPlace._id || activePinPlace.id) ? (
+                            <div className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              <span>{t("route_planner.in_your_route") || "En tu ruta"}</span>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onSelectPlace(activePinPlace);
+                                setActivePinPlace(null);
+                              }}
+                              className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-[#fabf13] hover:bg-[#e0ac10] text-gray-950 font-bold text-xs transition-colors shadow-sm"
+                            >
+                              <Plus className="w-3 h-3 stroke-[3]" />
+                              <span>{t("route_planner.add_place_btn") || "Añadir a la ruta"}</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           )}
         </div>

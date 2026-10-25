@@ -42,7 +42,9 @@ export const CategoryMarker = React.memo(function CategoryMarker({
     icon?.includes(".");
 
   const iconSize = isCustomImage ? badgeSize : (isMobile ? 16 : 19);
-  const displayName = getLocalized(name, language);
+  const displayName = isLocked
+    ? (language === "es" ? "Ubicación Premium" : "Premium Location")
+    : getLocalized(name, language);
 
   return (
     <div
