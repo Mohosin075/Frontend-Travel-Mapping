@@ -46,7 +46,11 @@ export default function NotificationBellDropdown({
   const [open, setOpen] = useState(false);
   const [filterUnread, setFilterUnread] = useState(false);
 
-  const { data: unreadData, refetch: refetchUnread } = useGetUnreadCountQuery();
+  const { data: unreadData, refetch: refetchUnread } = useGetUnreadCountQuery(undefined, {
+    pollingInterval: 30000,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
   const {
     data: notifData,
     isLoading,
@@ -72,6 +76,13 @@ export default function NotificationBellDropdown({
     if (userId) {
       emitWhenReady("join-room", userId);
     }
+
+    const handleConnect = () => {
+      if (userId) {
+        emitWhenReady("join-room", userId);
+      }
+      refetchUnread();
+    };
 
     const handleNewNotification = (payload: any) => {
       refetchUnread();
@@ -125,10 +136,12 @@ export default function NotificationBellDropdown({
       if (open) refetchNotifs();
     };
 
+    socket.on("connect", handleConnect);
     socket.on("notification", handleNewNotification);
     socket.on("unread_count_update", handleCountUpdate);
 
     return () => {
+      socket.off("connect", handleConnect);
       socket.off("notification", handleNewNotification);
       socket.off("unread_count_update", handleCountUpdate);
     };

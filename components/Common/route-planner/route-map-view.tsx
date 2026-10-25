@@ -518,14 +518,6 @@ export default function RouteMapView({
                   <Navigation className="w-3 h-3 fill-gray-950 -rotate-45" />
                   <span>{t("route_planner.directions") || "Cómo llegar"}</span>
                 </button>
-
-                <Link
-                  href={`/places/${activeStop.placeId}`}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-600 dark:text-slate-300 hover:text-[#FFC107] transition-colors"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  <span>{t("route_planner.view_place") || "Ver"}</span>
-                </Link>
               </div>
             </div>
           </div>

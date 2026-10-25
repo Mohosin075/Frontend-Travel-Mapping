@@ -195,7 +195,12 @@ export default function Header() {
 
   const { data: unreadData, refetch: refetchUnread } = useGetUnreadCountQuery(
     undefined,
-    { skip: !isAuthenticated }
+    {
+      skip: !isAuthenticated,
+      pollingInterval: 30000,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    }
   );
 
   useEffect(() => {

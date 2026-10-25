@@ -247,9 +247,6 @@ export default function RouteDetailViewModal({
                 <MapPin className="w-5 h-5 text-amber-500" />
                 <span>{t("route_planner.stops_sequence") || "Secuencia de paradas"}</span>
               </h3>
-              <span className="text-xs text-gray-500 dark:text-slate-400">
-                {t("route_planner.view_only_notice") || "Vista protegida contra cambios accidentales"}
-              </span>
             </div>
 
             {stops.length === 0 ? (
@@ -266,15 +263,15 @@ export default function RouteDetailViewModal({
                     <div
                       key={stop.id || index}
                       onClick={() => setSelectedStopIndex(index)}
-                      className={`flex items-center gap-3.5 p-3 sm:p-3.5 rounded-2xl border cursor-pointer transition-all duration-200 group ${
+                      className={`flex items-center gap-3 sm:gap-3.5 p-2.5 sm:p-3.5 rounded-2xl border cursor-pointer transition-all duration-200 group ${
                         isSelected
                           ? "border-[#FFC107] bg-amber-500/10 dark:bg-amber-500/15 ring-2 ring-[#FFC107]/40 shadow-sm"
                           : "border-gray-100 dark:border-slate-800/80 bg-gray-50/60 dark:bg-slate-900/40 hover:bg-white dark:hover:bg-slate-800/60 hover:border-amber-300 dark:hover:border-slate-700"
                       }`}
                     >
-                      {/* Step Number Badge */}
+                      {/* Step Number Badge (Desktop) */}
                       <div
-                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full font-black text-xs flex items-center justify-center shrink-0 transition-all ${
+                        className={`hidden sm:flex w-8 h-8 rounded-full font-black text-xs items-center justify-center shrink-0 transition-all ${
                           isSelected
                             ? "bg-[#FFC107] text-gray-950 shadow-md scale-105"
                             : "bg-amber-400/20 text-amber-700 dark:text-amber-400 group-hover:bg-amber-400/30"
@@ -283,66 +280,28 @@ export default function RouteDetailViewModal({
                         {index + 1}
                       </div>
 
-                      {/* Thumbnail */}
-                      {stop.placeId ? (
-                        <Link
-                          href={`/places/${stop.placeId}`}
-                          onClick={(e) => e.stopPropagation()}
-                          title={getLocalized(stop.name, language)}
-                          className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 shrink-0 block hover:opacity-90 transition-opacity"
-                        >
-                          {photo ? (
-                            <SafeImage
-                              src={photo}
-                              alt=""
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-amber-500 bg-amber-500/10">
-                              <MapPin className="w-5 h-5" />
-                            </div>
-                          )}
-                        </Link>
-                      ) : (
-                        <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 shrink-0">
-                          {photo ? (
-                            <SafeImage
-                              src={photo}
-                              alt=""
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-amber-500 bg-amber-500/10">
-                              <MapPin className="w-5 h-5" />
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      {/* Photo Thumbnail */}
+                      <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 shrink-0">
+                        {photo ? (
+                          <SafeImage
+                            src={photo}
+                            alt=""
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-amber-500 bg-amber-500/10">
+                            <MapPin className="w-5 h-5" />
+                          </div>
+                        )}
+                      </div>
 
-                      {/* Stop Info */}
+                      {/* Stop Info (Name & Address) */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          {stop.placeId ? (
-                            <Link
-                              href={`/places/${stop.placeId}`}
-                              onClick={(e) => e.stopPropagation()}
-                              title={getLocalized(stop.name, language)}
-                              className="text-sm font-bold text-gray-900 dark:text-slate-100 hover:text-amber-500 hover:underline underline-offset-2 transition-colors truncate"
-                            >
-                              {getLocalized(stop.name, language)}
-                            </Link>
-                          ) : (
-                            <h4 className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate group-hover:text-amber-500 transition-colors">
-                              {getLocalized(stop.name, language)}
-                            </h4>
-                          )}
-                          {stop.category && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
-                              {getLocalized(stop.category, language)}
-                            </span>
-                          )}
+                          <h4 className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate group-hover:text-amber-500 transition-colors">
+                            {getLocalized(stop.name, language)}
+                          </h4>
                           {isSelected && (
                             <span className="hidden sm:inline-flex text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-[#FFC107] text-gray-950 shrink-0">
                               {t("route_planner.active_badge") || "Activo"}
@@ -356,8 +315,8 @@ export default function RouteDetailViewModal({
                         )}
                       </div>
 
-                      {/* Action buttons: Get directions & View place */}
-                      <div className="flex items-center gap-2 shrink-0">
+                      {/* Action button: Get directions */}
+                      <div className="shrink-0">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -365,23 +324,11 @@ export default function RouteDetailViewModal({
                             handleStopDirections(stop.coordinates);
                           }}
                           title={t("route_planner.directions") || (language === "es" ? "Cómo llegar" : "Get directions")}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FFC107] hover:bg-[#e6ad06] text-gray-950 font-bold text-xs shadow-sm active:scale-95 transition-all cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-[#FFC107] hover:bg-[#e6ad06] text-gray-950 font-bold text-xs shadow-sm active:scale-95 transition-all cursor-pointer"
                         >
                           <Navigation className="w-3.5 h-3.5 fill-gray-950 -rotate-45 shrink-0" />
                           <span>{t("route_planner.directions") || (language === "es" ? "Cómo llegar" : "Get directions")}</span>
                         </button>
-
-                        {stop.placeId && (
-                          <Link
-                            href={`/places/${stop.placeId}`}
-                            onClick={(e) => e.stopPropagation()}
-                            title={t("route_planner.view_place") || "Ver lugar"}
-                            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-[#FFC107] hover:text-[#FFC107] text-gray-700 dark:text-slate-300 font-bold text-xs shadow-sm transition-all"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            <span>{t("route_planner.view_place") || "Ver lugar"}</span>
-                          </Link>
-                        )}
                       </div>
                     </div>
                   );

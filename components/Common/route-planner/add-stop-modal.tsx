@@ -505,28 +505,28 @@ export default function AddStopModal({
                         }`}
                       >
                         <div
-                          className={`w-11 h-11 rounded-full flex items-center justify-center shadow-xl border-2 transition-all ${
+                          className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 transition-all ${
                             isSelected
-                              ? "bg-[#fabf13] text-gray-950 border-white ring-4 ring-[#fabf13]/40 shadow-amber-500/30"
+                              ? "bg-[#fabf13] text-gray-950 border-white ring-2 ring-[#fabf13]/50 shadow-amber-500/30"
                               : "bg-white dark:bg-[#131b2e] text-amber-500 border-amber-400 dark:border-amber-400/80 hover:border-amber-500"
                           }`}
                         >
                           {isSelected ? (
-                            <Check className="w-6 h-6 stroke-[3]" />
+                            <Check className="w-4.5 h-4.5 stroke-[3]" />
                           ) : place.category?.icon ? (
                             <CategoryIcon
                               icon={place.category.icon}
-                              size={24}
+                              size={19}
                               color={isDark ? "#fbbf24" : "#d97706"}
                             />
                           ) : (
-                            <MapPin className="w-5 h-5" />
+                            <MapPin className="w-4.5 h-4.5" />
                           )}
                         </div>
 
                         {/* Marker Pin Tail */}
                         <div
-                          className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 rounded-[1px] transition-colors ${
+                          className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 rounded-[1px] transition-colors ${
                             isSelected
                               ? "bg-[#fabf13]"
                               : "bg-white dark:bg-[#131b2e] border-r-2 border-b-2 border-amber-400 dark:border-amber-400/80"
