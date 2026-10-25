@@ -150,18 +150,9 @@ export function ProfileSidebar({ data }: ProfileProps) {
               <NoImage />
             )}
 
-            {hasPurchasedMap ? (
-              <div className="absolute bottom-0 right-0 w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center text-black font-bold text-sm border-2 border-white dark:border-slate-900 shadow-sm">
-                L{currentLevelNumber}
-              </div>
-            ) : (
-              <div
-                className="absolute bottom-0 right-0 w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center text-black font-bold text-xs border-2 border-white dark:border-slate-900 shadow-sm"
-                title={t("levels.locked_feature") || "Locked"}
-              >
-                <Lock size={12} strokeWidth={2.5} />
-              </div>
-            )}
+            <div className="absolute bottom-0 right-0 w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center text-black font-bold text-sm border-2 border-white dark:border-slate-900 shadow-sm">
+              L{currentLevelNumber}
+            </div>
           </div>
 
           {/* User Name */}
@@ -170,55 +161,16 @@ export function ProfileSidebar({ data }: ProfileProps) {
           </h2>
 
           {/* Points / XP display */}
-          {hasPurchasedMap ? (
-            <div className="text-xs font-bold text-amber-600 dark:text-amber-400 mb-2 flex items-center justify-center gap-1">
-              ✨ {data?.points ?? 0} XP
-            </div>
-          ) : (
-            <div className="text-xs font-bold text-gray-400 dark:text-slate-500 mb-2 flex items-center justify-center gap-1">
-              <Lock size={12} />
-              <span>0 XP ({t("levels.locked_feature") || "Locked"})</span>
-            </div>
-          )}
+          <div className="text-xs font-bold text-amber-600 dark:text-amber-400 mb-2 flex items-center justify-center gap-1">
+            ✨ {data?.points ?? 0} XP
+          </div>
 
           {/* Level Name Badge */}
-          {hasPurchasedMap ? (
-            (() => {
-              const USER_LEVEL_KEYS = [
-                "levels.explorador",
-                "levels.aventurero",
-                "levels.tlacuilo",
-                "levels.expedicionario",
-                "levels.viajero",
-                "levels.chasqui",
-                "levels.cronista",
-                "levels.pochteca",
-                "levels.navegante",
-                "levels.cartografo",
-                "levels.gran_explorador",
-                "levels.conquistador",
-                "levels.gran_conquistador",
-                "levels.amauta",
-                "levels.leyenda",
-              ];
-              const levelName = t(USER_LEVEL_KEYS[data?.level ?? 0] || "levels.explorador");
-              return (
-                <div className="inline-block bg-yellow-400 text-black px-3.5 py-1 rounded-full mb-3 shadow-xs">
-                  <span className="font-bold text-xs uppercase tracking-wider">
-                    ⭐ {levelName}
-                  </span>
-                </div>
-              );
-            })()
-          ) : (
-            <Link
-              href="/catalog"
-              className="inline-flex items-center gap-1.5 bg-amber-400/20 text-amber-900 dark:text-amber-300 border border-amber-400/40 px-3.5 py-1 rounded-full mb-3 text-xs font-bold hover:bg-amber-400/30 transition-all shadow-xs"
-            >
-              <Lock size={12} />
-              <span>{t("levels.unlock_with_map") || "Unlock with Map"}</span>
-            </Link>
-          )}
+          <div className="inline-block bg-yellow-400 text-black px-3.5 py-1 rounded-full mb-3 shadow-xs">
+            <span className="font-bold text-xs uppercase tracking-wider">
+              ⭐ {currentLevelName}
+            </span>
+          </div>
 
           {/* Visited Places Counter Badge */}
           <div className="flex items-center justify-center mb-3">

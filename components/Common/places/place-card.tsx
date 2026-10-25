@@ -4,7 +4,7 @@ import { SafeImage } from "@/components/shared/safe-image";
 import { NoImage } from "@/lib/others/others";
 import { TPlace } from "@/lib/types/place/place";
 import { getUsableMediaUrl, getLocalized } from "@/lib/utils";
-import { MapPin, Star, Lock } from "lucide-react";
+import { MapPin, Star, Lock, Check } from "lucide-react";
 import Link from "next/link";
 import { appAlert } from "@/lib/app-alert";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -12,6 +12,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 export function PlaceCard({ data, priority = false }: { data: TPlace; priority?: boolean }) {
   const coverImage = getUsableMediaUrl(data?.media);
   const { t, language } = useLanguage();
+  const isVisited = Boolean((data as any)?.isVisited);
 
   const handleClick = (e: React.MouseEvent) => {
     if (data?.isLocked) {
@@ -41,7 +42,13 @@ export function PlaceCard({ data, priority = false }: { data: TPlace; priority?:
 
   return (
     <Link href={`/places/${data?._id || data?.id}`} onClick={handleClick} className="group block">
-      <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#131b2e]/90 border border-gray-100 dark:border-slate-800/80 hover:dark:border-amber-400/40 hover:shadow-2xl dark:shadow-xl transition-all duration-300 backdrop-blur-md">
+      <div
+        className={`rounded-2xl overflow-hidden bg-white dark:bg-[#131b2e]/90 transition-all duration-300 backdrop-blur-md ${
+          isVisited
+            ? "border-2 border-[#FFC107] ring-1 ring-[#FFC107]/40 shadow-md shadow-amber-500/10 hover:border-[#FFC107] hover:shadow-xl"
+            : "border border-gray-100 dark:border-slate-800/80 hover:dark:border-amber-400/40 hover:shadow-2xl dark:shadow-xl"
+        }`}
+      >
         {/* Image Section */}
         <div className="relative h-36 sm:h-48 md:h-64 w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
           {coverImage ? (
@@ -82,6 +89,14 @@ export function PlaceCard({ data, priority = false }: { data: TPlace; priority?:
             <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
             {data?.isLocked ? "—" : parseFloat(data?.rating?.toFixed(1))}
           </div>
+
+          {/* Visited Badge */}
+          {isVisited && (
+            <div className={`absolute ${data?.isLocked ? "bottom-3 left-3" : "top-3 left-3"} bg-[#FFC107] text-gray-950 px-2.5 py-1 rounded-full flex items-center gap-1 text-[11px] font-black shadow-md border border-amber-300/80 z-10`}>
+              <Check className="w-3 h-3 stroke-[3]" />
+              <span>{t("common.visited") || "Visited"}</span>
+            </div>
+          )}
 
           {/* Lock Badge on top of image */}
           {data?.isLocked && (

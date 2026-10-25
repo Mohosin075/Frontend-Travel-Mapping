@@ -122,16 +122,198 @@ export const HIDE_GOOGLE_POI_STYLES: google.maps.MapTypeStyle[] = [
   },
 ];
 
-/** Ensures that Google Maps POIs (supermarkets, gas stations, malls, businesses, transit) remain completely hidden at runtime */
+/** Comprehensive dark theme styling ensuring all Google POIs, businesses, supermarkets, gas stations and transit are hidden */
+export const DARK_MAP_STYLES_NO_POI: google.maps.MapTypeStyle[] = [
+  { elementType: "geometry", stylers: [{ color: "#1a2234" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#131a28" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+  {
+    featureType: "administrative.locality",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#cbd5e1" }],
+  },
+  {
+    featureType: "poi",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "poi",
+    elementType: "labels",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "poi",
+    elementType: "labels.icon",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "poi",
+    elementType: "labels.text",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "poi.business",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "poi.attraction",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "poi.government",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "poi.medical",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "poi.park",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "poi.place_of_worship",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "poi.school",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "poi.sports_complex",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#293548" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#1f2937" }],
+  },
+  {
+    featureType: "road",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#94a3b8" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry",
+    stylers: [{ color: "#374761" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#293548" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#cbd5e1" }],
+  },
+  {
+    featureType: "transit",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "transit.line",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "transit.station",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "transit.station.airport",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "transit.station.bus",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "transit.station.rail",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#0f172a" }],
+  },
+  {
+    featureType: "water",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#64748b" }],
+  },
+  {
+    featureType: "water",
+    elementType: "labels.text.stroke",
+    stylers: [{ color: "#0f172a" }],
+  },
+];
+
+/** Ensures that Google Maps POIs (supermarkets, gas stations, malls, businesses, transit) remain completely hidden at runtime using custom StyledMapType and styles */
 function MapPoiHider({ isDark }: { isDark: boolean }) {
   const map = useMap();
 
   useEffect(() => {
     if (!map) return;
+
+    if (typeof google !== "undefined" && google.maps && google.maps.StyledMapType) {
+      const darkMapType = new google.maps.StyledMapType(DARK_MAP_STYLES_NO_POI, {
+        name: "Dark Map",
+      });
+      map.mapTypes.set("dark_mode_no_poi", darkMapType);
+    }
+
+    const currentMapTypeId = map.getMapTypeId();
+    const isSatellite = currentMapTypeId === "satellite" || currentMapTypeId === "hybrid";
+
+    if (!isSatellite) {
+      if (isDark) {
+        map.setMapTypeId("dark_mode_no_poi");
+      } else {
+        map.setMapTypeId("roadmap");
+      }
+    }
+
     map.setOptions({
-      styles: HIDE_GOOGLE_POI_STYLES,
+      styles: isDark ? DARK_MAP_STYLES_NO_POI : HIDE_GOOGLE_POI_STYLES,
       clickableIcons: false,
     });
+  }, [map, isDark]);
+
+  useEffect(() => {
+    if (!map) return;
+    const listener = map.addListener("maptypeid_changed", () => {
+      const type = map.getMapTypeId();
+      if (type === "roadmap" && isDark) {
+        map.setMapTypeId("dark_mode_no_poi");
+      }
+    });
+
+    return () => {
+      if (typeof google !== "undefined" && google.maps) {
+        google.maps.event.removeListener(listener);
+      }
+    };
   }, [map, isDark]);
 
   return null;
@@ -1145,7 +1327,6 @@ export default function MapPage() {
           apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY as string}
         >
           <Map
-            colorScheme={isDark ? "DARK" : "LIGHT"}
             defaultCenter={initialMapState?.center || defaultPosition}
             defaultZoom={initialMapState?.zoom || 13}
             onCameraChanged={(ev) => {
@@ -1168,7 +1349,7 @@ export default function MapPage() {
             mapTypeControlOptions={{
               position: ControlPosition.TOP_RIGHT,
             }}
-            styles={HIDE_GOOGLE_POI_STYLES}
+            styles={isDark ? DARK_MAP_STYLES_NO_POI : HIDE_GOOGLE_POI_STYLES}
             clickableIcons={false}
           >
             <MapPoiHider isDark={isDark} />

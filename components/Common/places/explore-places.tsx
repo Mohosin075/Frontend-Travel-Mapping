@@ -6,6 +6,7 @@ import { useGetPlacesQuery } from "@/redux/features/place/placeApi";
 import { useGetCategoriesQuery } from "@/redux/features/category/categoryApi";
 import { useGetMapsQuery } from "@/redux/features/map/mapApi";
 import { useGetProfileQuery } from "@/redux/features/user/userApi";
+import { useGetMyVisitedPlacesQuery } from "@/redux/features/visited/visitedApi";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getLocalized } from "@/lib/utils";
 import Link from "next/link";
@@ -17,7 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { PlaceCard } from "./place-card";
 
@@ -43,6 +44,20 @@ export default function ExplorePlaces() {
   ];
   const { data: profile } = useGetProfileQuery({});
   const isPremium = profile && ["super_admin", "admin", "map_editor"].includes(profile.role);
+
+  const { data: visitedRes } = useGetMyVisitedPlacesQuery(undefined, {
+    skip: !profile,
+  });
+
+  const visitedPlaceIds = useMemo(() => {
+    const set = new Set<string>();
+    const list = visitedRes?.data || [];
+    list.forEach((v: any) => {
+      const pid = v.place?._id || v.place?.id || v.place || v.business?._id || v.business?.id || v.business;
+      if (pid) set.add(String(pid));
+    });
+    return set;
+  }, [visitedRes]);
 
   const SESSION_STORAGE_KEY = "explore_places_state";
 
@@ -486,10 +501,15 @@ export default function ExplorePlaces() {
               }));
 
               const isLockedForUser = place.isLocked || (!isBusinessLocation(place) && !isPurchased);
+              const isVisited =
+                visitedPlaceIds.has(String(place._id)) ||
+                (place.id ? visitedPlaceIds.has(String(place.id)) : false) ||
+                Boolean(place.isVisited);
+
               return (
                 <PlaceCard
                   key={place._id}
-                  data={{ ...place, isLocked: isLockedForUser }}
+                  data={{ ...place, isLocked: isLockedForUser, isVisited }}
                   priority={index < 6}
                 />
               );

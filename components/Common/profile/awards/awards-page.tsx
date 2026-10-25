@@ -163,33 +163,33 @@ export default function AwardsPage() {
   const isMaxLevel = levelCalc.isMaxLevel;
 
   return (
-    <div className="py-3 md:py-12 bg-white dark:bg-[#0b0f19] min-h-screen transition-colors">
-      <div className="max-w-360 mx-auto px-3 md:px-6 font-public-sans">
+    <div className="py-6 sm:py-10 bg-gray-50 dark:bg-[#0b0f19] min-h-screen transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 font-public-sans">
         {/* Page Title */}
-        <h1 className="text-lg md:text-2xl font-bold mb-2 md:mb-5 uppercase tracking-wide text-gray-900 dark:text-slate-100">
-          {t("awards.page_title") || "Awards & Achievements"}
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-gray-900 dark:text-slate-100 flex items-center gap-2.5">
+          <span>{t("awards.page_title") || "Awards & Achievements"}</span>
         </h1>
 
         {!isProfileLoading && !hasPurchasedMap ? (
-          <div className="relative overflow-hidden bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/15 dark:from-amber-950/40 dark:via-yellow-950/20 dark:to-amber-950/40 p-4 sm:p-6 md:p-8 rounded-2xl md:rounded-3xl border border-amber-500/30 dark:border-amber-600/40 mb-4 md:mb-8 shadow-lg backdrop-blur-md animate-in fade-in">
-            <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-7 text-center md:text-left">
-              <div className="w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-[#fabf13] to-amber-600 flex items-center justify-center shrink-0 shadow-xl shadow-amber-500/25 text-black">
-                <Lock className="w-7 h-7 sm:w-10 sm:h-10 md:w-12 md:h-12 stroke-[2.2]" />
+          <div className="relative overflow-hidden bg-white dark:bg-[#131b2e] p-5 sm:p-7 md:p-8 rounded-2xl md:rounded-3xl border border-gray-200 dark:border-slate-800 mb-6 md:mb-8 shadow-sm">
+            <div className="flex flex-col md:flex-row items-center gap-5 sm:gap-6 md:gap-7 text-center md:text-left">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-2xl bg-[#fabf13] flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20 text-black">
+                <Lock className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 stroke-[2.2]" />
               </div>
               <div className="flex-1">
-                <div className="inline-flex items-center gap-1.5 bg-black/80 dark:bg-black/60 text-[#fabf13] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2 border border-amber-500/30">
+                <div className="inline-flex items-center gap-1.5 bg-[#fabf13]/15 text-amber-800 dark:text-[#fabf13] border border-[#fabf13]/40 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
                   <Lock size={12} />
                   <span>{t("levels.locked_feature") || "Feature Locked"}</span>
                 </div>
-                <h2 className="text-lg sm:text-xl md:text-2xl font-black text-gray-900 dark:text-slate-100 tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100">
                   {t("levels.locked_title") || "Levels & Rewards are Locked"}
                 </h2>
-                <p className="text-gray-600 dark:text-slate-300 text-xs md:text-sm mt-1.5 leading-relaxed max-w-2xl">
+                <p className="text-gray-500 dark:text-slate-400 text-xs md:text-sm mt-1.5 leading-relaxed max-w-2xl">
                   {t("levels.locked_hero_desc") || "Levels and rewards are exclusively for users who have purchased maps. Purchase a map to level up, earn XP points, and unlock free rewards like PDF itineraries, exclusive discounts, and free maps!"}
                 </p>
               </div>
               <Link href="/catalog" className="shrink-0 w-full md:w-auto">
-                <Button className="w-full md:w-auto bg-[#fabf13] hover:bg-[#e0ac10] text-black font-extrabold text-xs md:text-sm px-6 md:px-8 py-5 md:py-6 rounded-xl shadow-xl shadow-amber-500/30 hover:scale-105 transition-all cursor-pointer">
+                <Button className="w-full md:w-auto bg-[#fabf13] hover:bg-[#e0ac10] text-black font-extrabold text-xs md:text-sm px-6 md:px-8 py-5 md:py-6 rounded-xl shadow-md shadow-amber-500/25 transition-all cursor-pointer">
                   <Ticket className="w-4 h-4 mr-2" />
                   {t("levels.purchase_map_cta") || "Purchase a Map to Unlock"}
                 </Button>
@@ -197,15 +197,15 @@ export default function AwardsPage() {
             </div>
           </div>
         ) : (
-          <div className="bg-amber-500/10 dark:bg-amber-950/20 p-2.5 md:p-6 rounded-xl md:rounded-3xl flex flex-row items-center justify-between border border-amber-500/15 dark:border-amber-800/40 mb-4 md:mb-8 shadow-sm">
+          <div className="bg-white dark:bg-[#131b2e] p-4 sm:p-6 md:p-7 rounded-2xl md:rounded-3xl flex flex-row items-center justify-between border border-gray-200/80 dark:border-slate-800 mb-6 md:mb-8 shadow-sm">
             {/* LEFT: Progress Circle */}
-            <div className="relative w-14 h-14 md:w-36 md:h-36 flex items-center justify-center shrink-0">
+            <div className="relative w-16 h-16 sm:w-24 sm:h-24 md:w-36 md:h-36 flex items-center justify-center shrink-0">
               <svg className="absolute w-full h-full -rotate-90" viewBox="0 0 160 160">
                 <circle
                   cx="80"
                   cy="80"
                   r="70"
-                  stroke="#f3f4f6"
+                  className="stroke-gray-100 dark:stroke-slate-800/80"
                   strokeWidth="10"
                   fill="none"
                 />
@@ -213,7 +213,7 @@ export default function AwardsPage() {
                   cx="80"
                   cy="80"
                   r="70"
-                  stroke="#f59e0b"
+                  stroke="#fabf13"
                   strokeWidth="10"
                   fill="none"
                   strokeDasharray="440"
@@ -233,7 +233,7 @@ export default function AwardsPage() {
                   </>
                 ) : (
                   <>
-                    <p className="text-xs sm:text-base md:text-2xl font-extrabold text-gray-900 dark:text-slate-100 leading-none">
+                    <p className="text-xs sm:text-base md:text-2xl font-black text-gray-900 dark:text-slate-100 leading-none">
                       {points.toLocaleString()}
                     </p>
                     <p className="text-[6px] md:text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mt-0.5 leading-none">
@@ -245,16 +245,18 @@ export default function AwardsPage() {
             </div>
 
             {/* RIGHT CONTENT */}
-            <div className="flex-1 ml-2 md:ml-8 text-left w-full">
+            <div className="flex-1 ml-3 sm:ml-6 md:ml-8 text-left w-full">
               {/* Level badge */}
-              <span className="inline-block bg-amber-500/20 text-amber-800 dark:text-amber-300 px-2 py-0.5 md:px-4 md:py-1 rounded-full text-[8px] md:text-xs font-bold mb-0.5 md:mb-2 uppercase tracking-wider">
-                {isProfileLoading
-                  ? (t("common.loading") || "Loading...")
-                  : `🏆 ${t("awards.level") || "Level"} ${currentLevel} · ${currentLevelName}`}
-              </span>
+              <div className="inline-block bg-[#fabf13] text-black px-3 py-1 rounded-full mb-1.5 md:mb-2 shadow-xs">
+                <span className="font-extrabold text-[10px] md:text-xs uppercase tracking-wider">
+                  {isProfileLoading
+                    ? (t("common.loading") || "Loading...")
+                    : `⭐ ${t("awards.level") || "Level"} ${currentLevel} · ${currentLevelName}`}
+                </span>
+              </div>
 
               {/* Name */}
-              <h2 className="text-xs sm:text-base md:text-xl font-bold text-gray-900 dark:text-slate-100 capitalize leading-tight">
+              <h2 className="text-sm sm:text-lg md:text-2xl font-bold text-gray-900 dark:text-slate-100 capitalize leading-tight">
                 {isProfileLoading ? (
                   <span className="inline-block h-4 w-20 bg-gray-200 dark:bg-slate-800 animate-pulse rounded" />
                 ) : (
@@ -263,7 +265,7 @@ export default function AwardsPage() {
               </h2>
 
               {/* Description */}
-              <p className="hidden md:block text-gray-500 dark:text-slate-400 mt-1.5 text-sm leading-relaxed max-w-xl">
+              <p className="hidden md:block text-gray-500 dark:text-slate-400 mt-1.5 text-xs sm:text-sm leading-relaxed max-w-xl">
                 {t("awards.progress_msg_prefix") || "You're making incredible progress! Earn "}
                 <span className="font-bold text-gray-900 dark:text-slate-200">
                   {pointsNeededForNext.toLocaleString()} {t("awards.more_xp") || "more XP"}
@@ -272,62 +274,65 @@ export default function AwardsPage() {
               </p>
 
               {/* Cards */}
-              <div className="flex gap-1.5 md:gap-3 mt-1 md:mt-3 w-full">
-                <div className="bg-white/80 dark:bg-[#131b2e]/80 border border-gray-100 dark:border-slate-800 px-2 py-1 md:px-4 md:py-2.5 rounded-lg md:rounded-xl flex-1 md:flex-none md:w-36 shadow-sm">
-                  <p className="text-[6px] md:text-[9px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest leading-none">{t("common.next_level")}</p>
-                  <p className="font-extrabold text-gray-800 dark:text-slate-200 mt-0.5 text-[9px] md:text-xs leading-none">
+              <div className="flex gap-2 md:gap-3 mt-2 md:mt-3.5 w-full">
+                <div className="bg-gray-50 dark:bg-[#0b0f19] border border-gray-200/70 dark:border-slate-800 px-3 py-1.5 md:px-4 md:py-2.5 rounded-xl flex-1 md:flex-none md:w-40 shadow-xs">
+                  <p className="text-[7px] md:text-[9px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest leading-none">{t("common.next_level")}</p>
+                  <p className="font-extrabold text-gray-800 dark:text-slate-200 mt-1 text-[10px] md:text-xs leading-none">
                     {isMaxLevel ? (t("awards.max_level") || "Max Level") : `${t("awards.level") || "Level"} ${nextLevelData.level} · ${levelCalc.nextLevelName}`}
                   </p>
                 </div>
 
-                <div className="bg-white/80 dark:bg-[#131b2e]/80 border border-gray-100 dark:border-slate-800 px-2 py-1 md:px-4 md:py-2.5 rounded-lg md:rounded-xl flex-1 md:flex-none md:w-36 shadow-sm">
-                  <p className="text-[6px] md:text-[9px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest leading-none">
+                <div className="bg-gray-50 dark:bg-[#0b0f19] border border-gray-200/70 dark:border-slate-800 px-3 py-1.5 md:px-4 md:py-2.5 rounded-xl flex-1 md:flex-none md:w-40 shadow-xs">
+                  <p className="text-[7px] md:text-[9px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest leading-none">
                     {t("awards.level_progress") || "LEVEL PROGRESS"}
                   </p>
-                  <p className="font-extrabold text-amber-600 dark:text-amber-400 mt-0.5 text-[9px] md:text-xs leading-none">{Math.round(percent)}%</p>
+                  <p className="font-extrabold text-amber-600 dark:text-[#fabf13] mt-1 text-[10px] md:text-xs leading-none">{Math.round(percent)}%</p>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        <div className="mt-4 md:mt-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-200 dark:border-slate-800 pb-3 md:pb-4 mb-4 md:mb-8 gap-3">
+        <div className="mt-6 md:mt-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-200 dark:border-slate-800 pb-4 mb-6 md:mb-8 gap-3">
             <div>
-              <h2 className="text-lg md:text-xl font-bold uppercase tracking-wide text-gray-900 dark:text-slate-100">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-slate-100">
                 {t("awards.vault_title") || "Achievement Vault"}
               </h2>
-              <p className="text-gray-500 dark:text-slate-400 text-[11px] md:text-xs mt-0.5">
+              <p className="text-gray-500 dark:text-slate-400 text-xs sm:text-sm mt-0.5">
                 {t("awards.vault_subtitle") || "Earn XP by discovering and reviewing places to unlock exclusive rewards."}
               </p>
             </div>
 
-            {/* Filter Tabs */}
-            <div className="flex bg-gray-100 dark:bg-slate-900/80 p-0.5 md:p-1 rounded-xl self-start md:self-auto">
+            {/* Filter Tabs matching website theme */}
+            <div className="flex bg-gray-100 dark:bg-slate-900/80 p-1 rounded-full self-start md:self-auto gap-1 border border-gray-200/60 dark:border-slate-800">
               <button
                 onClick={() => setActiveFilter("all")}
-                className={`px-2.5 py-1.5 md:px-4 md:py-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all ${activeFilter === "all"
-                    ? "bg-white dark:bg-[#131b2e] text-gray-900 dark:text-slate-100 shadow-sm"
-                    : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100"
-                  }`}
+                className={`px-3.5 py-1.5 md:px-4 md:py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
+                  activeFilter === "all"
+                    ? "bg-[#fabf13] text-black shadow-sm"
+                    : "text-gray-600 dark:text-slate-300 hover:text-black dark:hover:text-white"
+                }`}
               >
                 {t("awards.all_trophies") || "All Trophies"}
               </button>
               <button
                 onClick={() => setActiveFilter("unlocked")}
-                className={`px-2.5 py-1.5 md:px-4 md:py-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all ${activeFilter === "unlocked"
-                    ? "bg-white dark:bg-[#131b2e] text-gray-900 dark:text-slate-100 shadow-sm"
-                    : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100"
-                  }`}
+                className={`px-3.5 py-1.5 md:px-4 md:py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
+                  activeFilter === "unlocked"
+                    ? "bg-[#fabf13] text-black shadow-sm"
+                    : "text-gray-600 dark:text-slate-300 hover:text-black dark:hover:text-white"
+                }`}
               >
                 {(t("awards.unlocked_count") || "Unlocked ({count})").replace("{count}", String(unlockedAwards.length))}
               </button>
               <button
                 onClick={() => setActiveFilter("locked")}
-                className={`px-2.5 py-1.5 md:px-4 md:py-2 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all ${activeFilter === "locked"
-                    ? "bg-white dark:bg-[#131b2e] text-gray-900 dark:text-slate-100 shadow-sm"
-                    : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100"
-                  }`}
+                className={`px-3.5 py-1.5 md:px-4 md:py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
+                  activeFilter === "locked"
+                    ? "bg-[#fabf13] text-black shadow-sm"
+                    : "text-gray-600 dark:text-slate-300 hover:text-black dark:hover:text-white"
+                }`}
               >
                 {(t("awards.in_progress_count") || "In Progress ({count})").replace("{count}", String(lockedAwards.length))}
               </button>
@@ -385,7 +390,7 @@ export default function AwardsPage() {
                                   className="block w-full"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[11px] sm:text-xs uppercase tracking-wider h-10 sm:h-11 rounded-xl border-none shadow-sm shadow-amber-200/50 cursor-pointer">
+                                  <Button className="w-full bg-[#fabf13] hover:bg-[#e0ac10] text-black font-extrabold text-[11px] sm:text-xs uppercase tracking-wider h-10 sm:h-11 rounded-xl border-none shadow-sm shadow-amber-500/20 cursor-pointer">
                                     {t("awards.redeem_now") || "Redeem Now"}
                                   </Button>
                                 </Link>
@@ -396,7 +401,7 @@ export default function AwardsPage() {
                               <Button
                                 onClick={(e) => hasPurchasedMap ? handleDownloadAwardPdf(e, award) : promptPurchaseMap(e)}
                                 disabled={downloadingAwardId === award._id}
-                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] sm:text-xs uppercase tracking-wider h-10 sm:h-11 rounded-xl border-none shadow-sm shadow-emerald-200/50 cursor-pointer"
+                                className="w-full bg-[#fabf13] hover:bg-[#e0ac10] text-black font-extrabold text-[11px] sm:text-xs uppercase tracking-wider h-10 sm:h-11 rounded-xl border-none shadow-sm shadow-amber-500/20 cursor-pointer"
                               >
                                 {!hasPurchasedMap ? (
                                   <span className="flex items-center justify-center gap-1.5">
@@ -417,7 +422,7 @@ export default function AwardsPage() {
                                   e.stopPropagation();
                                   hasPurchasedMap ? setSelectedAward(award) : promptPurchaseMap();
                                 }}
-                                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[11px] sm:text-xs uppercase tracking-wider h-10 sm:h-11 rounded-xl border-none shadow-sm shadow-amber-200/50 cursor-pointer"
+                                className="w-full bg-[#fabf13] hover:bg-[#e0ac10] text-black font-extrabold text-[11px] sm:text-xs uppercase tracking-wider h-10 sm:h-11 rounded-xl border-none shadow-sm shadow-amber-500/20 cursor-pointer"
                               >
                                 {!hasPurchasedMap ? (
                                   <span className="flex items-center justify-center gap-1.5">
