@@ -34,9 +34,9 @@ export const CategoryMarker = React.memo(function CategoryMarker({
   const { language } = useLanguage();
   // Proportions for Google Maps POI Pin (size="sm" for dense dashboard map, "md" for default)
   const isSmall = size === "sm";
-  const width = isSmall ? (isMobile ? 20 : 24) : (isMobile ? 30 : 37);
-  const height = isSmall ? (isMobile ? 25 : 30) : (isMobile ? 38 : 46);
-  const badgeSize = isSmall ? (isMobile ? 16 : 19) : (isMobile ? 24 : 29);
+  const width = isSmall ? (isMobile ? 24 : 28) : (isMobile ? 30 : 37);
+  const height = isSmall ? (isMobile ? 30 : 35) : (isMobile ? 38 : 46);
+  const badgeSize = isSmall ? (isMobile ? 19 : 22) : (isMobile ? 24 : 29);
 
   const isCustomImage =
     icon?.startsWith("http") ||
@@ -44,7 +44,7 @@ export const CategoryMarker = React.memo(function CategoryMarker({
     icon?.includes("/") ||
     icon?.includes(".");
 
-  const iconSize = isCustomImage ? badgeSize : (isSmall ? (isMobile ? 11 : 13) : (isMobile ? 16 : 19));
+  const iconSize = isCustomImage ? badgeSize : (isSmall ? (isMobile ? 13 : 15) : (isMobile ? 16 : 19));
   const displayName = isLocked
     ? (language === "es" ? "Ubicación Premium" : "Premium Location")
     : getLocalized(name, language);
@@ -67,8 +67,8 @@ export const CategoryMarker = React.memo(function CategoryMarker({
             top: "40%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: `${badgeSize + (isSmall ? 10 : 16)}px`,
-            height: `${badgeSize + (isSmall ? 10 : 16)}px`,
+            width: `${badgeSize + (isSmall ? 12 : 16)}px`,
+            height: `${badgeSize + (isSmall ? 12 : 16)}px`,
             borderRadius: "50%",
             border: "2.5px solid #FFC107",
             boxShadow: "0 0 16px rgba(255, 193, 7, 0.65)",
@@ -250,8 +250,8 @@ export const CategoryMarker = React.memo(function CategoryMarker({
               background: "#EF4444",
               color: "#fff",
               borderRadius: "50%",
-              width: isSmall ? 12 : (isMobile ? 15 : 18),
-              height: isSmall ? 12 : (isMobile ? 15 : 18),
+              width: isSmall ? 14 : (isMobile ? 15 : 18),
+              height: isSmall ? 14 : (isMobile ? 15 : 18),
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -260,7 +260,7 @@ export const CategoryMarker = React.memo(function CategoryMarker({
               boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
             }}
           >
-            <Lock size={isSmall ? 7 : (isMobile ? 8 : 10)} style={{ strokeWidth: 3 }} />
+            <Lock size={isSmall ? 8 : (isMobile ? 8 : 10)} style={{ strokeWidth: 3 }} />
           </div>
         )}
       </div>
