@@ -16,6 +16,7 @@ interface CategoryMarkerProps {
   isMobile?: boolean;
   status?: string;
   isVisited?: boolean;
+  size?: "sm" | "md" | "lg";
 }
 
 export const CategoryMarker = React.memo(function CategoryMarker({
@@ -28,12 +29,14 @@ export const CategoryMarker = React.memo(function CategoryMarker({
   isMobile = false,
   status,
   isVisited = false,
+  size = "md",
 }: CategoryMarkerProps) {
   const { language } = useLanguage();
-  // Proportions for a 100% Uniform Google Maps POI Pin
-  const width = isMobile ? 30 : 37;
-  const height = isMobile ? 38 : 46;
-  const badgeSize = isMobile ? 24 : 29;
+  // Proportions for Google Maps POI Pin (size="sm" for dense dashboard map, "md" for default)
+  const isSmall = size === "sm";
+  const width = isSmall ? (isMobile ? 20 : 24) : (isMobile ? 30 : 37);
+  const height = isSmall ? (isMobile ? 25 : 30) : (isMobile ? 38 : 46);
+  const badgeSize = isSmall ? (isMobile ? 16 : 19) : (isMobile ? 24 : 29);
 
   const isCustomImage =
     icon?.startsWith("http") ||
@@ -41,7 +44,7 @@ export const CategoryMarker = React.memo(function CategoryMarker({
     icon?.includes("/") ||
     icon?.includes(".");
 
-  const iconSize = isCustomImage ? badgeSize : (isMobile ? 16 : 19);
+  const iconSize = isCustomImage ? badgeSize : (isSmall ? (isMobile ? 11 : 13) : (isMobile ? 16 : 19));
   const displayName = isLocked
     ? (language === "es" ? "Ubicación Premium" : "Premium Location")
     : getLocalized(name, language);
@@ -64,8 +67,8 @@ export const CategoryMarker = React.memo(function CategoryMarker({
             top: "40%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: `${badgeSize + 16}px`,
-            height: `${badgeSize + 16}px`,
+            width: `${badgeSize + (isSmall ? 10 : 16)}px`,
+            height: `${badgeSize + (isSmall ? 10 : 16)}px`,
             borderRadius: "50%",
             border: "2.5px solid #FFC107",
             boxShadow: "0 0 16px rgba(255, 193, 7, 0.65)",
@@ -84,12 +87,12 @@ export const CategoryMarker = React.memo(function CategoryMarker({
               : "opacity-0 group-hover:opacity-100"
             }`}
           style={{
-            bottom: `${height + (isSelected ? 10 : 6)}px`,
+            bottom: `${height + (isSelected ? (isSmall ? 8 : 10) : (isSmall ? 4 : 6))}px`,
             backgroundColor: isSelected ? "#0F172A" : "rgba(15, 23, 42, 0.94)",
             color: "#FFFFFF",
-            padding: "4px 10px",
+            padding: isSmall ? "3px 8px" : "4px 10px",
             borderRadius: "8px",
-            fontSize: isSelected ? "12px" : "11px",
+            fontSize: isSmall ? (isSelected ? "11px" : "10px") : (isSelected ? "12px" : "11px"),
             fontWeight: isSelected ? "800" : "700",
             boxShadow: "0 8px 20px rgba(0, 0, 0, 0.45)",
             border: isSelected ? "1.5px solid #FFC107" : isLocked ? "1.5px solid #F59E0B" : status === "Draft" ? "1.5px solid #F59E0B" : "1px solid rgba(255, 255, 255, 0.2)",
@@ -164,7 +167,7 @@ export const CategoryMarker = React.memo(function CategoryMarker({
             d="M20 1C9.5 1 1 9.5 1 20C1 28.5 10.5 38.2 15.3 42.6C16.8 43.9 18.4 44.5 20 44.5C21.6 44.5 23.2 43.9 24.7 42.6C29.5 38.2 39 28.5 39 20C39 9.5 30.5 1 20 1Z"
             fill={status === "Draft" ? "#FFFBEB" : "#FFFFFF"}
             stroke={isVisited ? "#FFC107" : status === "Draft" ? "#D97706" : "rgba(0,0,0,0.08)"}
-            strokeWidth={isVisited ? "2.5" : status === "Draft" ? "2.5" : "1"}
+            strokeWidth={isVisited ? "2.5" : status === "Draft" ? (isSmall ? "2" : "2.5") : "1"}
             strokeDasharray={status === "Draft" ? "4 2" : "none"}
           />
         </svg>
@@ -193,30 +196,48 @@ export const CategoryMarker = React.memo(function CategoryMarker({
 
         {/* Draft Badge (if draft) */}
         {status === "Draft" && !isLocked && (
-          <div
-            style={{
-              position: "absolute",
-              top: -6,
-              right: -10,
-              background: "#F59E0B",
-              color: "#FFFFFF",
-              borderRadius: "5px",
-              padding: "1px 4.5px",
-              fontSize: "8.5px",
-              fontWeight: "900",
-              letterSpacing: "0.5px",
-              textTransform: "uppercase",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: "1.5px solid white",
-              zIndex: 10,
-              boxShadow: "0 2px 6px rgba(245, 158, 11, 0.45)",
-              lineHeight: "11px",
-            }}
-          >
-            {language === "es" ? "BORRADOR" : "DRAFT"}
-          </div>
+          isSmall ? (
+            <div
+              title={language === "es" ? "Borrador" : "Draft"}
+              style={{
+                position: "absolute",
+                top: -1,
+                right: -1,
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                backgroundColor: "#F59E0B",
+                border: "1.5px solid #FFFFFF",
+                boxShadow: "0 1px 3px rgba(245, 158, 11, 0.45)",
+                zIndex: 10,
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                position: "absolute",
+                top: -6,
+                right: -10,
+                background: "#F59E0B",
+                color: "#FFFFFF",
+                borderRadius: "5px",
+                padding: "1px 4.5px",
+                fontSize: "8.5px",
+                fontWeight: "900",
+                letterSpacing: "0.5px",
+                textTransform: "uppercase",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "1.5px solid white",
+                zIndex: 10,
+                boxShadow: "0 2px 6px rgba(245, 158, 11, 0.45)",
+                lineHeight: "11px",
+              }}
+            >
+              {language === "es" ? "BORRADOR" : "DRAFT"}
+            </div>
+          )
         )}
 
         {/* Lock Badge (if locked) */}
@@ -229,8 +250,8 @@ export const CategoryMarker = React.memo(function CategoryMarker({
               background: "#EF4444",
               color: "#fff",
               borderRadius: "50%",
-              width: isMobile ? 15 : 18,
-              height: isMobile ? 15 : 18,
+              width: isSmall ? 12 : (isMobile ? 15 : 18),
+              height: isSmall ? 12 : (isMobile ? 15 : 18),
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -239,7 +260,7 @@ export const CategoryMarker = React.memo(function CategoryMarker({
               boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
             }}
           >
-            <Lock size={isMobile ? 8 : 10} style={{ strokeWidth: 3 }} />
+            <Lock size={isSmall ? 7 : (isMobile ? 8 : 10)} style={{ strokeWidth: 3 }} />
           </div>
         )}
       </div>

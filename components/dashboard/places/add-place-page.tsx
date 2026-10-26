@@ -771,6 +771,7 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
                 name={place.name}
                 isSelected={isSelected}
                 status={place.status}
+                size="sm"
               />
             </div>
           </AdvancedMarker>
@@ -1762,6 +1763,7 @@ export default function AddPlacePage() {
                       isTemp={true}
                       isSelected={true}
                       status="Draft"
+                      size="sm"
                     />
                   </div>
                 </AdvancedMarker>
