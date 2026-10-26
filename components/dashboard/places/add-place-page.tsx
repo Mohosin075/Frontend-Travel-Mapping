@@ -505,35 +505,13 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
   places,
   selectedPlaceId,
   selectedPlace,
-  draggedPositions,
-  draggableMarkerId,
-  animatingPins,
   findCategoryById,
-  startDragTimer,
-  clearDragTimer,
-  setDraggableMarkerId,
-  wasDraggingRef,
-  setDraggedPositions,
-  setAnimatingPins,
-  updatePlace,
-  setSelectedPlace,
   handleSelectPlace,
 }: {
   places: any[];
   selectedPlaceId?: string;
   selectedPlace: any;
-  draggedPositions: Record<string, { lat: number; lng: number }>;
-  draggableMarkerId: string | null;
-  animatingPins: Record<string, "bounce" | "shake" | null>;
   findCategoryById: (catId?: string) => any;
-  startDragTimer: (id: string, e: React.PointerEvent) => void;
-  clearDragTimer: () => void;
-  setDraggableMarkerId: (id: string | null) => void;
-  wasDraggingRef: React.MutableRefObject<boolean>;
-  setDraggedPositions: React.Dispatch<React.SetStateAction<Record<string, { lat: number; lng: number }>>>;
-  setAnimatingPins: React.Dispatch<React.SetStateAction<Record<string, "bounce" | "shake" | null>>>;
-  updatePlace: any;
-  setSelectedPlace: React.Dispatch<any>;
   handleSelectPlace: (place: any) => void;
 }) {
   const map = useMap();
@@ -586,11 +564,10 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
         const coords =
           place?.location?.mapLocation?.coordinates ||
           place?.location?.coordinates;
-        const serverPosition = {
+        const position = {
           lat: coords?.[1] || place?.latitude,
           lng: coords?.[0] || place?.longitude,
         };
-        const position = (placeId && draggedPositions[placeId]) || serverPosition;
 
         if (!position.lat || !position.lng) return null;
 
@@ -600,188 +577,29 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
             : findCategoryById(place.category);
 
         const isSelected = selectedPlace?._id === place._id;
-        const isDraggable = draggableMarkerId === place._id;
+        const handleMarkerClick = (e?: React.MouseEvent | any) => {
+          if (e && typeof e.stopPropagation === "function") {
+            e.stopPropagation();
+          }
+          handleSelectPlace(place);
+        };
 
         return (
           <AdvancedMarker
             key={place._id}
             position={position}
-            draggable={isDraggable}
-            onDragStart={() => {
-              clearDragTimer();
-              wasDraggingRef.current = true;
-            }}
-            onDragEnd={(e: any) => {
-              setDraggableMarkerId(null);
-              if (!e.latLng || !placeId) {
-                wasDraggingRef.current = false;
-                return;
-              }
-
-              const newLat = e.latLng.lat();
-              const newLng = e.latLng.lng();
-              const updatedPosition = { lat: newLat, lng: newLng };
-
-              setDraggedPositions((prev) => ({
-                ...prev,
-                [placeId]: updatedPosition,
-              }));
-
-              appAlert.fire({
-                title: "Are you sure?",
-                text: "Are you sure to update location?",
-                icon: "question",
-                showCancelButton: true,
-                confirmButtonText: "Yes, update it!",
-                cancelButtonText: "No",
-              }).then(async (result) => {
-                if (!result.isConfirmed) {
-                  setDraggedPositions((prev) => {
-                    const next = { ...prev };
-                    delete next[placeId];
-                    return next;
-                  });
-                  setAnimatingPins((prev) => ({ ...prev, [placeId]: "shake" }));
-                  setTimeout(() => {
-                    setAnimatingPins((prev) => {
-                      const next = { ...prev };
-                      delete next[placeId];
-                      return next;
-                    });
-                  }, 1000);
-                  setTimeout(() => {
-                    wasDraggingRef.current = false;
-                  }, 200);
-                  return;
-                }
-
-                const toastId = toast.loading("Saving location...");
-                try {
-                  const payload: any = {
-                    location: {
-                      type: "Point",
-                      coordinates: [newLng, newLat]
-                    }
-                  };
-
-                  await updatePlace({
-                    id: placeId,
-                    data: payload
-                  }).unwrap();
-
-                  toast.success("Location updated successfully!", { id: toastId });
-
-                  fetch(
-                    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${newLat},${newLng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY}`
-                  )
-                    .then((res) => res.json())
-                    .then((geocodeData) => {
-                      if (geocodeData.status === "OK" && geocodeData.results.length > 0) {
-                        const address = geocodeData.results[0].formatted_address;
-                        if (address) {
-                          updatePlace({
-                            id: placeId,
-                            data: { address }
-                          });
-                          setSelectedPlace((prev: any) => {
-                            if (prev && prev._id === placeId) {
-                              return { ...prev, address };
-                            }
-                            return prev;
-                          });
-                        }
-                      }
-                    })
-                    .catch((geocodeErr) => {
-                      console.error("Geocoding failed during background drag save", geocodeErr);
-                    });
-
-                  setAnimatingPins((prev) => ({ ...prev, [placeId]: "bounce" }));
-                  setTimeout(() => {
-                    setAnimatingPins((prev) => {
-                      const next = { ...prev };
-                      delete next[placeId];
-                      return next;
-                    });
-                  }, 1500);
-
-                  setSelectedPlace((prev: any) => {
-                    if (prev && prev._id === placeId) {
-                      return {
-                        ...prev,
-                        position: updatedPosition
-                      };
-                    }
-                    return prev;
-                  });
-
-                  setTimeout(() => {
-                    wasDraggingRef.current = false;
-                  }, 200);
-                } catch (err: any) {
-                  toast.error(err?.data?.message || "Failed to auto-save location", { id: toastId });
-                  console.error("Auto-save drag failed", err);
-
-                  setDraggedPositions((prev) => {
-                    const next = { ...prev };
-                    delete next[placeId];
-                    return next;
-                  });
-                  setAnimatingPins((prev) => ({ ...prev, [placeId]: "shake" }));
-                  setTimeout(() => {
-                    setAnimatingPins((prev) => {
-                      const next = { ...prev };
-                      delete next[placeId];
-                      return next;
-                    });
-                  }, 1000);
-
-                  setTimeout(() => {
-                    wasDraggingRef.current = false;
-                  }, 200);
-                }
-              });
-            }}
-            onClick={() => {
-              if (wasDraggingRef.current) {
-                wasDraggingRef.current = false;
-                return;
-              }
-              setDraggableMarkerId(null);
-              handleSelectPlace(place);
-            }}
+            zIndex={isSelected ? 9999 : 10}
+            onClick={() => handleMarkerClick()}
           >
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                if (wasDraggingRef.current) {
-                  wasDraggingRef.current = false;
-                  return;
-                }
-                setDraggableMarkerId(null);
-                handleSelectPlace(place);
-              }}
-              onPointerDown={(e) => {
-                if (e.button === 0) startDragTimer(place._id, e);
-              }}
-              onPointerUp={clearDragTimer}
-              onPointerCancel={clearDragTimer}
-              className={`
-                cursor-pointer
-                ${isDraggable ? "animate-bounce cursor-grab" : ""}
-                ${animatingPins[placeId] === "bounce" ? "pin-anim-bounce" : ""}
-                ${animatingPins[placeId] === "shake" ? "pin-anim-shake" : ""}
-              `}
-            >
-              <CategoryMarker
-                icon={cat?.icon || "📍"}
-                color={resolveCategoryColor(cat)}
-                name={place.name}
-                isSelected={isSelected}
-                status={place.status}
-                size="md"
-              />
-            </div>
+            <CategoryMarker
+              icon={cat?.icon || "📍"}
+              color={resolveCategoryColor(cat)}
+              name={place.name}
+              isSelected={isSelected}
+              status={place.status}
+              size="md"
+              onClick={handleMarkerClick}
+            />
           </AdvancedMarker>
         );
       })}
@@ -944,57 +762,7 @@ export default function AddPlacePage() {
   const [draggedPositions, setDraggedPositions] = useState<
     Record<string, { lat: number; lng: number }>
   >({});
-  const [animatingPins, setAnimatingPins] = useState<
-    Record<string, "bounce" | "shake" | null>
-  >({});
-
   const [formData, setFormData] = useState({ name: "", description: "" });
-  const [draggableMarkerId, setDraggableMarkerId] = useState<string | null>(null);
-  const dragTimeoutRef = useRef<any>(null);
-  const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
-  const wasDraggingRef = useRef(false);
-
-  const clearDragTimer = useCallback(() => {
-    if (dragTimeoutRef.current) {
-      clearTimeout(dragTimeoutRef.current);
-      dragTimeoutRef.current = null;
-    }
-    dragStartPosRef.current = null;
-  }, []);
-
-  const startDragTimer = useCallback((markerId: string, event: React.PointerEvent) => {
-    dragStartPosRef.current = { x: event.clientX, y: event.clientY };
-    if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current);
-
-    const onWindowMove = (e: PointerEvent) => {
-      if (!dragStartPosRef.current) {
-        window.removeEventListener("pointermove", onWindowMove);
-        return;
-      }
-      const dx = e.clientX - dragStartPosRef.current.x;
-      const dy = e.clientY - dragStartPosRef.current.y;
-      if (Math.hypot(dx, dy) > 15) {
-        clearDragTimer();
-        window.removeEventListener("pointermove", onWindowMove);
-      }
-    };
-    window.addEventListener("pointermove", onWindowMove);
-
-    dragTimeoutRef.current = setTimeout(() => {
-      setDraggableMarkerId(markerId);
-      toast.info(t("places_admin.marker_drag_enabled") || "Marker drag enabled. Move it now!");
-      dragStartPosRef.current = null;
-      wasDraggingRef.current = true;
-      window.removeEventListener("pointermove", onWindowMove);
-    }, 500);
-  }, [clearDragTimer, t]);
-
-  // Clean up timer on unmount
-  useEffect(() => {
-    return () => {
-      if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current);
-    };
-  }, []);
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
 
   const updateAddressFromCoords = async (lat: number, lng: number) => {
@@ -1712,18 +1480,7 @@ export default function AddPlacePage() {
                 places={displayPlaces}
                 selectedPlaceId={selectedPlace?._id}
                 selectedPlace={selectedPlace}
-                draggedPositions={draggedPositions}
-                draggableMarkerId={draggableMarkerId}
-                animatingPins={animatingPins}
                 findCategoryById={findCategoryById}
-                startDragTimer={startDragTimer}
-                clearDragTimer={clearDragTimer}
-                setDraggableMarkerId={setDraggableMarkerId}
-                wasDraggingRef={wasDraggingRef}
-                setDraggedPositions={setDraggedPositions}
-                setAnimatingPins={setAnimatingPins}
-                updatePlace={updatePlace}
-                setSelectedPlace={setSelectedPlace}
                 handleSelectPlace={handleSelectPlace}
               />
 
@@ -1731,24 +1488,7 @@ export default function AddPlacePage() {
               {tempMarker && (
                 <AdvancedMarker
                   position={tempMarker}
-                  draggable={draggableMarkerId === "temp"}
-                  onDragStart={() => {
-                    clearDragTimer();
-                  }}
-                  onDragEnd={(e: any) => {
-                    setDraggableMarkerId(null);
-                    if (e.latLng) {
-                      const newLat = e.latLng.lat();
-                      const newLng = e.latLng.lng();
-                      setTempMarker({ lat: newLat, lng: newLng });
-                      setSelectedPlace({
-                        position: { lat: newLat, lng: newLng },
-                        isNew: true,
-                        address: "",
-                      });
-                      updateAddressFromCoords(newLat, newLng);
-                    }
-                  }}
+                  zIndex={99999}
                   onClick={() =>
                     setSelectedPlace({
                       position: tempMarker,
@@ -1757,31 +1497,22 @@ export default function AddPlacePage() {
                     })
                   }
                 >
-                  <div
+                  <CategoryMarker
+                    icon={activeCategory?.icon || "📍"}
+                    color={resolveCategoryColor(activeCategory)}
+                    isTemp={true}
+                    isSelected={true}
+                    status="Draft"
+                    size="md"
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e?.stopPropagation();
                       setSelectedPlace({
                         position: tempMarker,
                         isNew: true,
                         address: selectedPlace?.address || "",
                       });
                     }}
-                    onPointerDown={(e) => {
-                      if (e.button === 0) startDragTimer("temp", e);
-                    }}
-                    onPointerUp={clearDragTimer}
-                    onPointerCancel={clearDragTimer}
-                    className={`cursor-pointer ${draggableMarkerId === "temp" ? "animate-bounce cursor-grab" : ""}`}
-                  >
-                    <CategoryMarker
-                      icon={activeCategory?.icon || "📍"}
-                      color={resolveCategoryColor(activeCategory)}
-                      isTemp={true}
-                      isSelected={true}
-                      status="Draft"
-                      size="md"
-                    />
-                  </div>
+                  />
                 </AdvancedMarker>
               )}
 

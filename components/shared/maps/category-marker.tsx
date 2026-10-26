@@ -17,6 +17,7 @@ interface CategoryMarkerProps {
   status?: string;
   isVisited?: boolean;
   size?: "sm" | "md" | "lg";
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export const CategoryMarker = React.memo(function CategoryMarker({
@@ -30,13 +31,27 @@ export const CategoryMarker = React.memo(function CategoryMarker({
   status,
   isVisited = false,
   size = "md",
+  onClick,
 }: CategoryMarkerProps) {
   const { language } = useLanguage();
-  // Proportions for Google Maps POI Pin (size="sm" for dense dashboard map, "md" for default)
+  // Proportions for Google Maps POI Pin (size="sm" for dense dashboard map, "md" for default, "lg" for large)
   const isSmall = size === "sm";
-  const width = isSmall ? (isMobile ? 24 : 28) : (isMobile ? 30 : 37);
-  const height = isSmall ? (isMobile ? 30 : 35) : (isMobile ? 38 : 46);
-  const badgeSize = isSmall ? (isMobile ? 19 : 22) : (isMobile ? 24 : 29);
+  const isLarge = size === "lg";
+  const width = isSmall
+    ? (isMobile ? 24 : 28)
+    : isLarge
+      ? (isMobile ? 36 : 44)
+      : (isMobile ? 30 : 37);
+  const height = isSmall
+    ? (isMobile ? 30 : 35)
+    : isLarge
+      ? (isMobile ? 45 : 55)
+      : (isMobile ? 38 : 46);
+  const badgeSize = isSmall
+    ? (isMobile ? 19 : 22)
+    : isLarge
+      ? (isMobile ? 28 : 34)
+      : (isMobile ? 24 : 29);
 
   const isCustomImage =
     icon?.startsWith("http") ||
@@ -44,13 +59,29 @@ export const CategoryMarker = React.memo(function CategoryMarker({
     icon?.includes("/") ||
     icon?.includes(".");
 
-  const iconSize = isCustomImage ? badgeSize : (isSmall ? (isMobile ? 13 : 15) : (isMobile ? 16 : 19));
+  const iconSize = isCustomImage
+    ? badgeSize
+    : isSmall
+      ? (isMobile ? 13 : 15)
+      : isLarge
+        ? (isMobile ? 20 : 24)
+        : (isMobile ? 16 : 19);
   const displayName = isLocked
     ? (language === "es" ? "Ubicación Premium" : "Premium Location")
     : getLocalized(name, language);
 
   return (
     <div
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.(e);
+      }}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+      }}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+      }}
       className={`cat-marker-root group relative select-none flex items-center justify-center ${isSelected ? "is-selected z-50" : "z-10"}`}
       style={{
         width: `${width}px`,
