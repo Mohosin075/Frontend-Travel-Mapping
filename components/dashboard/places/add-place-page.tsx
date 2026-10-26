@@ -747,19 +747,27 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
                 wasDraggingRef.current = false;
                 return;
               }
-              if (draggableMarkerId === place._id) {
-                return;
-              }
+              setDraggableMarkerId(null);
               handleSelectPlace(place);
             }}
           >
             <div
+              onClick={(e) => {
+                e.stopPropagation();
+                if (wasDraggingRef.current) {
+                  wasDraggingRef.current = false;
+                  return;
+                }
+                setDraggableMarkerId(null);
+                handleSelectPlace(place);
+              }}
               onPointerDown={(e) => {
                 if (e.button === 0) startDragTimer(place._id, e);
               }}
               onPointerUp={clearDragTimer}
               onPointerCancel={clearDragTimer}
               className={`
+                cursor-pointer
                 ${isDraggable ? "animate-bounce cursor-grab" : ""}
                 ${animatingPins[placeId] === "bounce" ? "pin-anim-bounce" : ""}
                 ${animatingPins[placeId] === "shake" ? "pin-anim-shake" : ""}
@@ -771,7 +779,7 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
                 name={place.name}
                 isSelected={isSelected}
                 status={place.status}
-                size="sm"
+                size="md"
               />
             </div>
           </AdvancedMarker>
@@ -1750,12 +1758,20 @@ export default function AddPlacePage() {
                   }
                 >
                   <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedPlace({
+                        position: tempMarker,
+                        isNew: true,
+                        address: selectedPlace?.address || "",
+                      });
+                    }}
                     onPointerDown={(e) => {
                       if (e.button === 0) startDragTimer("temp", e);
                     }}
                     onPointerUp={clearDragTimer}
                     onPointerCancel={clearDragTimer}
-                    className={draggableMarkerId === "temp" ? "animate-bounce cursor-grab" : ""}
+                    className={`cursor-pointer ${draggableMarkerId === "temp" ? "animate-bounce cursor-grab" : ""}`}
                   >
                     <CategoryMarker
                       icon={activeCategory?.icon || "📍"}
@@ -1763,7 +1779,7 @@ export default function AddPlacePage() {
                       isTemp={true}
                       isSelected={true}
                       status="Draft"
-                      size="sm"
+                      size="md"
                     />
                   </div>
                 </AdvancedMarker>

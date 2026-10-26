@@ -463,19 +463,31 @@ function ViewportPlaceMarkers({
               });
             }}
           >
-            <CategoryMarker
-              icon={icon}
-              color={color}
-              name={place.name}
-              isSelected={selectedLocation?.id === place._id}
-              isLocked={place.isLocked}
-              isMobile={isMobile}
-              isVisited={
-                visitedPlaceIds?.has(String(place._id)) ||
-                (place.id ? visitedPlaceIds?.has(String(place.id)) : false) ||
-                Boolean(place.isVisited)
-              }
-            />
+            <div
+              className="cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedLocation({
+                  id: place._id,
+                  type: normalizePinType(place),
+                  data: place,
+                });
+              }}
+            >
+              <CategoryMarker
+                icon={icon}
+                color={color}
+                name={place.name}
+                isSelected={selectedLocation?.id === place._id}
+                isLocked={place.isLocked}
+                isMobile={isMobile}
+                isVisited={
+                  visitedPlaceIds?.has(String(place._id)) ||
+                  (place.id ? visitedPlaceIds?.has(String(place.id)) : false) ||
+                  Boolean(place.isVisited)
+                }
+              />
+            </div>
           </AdvancedMarker>
         );
       })}
