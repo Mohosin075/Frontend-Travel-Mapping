@@ -17,7 +17,6 @@ interface CategoryMarkerProps {
   status?: string;
   isVisited?: boolean;
   size?: "sm" | "md" | "lg";
-  onClick?: (e: React.MouseEvent) => void;
 }
 
 export const CategoryMarker = React.memo(function CategoryMarker({
@@ -31,7 +30,6 @@ export const CategoryMarker = React.memo(function CategoryMarker({
   status,
   isVisited = false,
   size = "md",
-  onClick,
 }: CategoryMarkerProps) {
   const { language } = useLanguage();
   // Proportions for Google Maps POI Pin (size="sm" for dense dashboard map, "md" for default, "lg" for large)
@@ -72,16 +70,6 @@ export const CategoryMarker = React.memo(function CategoryMarker({
 
   return (
     <div
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick?.(e);
-      }}
-      onPointerDown={(e) => {
-        e.stopPropagation();
-      }}
-      onMouseDown={(e) => {
-        e.stopPropagation();
-      }}
       className={`cat-marker-root group relative select-none flex items-center justify-center ${isSelected ? "is-selected z-50" : "z-10"}`}
       style={{
         width: `${width}px`,
