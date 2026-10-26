@@ -106,6 +106,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.addEventListener("touchstart", function(){}, {passive:true});`,
+          }}
+        />
+      </head>
       <body
         className={`${poppins.variable} ${inter.variable} ${arial.variable} ${publicSans.variable} antialiased`}
       >

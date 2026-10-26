@@ -50,7 +50,7 @@ export function PlaceCard({ data, priority = false }: { data: TPlace; priority?:
         }`}
       >
         {/* Image Section */}
-        <div className="relative h-36 sm:h-48 md:h-64 w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
+        <div className="relative h-48 sm:h-56 md:h-64 w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
           {coverImage ? (
             <div
               className={`w-full h-full relative transition-all duration-500 overflow-hidden ${

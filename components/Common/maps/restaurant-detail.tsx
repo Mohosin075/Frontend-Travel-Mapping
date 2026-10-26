@@ -353,7 +353,7 @@ export default function RestaurantDetail() {
                   width={500}
                   height={500}
                   unoptimized
-                  className="w-full h-full object-cover object-[center_25%]"
+                  className="w-full h-full object-cover object-center"
                   referrerPolicy="no-referrer"
                 />
 
@@ -612,7 +612,7 @@ export default function RestaurantDetail() {
                   width={400}
                   height={300}
                   unoptimized
-                  className="w-full h-full object-cover object-[center_25%]"
+                  className="w-full h-full object-cover object-center"
                   referrerPolicy="no-referrer"
                 />
                 {/* Bottom gradient overlay to make text/badges pop */}

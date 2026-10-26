@@ -269,14 +269,14 @@ export default function LocationDialog({ id, onClose, mapId, initialData }: Prop
         </button>
 
         {/* Image stays visible; long copy only scrolls below */}
-        <div className="relative h-36 sm:h-52 shrink-0 grow-0 overflow-hidden rounded-t-[28px] sm:rounded-t-[32px] bg-gray-100 dark:bg-slate-800">
+        <div className="relative h-48 sm:h-60 shrink-0 grow-0 overflow-hidden rounded-t-[28px] sm:rounded-t-[32px] bg-gray-100 dark:bg-slate-800">
           {coverImage ? (
             <SafeImage
               src={coverImage}
               alt={location?.name}
               fill
               priority={true}
-              className="w-full h-full object-cover object-[center_25%]"
+              className="w-full h-full object-cover object-center"
             />
           ) : isLoading ? (
             <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse" />

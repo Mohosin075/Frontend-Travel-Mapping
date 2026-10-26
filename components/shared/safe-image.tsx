@@ -76,7 +76,7 @@ export function SafeImage({
         }}
         onError={() => setFailed(true)}
         className={`relative z-[1] ${
-          fill ? "absolute inset-0 h-full w-full object-cover" : "h-full w-full object-cover"
+          fill ? "absolute inset-0 h-full w-full object-cover object-center" : "h-full w-full object-cover object-center"
         } transition-all duration-500 ease-out ${
           loaded ? "opacity-100 scale-100" : "opacity-0 scale-[1.01] blur-[2px]"
         } ${className}`}

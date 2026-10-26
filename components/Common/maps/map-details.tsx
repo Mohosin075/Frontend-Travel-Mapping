@@ -886,7 +886,7 @@ export default function MapDetails() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* LEFT HERO CARD */}
           <div className="lg:col-span-2 space-y-3">
-            <div className="relative rounded-xl overflow-hidden group bg-gray-200 aspect-[16/10] md:aspect-[16/9]">
+            <div className="relative rounded-xl overflow-hidden group bg-gray-200 aspect-[4/3] sm:aspect-[16/11] lg:aspect-[16/10] min-h-[320px] sm:min-h-[420px] lg:min-h-[480px]">
               <Carousel
                 setApi={setCarouselApi}
                 opts={{ loop: mediaList.length > 1 }}
@@ -900,7 +900,7 @@ export default function MapDetails() {
                         className="pl-0 h-full basis-full cursor-zoom-in"
                         onClick={() => openGallery(index)}
                       >
-                        <div className="relative h-full w-full min-h-[280px] md:min-h-[420px] group">
+                        <div className="relative h-full w-full min-h-[320px] sm:min-h-[420px] lg:min-h-[480px] group">
                           {isVideo(media) ? (
                             <>
                               <video
@@ -960,7 +960,7 @@ export default function MapDetails() {
                               alt={`${placeData?.name} photo ${index + 1}`}
                               fill
                               unoptimized
-                              className="object-cover object-[center_25%]"
+                              className="object-cover object-center"
                               sizes="(max-width: 1024px) 100vw, 66vw"
                             />
                           )}
