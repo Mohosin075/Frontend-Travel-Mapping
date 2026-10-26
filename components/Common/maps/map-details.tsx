@@ -886,7 +886,7 @@ export default function MapDetails() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* LEFT HERO CARD */}
           <div className="lg:col-span-2 space-y-3">
-            <div className="relative rounded-xl overflow-hidden group bg-gray-200 aspect-[4/3] sm:aspect-[16/11] lg:aspect-[16/10] min-h-[320px] sm:min-h-[420px] lg:min-h-[480px]">
+            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden group bg-gray-200 aspect-[4/3] sm:aspect-[16/11] lg:aspect-[16/10] min-h-[340px] sm:min-h-[420px] lg:min-h-[500px]">
               <Carousel
                 setApi={setCarouselApi}
                 opts={{ loop: mediaList.length > 1 }}
