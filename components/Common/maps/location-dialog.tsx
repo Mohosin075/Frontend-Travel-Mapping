@@ -204,7 +204,7 @@ export default function LocationDialog({ id, onClose, mapId, initialData }: Prop
           aria-hidden="true"
         />
         <div className="bg-white dark:bg-[#131b2e] border border-gray-100 dark:border-slate-800 rounded-t-[28px] rounded-b-[20px] sm:rounded-[32px] shadow-2xl w-full max-w-md relative z-10 flex flex-col overflow-hidden max-h-[85dvh] sm:max-h-[90vh] min-h-0 transition-all duration-300 ease-out animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-6 sm:slide-in-from-bottom-4">
-          <div className="h-36 sm:h-48 shrink-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 animate-pulse" />
+          <div className="h-[260px] sm:h-[300px] shrink-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 animate-pulse" />
           <div className="p-4 sm:p-6 space-y-3">
             <div className="h-6 w-3/4 bg-gray-200 dark:bg-slate-800 rounded-lg animate-pulse" />
             <div className="h-4 w-1/3 bg-gray-100 dark:bg-slate-700 rounded animate-pulse" />
