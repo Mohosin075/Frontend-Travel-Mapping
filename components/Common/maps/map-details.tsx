@@ -914,13 +914,13 @@ export default function MapDetails() {
   }
 
   return (
-    <section className="bg-gray-100 dark:bg-[#0b0f19] py-4 sm:py-8 lg:py-10 min-h-screen">
-      <div className="max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6">
+    <section className="bg-gray-100 dark:bg-[#0b0f19] py-4 sm:py-8 lg:py-10 min-h-screen w-full max-w-full overflow-x-hidden">
+      <div className="w-full max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6 min-w-0">
         {/* TOP GRID */}
-        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 min-w-0">
           {/* LEFT HERO CARD */}
-          <div className="lg:col-span-2 space-y-3">
-            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden group bg-gray-200 aspect-[4/3] sm:aspect-[16/11] lg:aspect-[16/10] min-h-[340px] sm:min-h-[420px] lg:min-h-[500px]">
+          <div className="lg:col-span-2 space-y-3 min-w-0">
+            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden group bg-gray-200 w-full max-w-full aspect-[4/3] sm:aspect-[16/11] lg:aspect-[16/10] sm:min-h-[420px] lg:min-h-[500px]">
               <Carousel
                 setApi={setCarouselApi}
                 opts={{ loop: mediaList.length > 1 }}
@@ -934,7 +934,7 @@ export default function MapDetails() {
                         className="pl-0 h-full basis-full cursor-zoom-in"
                         onClick={() => openGallery(index)}
                       >
-                        <div className="relative h-full w-full min-h-[340px] sm:min-h-[420px] lg:min-h-[500px] group">
+                        <div className="relative h-full w-full sm:min-h-[420px] lg:min-h-[500px] group">
                           {isVideo(media) ? (
                             <>
                               <video
@@ -1003,7 +1003,7 @@ export default function MapDetails() {
                     ))
                   ) : (
                     <CarouselItem className="pl-0 h-full basis-full">
-                      <div className="min-h-[250px] md:min-h-[420px] flex items-center justify-center bg-gray-100 dark:bg-slate-900">
+                      <div className="h-full w-full flex items-center justify-center bg-gray-100 dark:bg-slate-900">
                         <NoImage />
                       </div>
                     </CarouselItem>
@@ -1179,7 +1179,7 @@ export default function MapDetails() {
             </div>
 
             {/* Mobile-Only Title Card (Below the image) */}
-            <div className="md:hidden mt-3 rounded-2xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-[#131b2e] px-4 py-4 shadow-sm">
+            <div className="md:hidden mt-3 rounded-2xl border border-gray-200/80 dark:border-slate-800 bg-white dark:bg-[#131b2e] px-4 py-4 shadow-xs min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 {placeData?.category?.name && (
                   <span className="inline-flex items-center rounded-full bg-yellow-400 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-black">
@@ -1199,7 +1199,7 @@ export default function MapDetails() {
                 )}
               </div>
 
-              <h1 className="text-xl sm:text-2xl font-bold font-public-sans text-gray-900 dark:text-slate-100 leading-tight tracking-tight" style={{userSelect:'text'}}>
+              <h1 className="text-xl sm:text-2xl font-bold font-public-sans text-gray-900 dark:text-slate-100 leading-tight tracking-tight break-words" style={{userSelect:'text'}}>
                 {getLocalized(placeData?.name, language) || "Untitled location"}
               </h1>
 
@@ -1235,7 +1235,7 @@ export default function MapDetails() {
                 <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EC5B13]/10">
                   <MapPin size={13} className="text-[#FF8A4C]" />
                 </span>
-                <span className="leading-snug pt-0.5" style={{userSelect:'text'}}>
+                <span className="leading-snug pt-0.5 break-words" style={{userSelect:'text'}}>
                   {placeData?.address || "Address not available"}
                 </span>
               </div>
@@ -1244,8 +1244,8 @@ export default function MapDetails() {
           </div>
 
           {/* RIGHT SIDE INFO */}
-          <div className="flex flex-col gap-3">
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+          <div className="flex flex-col gap-3 min-w-0">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 min-w-0">
               {(dataToRender.some((i) => !i.empty)
                 ? dataToRender.filter((i) => !i.empty)
                 : dataToRender
@@ -1265,12 +1265,12 @@ export default function MapDetails() {
               })}
             </div>
 
-            <div className="flex flex-col gap-2 mt-1">
-              <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-2 mt-1 min-w-0">
+              <div className="grid grid-cols-2 gap-2 min-w-0">
                 <button
                   type="button"
                   onClick={handleViewOnMap}
-                  className="w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-yellow-400 hover:bg-yellow-500 text-black dark:text-slate-950 font-bold h-11 px-2 text-xs sm:text-sm rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer"
+                  className="w-full min-w-0 inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-yellow-400 hover:bg-yellow-500 text-black dark:text-slate-950 font-bold h-11 px-2 text-xs sm:text-sm rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer"
                 >
                   <Map size={16} className="shrink-0" />
                   <span className="truncate">{t("place.view_on_map")}</span>
@@ -1278,7 +1278,7 @@ export default function MapDetails() {
                 <button
                   type="button"
                   onClick={handleDirections}
-                  className="w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-yellow-400 hover:bg-yellow-500 text-black dark:text-slate-950 font-bold h-11 px-2 text-xs sm:text-sm rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer"
+                  className="w-full min-w-0 inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-yellow-400 hover:bg-yellow-500 text-black dark:text-slate-950 font-bold h-11 px-2 text-xs sm:text-sm rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer"
                 >
                   <Send size={16} className="shrink-0" />
                   <span className="truncate">{t("place.directions")}</span>
