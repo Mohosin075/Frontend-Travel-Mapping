@@ -443,7 +443,7 @@ export default function MapDetails() {
   const isHoursEmpty = !!formattedHours.empty || !formattedHours.text;
 
   const entryCostRaw = placeData?.entryCost;
-  const entryCostValue = formatEntryCost(entryCostRaw);
+  const entryCostValue = formatEntryCost(entryCostRaw, language);
   const hikeTimeRaw = placeData?.hikeTime;
   const hikeTimeValue = formatHikeTime(hikeTimeRaw);
 

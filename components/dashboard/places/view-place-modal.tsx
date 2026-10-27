@@ -787,7 +787,7 @@ export function ViewPlaceModal({
                             <span>{t("place.entry_cost")}</span>
                           </div>
                           <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
-                            {formatEntryCost(place.entryCost)}
+                            {formatEntryCost(place.entryCost, language)}
                           </p>
                         </div>
                       )}

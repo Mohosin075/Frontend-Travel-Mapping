@@ -439,30 +439,60 @@ export const mapEditorMenuItems = [
 
 /**
  * Formats entry cost for user & admin display.
- * e.g. "10" -> "$10 / person"
+ * e.g. "10" -> "$10 / person" (en) / "$10 / persona" (es)
  *      "15 / vehicle" -> "$15 / vehicle"
- *      "Free" -> "Free Entrance"
+ *      "Free" -> "Free" (en) / "Gratis" (es) (no $ sign)
+ *      "Gratis" -> "Gratis" (no $ sign)
  */
-export function formatEntryCost(raw?: unknown): string {
+export function formatEntryCost(raw?: unknown, lang: string = "es"): string {
   if (raw == null) return "";
-  const str = String(raw).trim();
+  const localized = (raw && typeof raw === "object") ? getLocalized(raw, lang) : String(raw);
+  const str = String(localized || "").trim();
   if (!str) return "";
 
-  const lower = str.toLowerCase();
-  if (lower === "free" || lower === "0" || lower === "$0" || lower === "free entrance") {
-    return "Free Entrance";
+  // Strip leading dollar sign and whitespace for clean checking
+  const clean = str.replace(/^\$\s*/, "").trim();
+  const lower = clean.toLowerCase();
+
+  // If it indicates free / gratis / 0, return without the money sign ($)
+  if (
+    lower === "free" ||
+    lower === "gratis" ||
+    lower === "0" ||
+    lower === "free entrance" ||
+    lower === "entrada gratis" ||
+    lower === "free entry" ||
+    lower === "gratis / free" ||
+    lower === "free / gratis"
+  ) {
+    return lang === "es" ? "Gratis" : "Free";
   }
 
-  if (str.includes("/") || lower.includes("person") || lower.includes("vehicle") || lower.includes("group")) {
-    return str.startsWith("$") ? str : `$${str}`;
+  // If the text contains "free" or "gratis" anywhere, return clean without '$'
+  if (lower.includes("free") || lower.includes("gratis")) {
+    return clean;
   }
 
-  const numMatch = str.replace(/^\$/, "").trim();
-  if (!Number.isNaN(Number(numMatch))) {
-    return `$${numMatch} / person`;
+  // If it already specifies unit (/ person, / vehicle, etc.)
+  if (
+    str.includes("/") ||
+    lower.includes("person") ||
+    lower.includes("vehicle") ||
+    lower.includes("group") ||
+    lower.includes("persona") ||
+    lower.includes("vehiculo") ||
+    lower.includes("vehículo")
+  ) {
+    return str.startsWith("$") ? str : `$${clean}`;
   }
 
-  return str.startsWith("$") ? str : `$${str}`;
+  // Pure number e.g. "10" -> "$10 / person" or "$10 / persona"
+  const numMatch = clean.replace(/^\$/, "").trim();
+  if (!Number.isNaN(Number(numMatch)) && numMatch !== "") {
+    return lang === "es" ? `$${numMatch} / persona` : `$${numMatch} / person`;
+  }
+
+  return str.startsWith("$") ? str : `$${clean}`;
 }
 
 /**
@@ -497,16 +527,24 @@ export function parseEntryCost(val?: unknown): { amount: string; type: string } 
   const str = String(val).trim();
   if (!str) return { amount: "", type: "/ person" };
 
-  const lower = str.toLowerCase();
-  if (lower === "free" || lower === "0" || lower === "$0" || lower === "free entrance") {
+  const clean = str.replace(/^\$\s*/, "").trim();
+  const lower = clean.toLowerCase();
+  if (
+    lower === "free" ||
+    lower === "gratis" ||
+    lower === "0" ||
+    lower === "free entrance" ||
+    lower === "entrada gratis" ||
+    lower === "free entry"
+  ) {
     return { amount: "", type: "Free" };
   }
 
   let type = "/ person";
-  if (lower.includes("vehicle") || lower.includes("car")) type = "/ vehicle";
-  else if (lower.includes("group")) type = "/ group";
+  if (lower.includes("vehicle") || lower.includes("car") || lower.includes("vehiculo") || lower.includes("vehículo")) type = "/ vehicle";
+  else if (lower.includes("group") || lower.includes("grupo")) type = "/ group";
   else if (lower.includes("flat") || lower.includes("total")) type = "flat";
-  else if (lower.includes("person")) type = "/ person";
+  else if (lower.includes("person") || lower.includes("persona")) type = "/ person";
 
   const match = str.match(/\d+(?:\.\d+)?/);
   const amount = match ? match[0] : "";

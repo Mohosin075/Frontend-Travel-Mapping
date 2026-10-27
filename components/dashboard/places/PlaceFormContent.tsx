@@ -1315,16 +1315,18 @@ export const PlaceFormContent = ({
                           )}
                         </div>
                         <div className="flex rounded-lg border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 h-9 overflow-hidden focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
-                          <span className="flex items-center pl-3 text-xs font-bold text-gray-500 dark:text-slate-400 select-none">
-                            $
-                          </span>
+                          {entryCostType !== "Free" && (
+                            <span className="flex items-center pl-3 text-xs font-bold text-gray-500 dark:text-slate-400 select-none">
+                              $
+                            </span>
+                          )}
                           <input
                             type="text"
                             placeholder={entryCostType === "Free" ? (t("places_admin.free_entry") || "Free") : "10"}
                             value={entryCostType === "Free" ? "" : entryCostAmount}
                             disabled={entryCostType === "Free"}
                             onChange={(e) => handleEntryCostAmountChange(e.target.value)}
-                            className="w-full bg-transparent pl-1.5 pr-2 text-sm italic text-gray-900 dark:text-slate-100 focus:outline-none disabled:bg-gray-50 dark:disabled:bg-slate-900/40 disabled:text-gray-400"
+                            className={`w-full bg-transparent ${entryCostType === "Free" ? "pl-3" : "pl-1.5"} pr-2 text-sm italic text-gray-900 dark:text-slate-100 focus:outline-none disabled:bg-gray-50 dark:disabled:bg-slate-900/40 disabled:text-gray-400`}
                           />
                           <select
                             value={entryCostType}
