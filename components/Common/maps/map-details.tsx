@@ -58,7 +58,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { FavouriteButton } from "@/components/shared/favourite-button";
 import { NoImage } from "@/lib/others/others";
 import { formatOfferDiscountLabel } from "@/lib/offer-label";
-import { formatEntryCost, formatHikeTime, getImageUrl, getUsableMediaList, isVideoUrl, getLocalized, convertTo12Hour, formatLocalizedDifficulty, formatLocalizedSchedule } from "@/lib/utils";
+import { formatEntryCost, formatHikeTime, getImageUrl, getUsableMediaList, isVideoUrl, getLocalized, convertTo12Hour, formatLocalizedDifficulty, formatLocalizedSchedule, cleanDescriptionHtml, extractImagesFromHtml } from "@/lib/utils";
 import { SafeImage } from "@/components/shared/safe-image";
 import { useGetSingleBusinessQuery } from "@/redux/features/business/businessApi";
 import { useGetOffersByPlaceOrBusinessIdQuery } from "@/redux/features/offer/offerApi";
@@ -497,14 +497,41 @@ export default function MapDetails() {
   const isBusiness = placeData?.type === "Business";
   const dataToRender = isBusiness ? restaurantData : infoData;
 
-  const descriptionText =
+  const rawDescription =
     (hasText(placeData?.description) && getLocalized(placeData.description, language).trim()) ||
     (hasText(placeData?.about) && getLocalized(placeData.about, language).trim()) ||
     "";
-  const accessText =
+  const descriptionText = cleanDescriptionHtml(rawDescription);
+
+  const rawAccess =
     (hasText(placeData?.access) && getLocalized(placeData.access, language).trim()) ||
     (hasText(placeData?.accessDescription) && getLocalized(placeData.accessDescription, language).trim()) ||
     "";
+  const accessText = cleanDescriptionHtml(rawAccess);
+
+  const renderFormattedDescription = (text: string) => {
+    if (!text) return null;
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+
+    return parts.map((part, i) => {
+      if (urlRegex.test(part)) {
+        return (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 underline font-semibold break-all"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
 
   const reviewData: any[] = reviews?.data || [];
 
@@ -687,7 +714,14 @@ export default function MapDetails() {
   }, [selectedMediaIndex]);
 
   const mediaList = useMemo(() => {
-    return getUsableMediaList(placeData?.media);
+    const list = getUsableMediaList(placeData?.media);
+    const extraImages = extractImagesFromHtml(placeData?.description);
+    extraImages.forEach((img) => {
+      if (!list.includes(img)) {
+        list.push(img);
+      }
+    });
+    return list;
   }, [placeData]);
 
   useEffect(() => {
@@ -880,13 +914,13 @@ export default function MapDetails() {
   }
 
   return (
-    <section className="bg-gray-100 dark:bg-[#0b0f19] py-10 min-h-screen">
-      <div className="max-w-[1400px] mx-auto px-4 md:px-6  ">
+    <section className="bg-gray-100 dark:bg-[#0b0f19] py-4 sm:py-8 lg:py-10 min-h-screen">
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6">
         {/* TOP GRID */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
           {/* LEFT HERO CARD */}
           <div className="lg:col-span-2 space-y-3">
-            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden group bg-gray-200 aspect-[4/3] sm:aspect-[16/11] lg:aspect-[16/10] min-h-[340px] sm:min-h-[420px] lg:min-h-[500px]">
+            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden group bg-gray-200 aspect-[4/3] sm:aspect-[16/11] lg:aspect-[16/10] min-h-[250px] sm:min-h-[380px] lg:min-h-[500px]">
               <Carousel
                 setApi={setCarouselApi}
                 opts={{ loop: mediaList.length > 1 }}
@@ -900,7 +934,7 @@ export default function MapDetails() {
                         className="pl-0 h-full basis-full cursor-zoom-in"
                         onClick={() => openGallery(index)}
                       >
-                        <div className="relative h-full w-full min-h-[320px] sm:min-h-[420px] lg:min-h-[480px] group">
+                        <div className="relative h-full w-full min-h-[250px] sm:min-h-[380px] lg:min-h-[480px] group">
                           {isVideo(media) ? (
                             <>
                               <video
@@ -969,56 +1003,58 @@ export default function MapDetails() {
                     ))
                   ) : (
                     <CarouselItem className="pl-0 h-full basis-full">
-                      <div className="min-h-[280px] md:min-h-[420px] flex items-center justify-center bg-gray-100 dark:bg-slate-900">
+                      <div className="min-h-[250px] md:min-h-[420px] flex items-center justify-center bg-gray-100 dark:bg-slate-900">
                         <NoImage />
                       </div>
                     </CarouselItem>
                   )}
                 </CarouselContent>
 
+                {/* Carousel Navigation Arrows: Hidden on mobile, visible on desktop/tablet */}
                 {mediaList.length > 1 && (
                   <>
-                    <CarouselPrevious className="absolute left-3 top-1/2 -translate-y-1/2 z-20 size-10 md:size-12 !border-0 !bg-black/50 hover:!bg-black/75 !text-white hover:!text-white shadow-lg disabled:opacity-30 cursor-pointer" />
-                    <CarouselNext className="absolute right-3 top-1/2 -translate-y-1/2 z-20 size-10 md:size-12 !border-0 !bg-black/50 hover:!bg-black/75 !text-white hover:!text-white shadow-lg disabled:opacity-30 cursor-pointer" />
+                    <CarouselPrevious className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 z-20 size-10 md:size-12 !border-0 !bg-black/50 hover:!bg-black/75 !text-white hover:!text-white shadow-lg disabled:opacity-30 cursor-pointer" />
+                    <CarouselNext className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 z-20 size-10 md:size-12 !border-0 !bg-black/50 hover:!bg-black/75 !text-white hover:!text-white shadow-lg disabled:opacity-30 cursor-pointer" />
                   </>
                 )}
               </Carousel>
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+              {/* Bottom gradient overlay: Desktop only to support overlay title card; hidden on mobile to keep photo crisp */}
+              <div className="hidden md:block absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
-              <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
+              <div className="absolute top-3.5 sm:top-4 left-3.5 sm:left-4 z-20 flex items-center gap-2">
                 <FavouriteButton
                   placeId={id}
                   type={isBusinessEntity ? "Business" : "Place"}
-                  Style="w-11 h-11 border border-black/5 dark:border-white/10 bg-white/95 dark:bg-[#131b2e]/95 hover:bg-white dark:hover:bg-[#1e293b] hover:scale-105 active:scale-95 shadow-md p-2.5 rounded-xl transition-all duration-200 cursor-pointer backdrop-blur-sm"
+                  Style="w-9 h-9 sm:w-11 sm:h-11 border border-black/5 dark:border-white/10 bg-white/95 dark:bg-[#131b2e]/95 hover:bg-white dark:hover:bg-[#1e293b] hover:scale-105 active:scale-95 shadow-md p-2 sm:p-2.5 rounded-xl transition-all duration-200 cursor-pointer backdrop-blur-sm"
                 />
                 <button
                   type="button"
                   onClick={handleAddToRoute}
                   title={isInRoute ? (language === "es" ? "En tu ruta (Ver ruta)" : "In your route (View)") : (language === "es" ? "Añadir a la Ruta" : "Add to Route")}
                   aria-label={language === "es" ? "Añadir a la Ruta" : "Add to Route"}
-                  className={`w-11 h-11 border rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer backdrop-blur-sm shadow-md hover:scale-105 active:scale-95 ${
+                  className={`w-9 h-9 sm:w-11 sm:h-11 border rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer backdrop-blur-sm shadow-md hover:scale-105 active:scale-95 ${
                     isInRoute
                       ? "bg-emerald-500/90 text-white border-emerald-400"
                       : "bg-white/95 dark:bg-[#131b2e]/95 text-amber-600 dark:text-amber-400 border-black/5 dark:border-white/10 hover:bg-white dark:hover:bg-[#1e293b]"
                   }`}
                 >
-                  {isInRoute ? <CheckCircle2 size={19} /> : <Compass size={19} />}
+                  {isInRoute ? <CheckCircle2 size={17} className="sm:size-[19px]" /> : <Compass size={17} className="sm:size-[19px]" />}
                 </button>
               </div>
 
               {mediaList.length > 0 && (
                 <>
-                  {/* Slide Counter Badge */}
-                  <div className="absolute top-4 right-17 z-20 rounded-full bg-black/55 px-3 py-2 text-xs font-bold text-white backdrop-blur-sm pointer-events-none select-none flex items-center justify-center h-11">
+                  {/* Slide Counter Badge: Aligned nicely on mobile without the fullscreen button */}
+                  <div className="absolute top-3.5 sm:top-4 right-3.5 sm:right-17 z-20 rounded-full bg-black/55 px-2.5 sm:px-3 py-1 sm:py-2 text-[11px] sm:text-xs font-bold text-white backdrop-blur-sm pointer-events-none select-none flex items-center justify-center h-8 sm:h-11">
                     {currentSlide + 1} / {mediaList.length}
                   </div>
 
-                  {/* Smart Fullscreen Square Icon Button */}
+                  {/* Smart Fullscreen Square Icon Button: Hidden on mobile, desktop/tablet only */}
                   <button
                     type="button"
                     title="Fullscreen"
-                    className="absolute top-4 right-4 z-20 w-11 h-11 border-none bg-black/50 hover:bg-black/75 text-white hover:scale-105 active:scale-95 shadow-md flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer backdrop-blur-sm"
+                    className="hidden sm:flex absolute top-4 right-4 z-20 w-11 h-11 border-none bg-black/50 hover:bg-black/75 text-white hover:scale-105 active:scale-95 shadow-md items-center justify-center rounded-xl transition-all duration-200 cursor-pointer backdrop-blur-sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       const isVid = isVideo(mediaList[currentSlide]);
@@ -1163,7 +1199,7 @@ export default function MapDetails() {
                 )}
               </div>
 
-              <h1 className="text-2xl font-bold font-public-sans text-gray-900 dark:text-slate-100 leading-tight tracking-tight" style={{userSelect:'text'}}>
+              <h1 className="text-xl sm:text-2xl font-bold font-public-sans text-gray-900 dark:text-slate-100 leading-tight tracking-tight" style={{userSelect:'text'}}>
                 {getLocalized(placeData?.name, language) || "Untitled location"}
               </h1>
 
@@ -1209,7 +1245,7 @@ export default function MapDetails() {
 
           {/* RIGHT SIDE INFO */}
           <div className="flex flex-col gap-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               {(dataToRender.some((i) => !i.empty)
                 ? dataToRender.filter((i) => !i.empty)
                 : dataToRender
@@ -1231,76 +1267,74 @@ export default function MapDetails() {
 
             <div className="flex flex-col gap-2 mt-1">
               <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={handleViewOnMap}
-                className="w-full inline-flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black dark:text-slate-950 font-bold h-11 px-2 text-xs sm:text-sm rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer"
-              >
-                <Map size={16} className="shrink-0" />
-                {t("place.view_on_map")}
-              </button>
+                <button
+                  type="button"
+                  onClick={handleViewOnMap}
+                  className="w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-yellow-400 hover:bg-yellow-500 text-black dark:text-slate-950 font-bold h-11 px-2 text-xs sm:text-sm rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer"
+                >
+                  <Map size={16} className="shrink-0" />
+                  <span className="truncate">{t("place.view_on_map")}</span>
+                </button>
                 <button
                   type="button"
                   onClick={handleDirections}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black dark:text-slate-950 font-bold h-11 px-2 text-xs sm:text-sm rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer"
+                  className="w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-yellow-400 hover:bg-yellow-500 text-black dark:text-slate-950 font-bold h-11 px-2 text-xs sm:text-sm rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer"
                 >
                   <Send size={16} className="shrink-0" />
-                  {t("place.directions")}
+                  <span className="truncate">{t("place.directions")}</span>
                 </button>
               </div>
 
-              {isBusiness && (
-                <>
+              {isBusiness && (hasText(placeData?.phone) || offerId) && (
+                <div className={`grid gap-2 ${hasText(placeData?.phone) && offerId ? "grid-cols-2" : "grid-cols-1"}`}>
                   {hasText(placeData?.phone) && (
-                    <div>
-                      <a href={`tel:${placeData.phone}`} className="w-full block">
-                        <button type="button" className="w-full inline-flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black dark:text-slate-950 font-bold h-11 text-sm rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer">
-                          <Phone size={16} />
-                          {t("place.call")}
-                        </button>
-                      </a>
-                    </div>
+                    <a href={`tel:${placeData.phone}`} className="w-full block">
+                      <button type="button" className="w-full inline-flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black dark:text-slate-950 font-bold h-11 px-2 text-xs sm:text-sm rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer">
+                        <Phone size={16} className="shrink-0" />
+                        <span className="truncate">{t("place.call")}</span>
+                      </button>
+                    </a>
                   )}
                   {offerId && (
-                    <Link href={`/offer/${offerId}`} className="block">
-                      <button type="button" className="w-full inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold h-11 text-sm rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer">
-                        <Ticket size={16} />
-                        {t("place.discounts")}
+                    <Link href={`/offer/${offerId}`} className="w-full block">
+                      <button type="button" className="w-full inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold h-11 px-2 text-xs sm:text-sm rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer">
+                        <Ticket size={16} className="shrink-0" />
+                        <span className="truncate">{t("place.discounts")}</span>
                       </button>
                     </Link>
                   )}
-                </>
+                </div>
               )}
             </div>
           </div>
         </div>
 
         {/* ACCORDIONS */}
-        <div className="mt-10 space-y-4">
+        <div className="mt-8 sm:mt-10 space-y-3 sm:space-y-4">
           <Accordion
             type="single"
             collapsible
             defaultValue="access"
-            className="space-y-4"
+            className="space-y-3 sm:space-y-4"
           >
             {/* ACCESS / DESCRIPTION */}
             {(descriptionText || accessText) && (
               <AccordionItem
                 value="access"
-                className="border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-[#131b2e]"
+                className="border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-[#131b2e] overflow-hidden"
               >
-                <AccordionTrigger className="font-semibold px-6 hover:no-underline dark:text-slate-100">
+                <AccordionTrigger className="font-semibold px-4 sm:px-6 hover:no-underline dark:text-slate-100 text-sm sm:text-base">
                   {isBusiness ? t("place.description_and_access") : t("place.about_this_place")}
                 </AccordionTrigger>
 
-                <AccordionContent className="text-muted-foreground space-y-4 px-6 pb-6">
+                <AccordionContent className="text-muted-foreground space-y-4 px-4 sm:px-6 pb-4 sm:pb-6 text-sm sm:text-base">
                   {descriptionText && (
                     <div>
                       <p className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-2">
                         {t("place.description")}
                       </p>
-                      <p className="leading-relaxed text-gray-700 dark:text-slate-300 whitespace-pre-wrap">
-                        {descriptionText}
+                      <p className="leading-relaxed text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words">
+                        {renderFormattedDescription(descriptionText)}
                       </p>
                     </div>
                   )}
@@ -1310,8 +1344,8 @@ export default function MapDetails() {
                       <p className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-2">
                         {t("place.access_and_getting_here")}
                       </p>
-                      <p className="leading-relaxed text-gray-700 dark:text-slate-300 whitespace-pre-wrap">
-                        {accessText}
+                      <p className="leading-relaxed text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words">
+                        {renderFormattedDescription(accessText)}
                       </p>
                     </div>
                   )}
@@ -1327,13 +1361,13 @@ export default function MapDetails() {
                 hasText(placeData?.accessibility?.notes)) && (
                 <AccordionItem
                   value="recommendations"
-                  className="border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-[#131b2e]"
+                  className="border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-[#131b2e] overflow-hidden"
                 >
-                  <AccordionTrigger className="font-semibold px-6 hover:no-underline dark:text-slate-100">
+                  <AccordionTrigger className="font-semibold px-4 sm:px-6 hover:no-underline dark:text-slate-100 text-sm sm:text-base">
                     {t("place.recommendations")}
                   </AccordionTrigger>
 
-                  <AccordionContent className="px-6 pb-6 space-y-5">
+                  <AccordionContent className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4 sm:space-y-5 text-sm sm:text-base">
                     {(hasText(placeData?.recommendations?.tips) || hasText(placeData?.details?.recommendations)) && (
                       <p className="leading-relaxed text-gray-700 dark:text-slate-300">
                         {getLocalized(placeData?.recommendations?.tips, language) ||
@@ -1374,14 +1408,14 @@ export default function MapDetails() {
             {!isBusiness && placeData?.services?.length > 0 && (
               <AccordionItem
                 value="services"
-                className="border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-[#131b2e]"
+                className="border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-[#131b2e] overflow-hidden"
               >
-                <AccordionTrigger className="font-semibold px-6 hover:no-underline dark:text-slate-100">
+                <AccordionTrigger className="font-semibold px-4 sm:px-6 hover:no-underline dark:text-slate-100 text-sm sm:text-base">
                   {t("place.services_available")}
                 </AccordionTrigger>
 
-                <AccordionContent className="px-6 pb-8">
-                  <div className="grid grid-cols-3 md:grid-cols-4 gap-6 text-center">
+                <AccordionContent className="px-4 sm:px-6 pb-6 sm:pb-8">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 gap-3 sm:gap-6 text-center">
                     {placeData.services.map((item: any, idx: number) => {
                       const serviceInfo = resolveServiceInfo(item);
                       if (!serviceInfo) return null;
@@ -1390,12 +1424,12 @@ export default function MapDetails() {
                       return (
                         <div
                           key={idx}
-                          className="flex flex-col items-center gap-2 group"
+                          className="flex flex-col items-center gap-1.5 sm:gap-2 group"
                         >
-                          <div className="bg-gray-50 dark:bg-[#0e1424] p-4 rounded-2xl border border-gray-100 dark:border-slate-800 group-hover:bg-amber-50 dark:group-hover:bg-amber-950/20 transition-colors">
-                            <Icon size={22} className="text-gray-600 dark:text-slate-300 group-hover:text-amber-600 dark:group-hover:text-amber-400" />
+                          <div className="bg-gray-50 dark:bg-[#0e1424] p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 group-hover:bg-amber-50 dark:group-hover:bg-amber-950/20 transition-colors">
+                            <Icon size={20} className="sm:size-[22px] text-gray-600 dark:text-slate-300 group-hover:text-amber-600 dark:group-hover:text-amber-400" />
                           </div>
-                          <p className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-tight">
+                          <p className="text-[9px] sm:text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-tight line-clamp-2">
                             {serviceInfo.label}
                           </p>
                         </div>
@@ -1410,13 +1444,13 @@ export default function MapDetails() {
             {placeData?.menuImages && placeData.menuImages.length > 0 && (
               <AccordionItem
                 value="menu"
-                className="border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-[#131b2e]"
+                className="border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-[#131b2e] overflow-hidden"
               >
-                <AccordionTrigger className="font-semibold px-6 hover:no-underline dark:text-slate-100">
+                <AccordionTrigger className="font-semibold px-4 sm:px-6 hover:no-underline dark:text-slate-100 text-sm sm:text-base">
                   {t("place.menu_and_prices")}
                 </AccordionTrigger>
 
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-4 sm:pb-6">
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {placeData.menuImages.map((image: string, index: number) => (
                       <div
@@ -1443,31 +1477,31 @@ export default function MapDetails() {
             {offersList.length > 0 && (
               <AccordionItem
                 value="offers"
-                className="border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-[#131b2e]"
+                className="border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-[#131b2e] overflow-hidden"
               >
-                <AccordionTrigger className="font-semibold px-6 hover:no-underline text-blue-600 dark:text-blue-400">
+                <AccordionTrigger className="font-semibold px-4 sm:px-6 hover:no-underline text-blue-600 dark:text-blue-400 text-sm sm:text-base">
                   <div className="flex items-center gap-2">
                     <Ticket size={20} />
                     {t("place.offers_and_discounts")} ({offersList.length})
                   </div>
                 </AccordionTrigger>
 
-                <AccordionContent className="px-6 pb-6 space-y-4">
-                  <div className="grid gap-4">
+                <AccordionContent className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
+                  <div className="grid gap-3 sm:gap-4">
                     {offersList.map((offer: any) => (
                       <div
                         key={offer._id}
-                        className="p-4 border border-blue-100 dark:border-blue-900/40 bg-blue-50/30 dark:bg-blue-950/20 rounded-xl relative overflow-hidden group hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+                        className="p-3.5 sm:p-4 border border-blue-100 dark:border-blue-900/40 bg-blue-50/30 dark:bg-blue-950/20 rounded-xl relative overflow-hidden group hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
                       >
-                        <div className="flex justify-between items-start gap-4">
+                        <div className="flex justify-between items-start gap-3 sm:gap-4">
                           <div className="flex-1 space-y-1">
-                            <h4 className="font-bold text-lg text-gray-900 dark:text-slate-100 leading-tight">
+                            <h4 className="font-bold text-base sm:text-lg text-gray-900 dark:text-slate-100 leading-tight">
                               {offer.title}
                             </h4>
-                            <p className="text-sm text-gray-600 dark:text-slate-300 line-clamp-2">
+                            <p className="text-xs sm:text-sm text-gray-600 dark:text-slate-300 line-clamp-2">
                               {offer.description}
                             </p>
-                            <div className="flex flex-wrap gap-2 mt-2">
+                            <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2">
                               <span className="text-[10px] font-bold bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded uppercase">
                                 {formatOfferDiscountLabel(offer)}
                               </span>
@@ -1482,7 +1516,7 @@ export default function MapDetails() {
                             </div>
                           </div>
                           <Link href={`/offer/${offer._id}`} className="shrink-0">
-                            <Button className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-4 h-auto rounded-lg">
+                            <Button className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-3 sm:px-4 h-auto rounded-lg">
                               {t("place.redeem_btn")}
                             </Button>
                           </Link>
@@ -1495,7 +1529,7 @@ export default function MapDetails() {
             )}
           </Accordion>
           {!isBusiness && (
-            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-xl p-4 mt-6">
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-xl p-3.5 sm:p-4 mt-6">
               <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
                 {t("place.notice_disclaimer")}
               </p>
@@ -1505,15 +1539,15 @@ export default function MapDetails() {
 
         {/* Dedicated Operating Hours Card */}
         {hoursObj && Object.keys(hoursObj).length > 0 && (
-          <div className="px-2 mt-10">
-            <div className="mb-8 bg-white dark:bg-[#131b2e] rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 sm:p-6">
+          <div className="mt-8 sm:mt-10">
+            <div className="bg-white dark:bg-[#131b2e] rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-slate-800">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
-                    <Clock size={20} />
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                    <Clock size={18} className="sm:size-5" />
                   </div>
                   <div>
-                    <h3 className="font-black text-lg sm:text-xl uppercase tracking-tight text-gray-900 dark:text-slate-100">
+                    <h3 className="font-black text-base sm:text-xl uppercase tracking-tight text-gray-900 dark:text-slate-100">
                       {t("places_admin.operating_hours") || "Operating Hours"}
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-slate-400">
@@ -1559,19 +1593,19 @@ export default function MapDetails() {
         )}
 
         {(hasText(placeData?.website) || hasText(placeData?.instagram)) && (
-          <div className="px-2 mt-6">
-            <h3 className="font-black text-xl uppercase tracking-tight text-gray-900 dark:text-slate-100 mb-2">
+          <div className="mt-6 sm:mt-8">
+            <h3 className="font-black text-lg sm:text-xl uppercase tracking-tight text-gray-900 dark:text-slate-100 mb-1 sm:mb-2">
               {t("place.online_presence")}
             </h3>
-            <p className="text-sm text-gray-500 dark:text-slate-400 mb-6">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mb-4 sm:mb-6">
               {t("place.online_presence_desc")}
             </p>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
               {/* WEBSITE */}
               {hasText(placeData?.website) && (
-                <div className="flex items-center justify-between p-3.5 sm:p-5 gap-2 sm:gap-4 border border-gray-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-[#131b2e] shadow-sm transition-shadow hover:shadow-md">
+                <div className="flex items-center justify-between p-3 sm:p-5 gap-2 sm:gap-4 border border-gray-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-[#131b2e] shadow-sm transition-shadow hover:shadow-md">
                   <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-                    <div className="bg-blue-50 dark:bg-blue-950/40 p-2.5 sm:p-3 rounded-xl shrink-0">🌐</div>
+                    <div className="bg-blue-50 dark:bg-blue-950/40 p-2 sm:p-3 rounded-xl shrink-0 text-base sm:text-lg">🌐</div>
                     <div className="min-w-0">
                       <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">
                         {t("business_details.website")}
@@ -1597,10 +1631,10 @@ export default function MapDetails() {
 
               {/* INSTAGRAM */}
               {hasText(placeData?.instagram) && (
-                <div className="flex items-center justify-between p-3.5 sm:p-5 gap-2 sm:gap-4 border border-gray-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-[#131b2e] shadow-sm transition-shadow hover:shadow-md">
+                <div className="flex items-center justify-between p-3 sm:p-5 gap-2 sm:gap-4 border border-gray-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-[#131b2e] shadow-sm transition-shadow hover:shadow-md">
                   <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-                    <div className="bg-pink-50 dark:bg-pink-950/40 p-2.5 sm:p-3 rounded-xl shrink-0 text-pink-600 dark:text-pink-400 flex items-center justify-center">
-                      <Instagram size={22} className="text-pink-600 dark:text-pink-400" />
+                    <div className="bg-pink-50 dark:bg-pink-950/40 p-2 sm:p-3 rounded-xl shrink-0 text-pink-600 dark:text-pink-400 flex items-center justify-center">
+                      <Instagram size={20} className="sm:size-[22px] text-pink-600 dark:text-pink-400" />
                     </div>
                     <div className="min-w-0">
                       <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">
@@ -1631,12 +1665,12 @@ export default function MapDetails() {
           </div>
         )}
         {/* REVIEWS & EXPERIENCES SECTION */}
-        <div className="mt-12 bg-white dark:bg-[#131b2e] rounded-3xl border border-gray-100 dark:border-slate-800 shadow-xs p-6 md:p-8 space-y-6">
+        <div className="mt-8 sm:mt-12 bg-white dark:bg-[#131b2e] rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-slate-800 shadow-xs p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-slate-800 pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-gray-100 dark:border-slate-800 pb-4 sm:pb-6">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-xl sm:text-2xl uppercase tracking-tight text-gray-900 dark:text-slate-100">
+                <h3 className="font-black text-lg sm:text-2xl uppercase tracking-tight text-gray-900 dark:text-slate-100">
                   {t("reviews.reviews_and_experiences")}
                 </h3>
                 <span className="text-xs font-bold bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800/40">
@@ -1650,7 +1684,7 @@ export default function MapDetails() {
 
             <Button
               onClick={handleOpenReviewModal}
-              className="bg-amber-400 hover:bg-amber-500 text-black font-black px-6 py-3 rounded-2xl text-xs sm:text-sm uppercase tracking-wider shadow-sm hover:shadow-md transition-all active:scale-95 shrink-0 border-none flex items-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto bg-amber-400 hover:bg-amber-500 text-black font-black px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-xs sm:text-sm uppercase tracking-wider shadow-sm hover:shadow-md transition-all active:scale-95 shrink-0 border-none flex items-center justify-center gap-2 cursor-pointer"
             >
               {myReview ? (
                 <>
@@ -1665,18 +1699,18 @@ export default function MapDetails() {
           </div>
 
           {/* Rating Summary Highlight */}
-          <div className="bg-gradient-to-r from-amber-50/70 via-orange-50/40 to-transparent dark:from-amber-950/20 dark:via-slate-900/50 dark:to-transparent p-5 rounded-2xl border border-amber-100/80 dark:border-amber-500/20 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-slate-100 tracking-tight flex items-baseline gap-1">
+          <div className="bg-gradient-to-r from-amber-50/70 via-orange-50/40 to-transparent dark:from-amber-950/20 dark:via-slate-900/50 dark:to-transparent p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-amber-100/80 dark:border-amber-500/20 flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="text-3xl sm:text-5xl font-black text-gray-900 dark:text-slate-100 tracking-tight flex items-baseline gap-1">
                 <span>{averageRating || "0.0"}</span>
-                <span className="text-lg text-gray-400 dark:text-slate-500 font-semibold">/ 5</span>
+                <span className="text-sm sm:text-lg text-gray-400 dark:text-slate-500 font-semibold">/ 5</span>
               </div>
               <div className="space-y-1">
-                <div className="flex gap-1">
+                <div className="flex gap-0.5 sm:gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                       key={star}
-                      size={18}
+                      size={16}
                       className={
                         star <= Math.round(Number(averageRating) || 0)
                           ? "fill-yellow-400 text-yellow-400"
@@ -1685,7 +1719,7 @@ export default function MapDetails() {
                     />
                   ))}
                 </div>
-                <p className="text-xs font-medium text-gray-500 dark:text-slate-400">
+                <p className="text-[11px] sm:text-xs font-medium text-gray-500 dark:text-slate-400">
                   {approvedReviews.length > 0
                     ? `${t("reviews.based_on_reviews")} ${approvedReviews.length} ${t("reviews.verified_reviews")}`
                     : isMapPurchased
@@ -1708,7 +1742,7 @@ export default function MapDetails() {
           {/* User's own review if Pending or Rejected */}
           {myReview && myReview.status !== "Approved" && (
             <div
-              className={`p-5 rounded-2xl border-2 transition-all ${
+              className={`p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-2 transition-all ${
                 myReview.status === "Pending"
                   ? "bg-amber-50/90 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800/60 shadow-sm"
                   : "bg-red-50/90 dark:bg-red-950/20 border-red-200 dark:border-red-900/40"
@@ -1717,7 +1751,7 @@ export default function MapDetails() {
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2">
                   <span
-                    className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full flex items-center gap-1.5 ${
+                    className={`text-[11px] sm:text-xs font-black uppercase tracking-wider px-2.5 sm:px-3 py-1 rounded-full flex items-center gap-1.5 ${
                       myReview.status === "Pending"
                         ? "bg-amber-200 dark:bg-amber-900/50 text-amber-950 dark:text-amber-200"
                         : "bg-red-200 dark:bg-red-900/50 text-red-950 dark:text-red-200"
@@ -1735,7 +1769,7 @@ export default function MapDetails() {
                       </>
                     )}
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-slate-400 font-medium">
+                  <span className="text-[11px] sm:text-xs text-gray-500 dark:text-slate-400 font-medium">
                     {t("reviews.visible_only_to_you")}
                   </span>
                 </div>
@@ -1760,7 +1794,7 @@ export default function MapDetails() {
               </p>
 
               {/* Card preview of the user's pending review */}
-              <div className="bg-white/90 dark:bg-[#0e1424] rounded-xl p-4 border border-amber-200 dark:border-slate-800 space-y-2">
+              <div className="bg-white/90 dark:bg-[#0e1424] rounded-xl p-3 sm:p-4 border border-amber-200 dark:border-slate-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((i) => (
@@ -1796,7 +1830,7 @@ export default function MapDetails() {
 
           {/* User's own review if already Approved */}
           {myReview && myReview.status === "Approved" && (
-            <div className="p-5 rounded-2xl bg-green-50/60 dark:bg-green-950/20 border border-green-200/80 dark:border-green-900/40 space-y-3">
+            <div className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-green-50/60 dark:bg-green-950/20 border border-green-200/80 dark:border-green-900/40 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/50 text-green-900 dark:text-green-300 flex items-center gap-1.5">
@@ -1823,7 +1857,7 @@ export default function MapDetails() {
                 </Button>
               </div>
 
-              <div className="bg-white dark:bg-[#0e1424] rounded-xl p-4 border border-green-100 dark:border-slate-800 space-y-2">
+              <div className="bg-white dark:bg-[#0e1424] rounded-xl p-3 sm:p-4 border border-green-100 dark:border-slate-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((i) => (
@@ -1872,17 +1906,17 @@ export default function MapDetails() {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {otherReviews.map((rev: any) => (
                 <div
                   key={rev._id}
-                  className="bg-gray-50/70 hover:bg-gray-50 dark:bg-[#0e1424] dark:hover:bg-slate-800/60 border border-gray-100 dark:border-slate-800/80 rounded-2xl p-5 transition-all space-y-3"
+                  className="bg-gray-50/70 hover:bg-gray-50 dark:bg-[#0e1424] dark:hover:bg-slate-800/60 border border-gray-100 dark:border-slate-800/80 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 transition-all space-y-2.5 sm:space-y-3"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start justify-between gap-3 sm:gap-4">
                     {rev.reviewer?._id || rev.reviewer?.id ? (
                       <Link
                         href={`/explorer/${rev.reviewer._id || rev.reviewer.id}`}
-                        className="flex items-center gap-3 group/user"
+                        className="flex items-center gap-2.5 sm:gap-3 group/user min-w-0"
                       >
                         <Avatar className="w-11 h-11 border-2 border-white dark:border-slate-800 shadow-xs shrink-0 group-hover/user:scale-105 transition-transform">
                           <AvatarImage

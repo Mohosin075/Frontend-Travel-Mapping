@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { formatEntryCost, formatHikeTime, getImageUrl, getLocalized, convertTo12Hour, formatLocalizedSchedule } from "@/lib/utils";
+import { formatEntryCost, formatHikeTime, getImageUrl, getLocalized, convertTo12Hour, formatLocalizedSchedule, cleanDescriptionHtml } from "@/lib/utils";
 import {
   useGetPlaceDetailsQuery,
   useReviewRecommendedPlaceMutation,
@@ -582,8 +582,8 @@ export function ViewPlaceModal({
                           <Info size={14} className="text-amber-600 dark:text-amber-400" />
                           <span>{t("place.about_this_place")}</span>
                         </div>
-                        <p className="text-gray-700 dark:text-slate-300 text-sm leading-relaxed font-normal">
-                          {getLocalized(place.description, language)}
+                        <p className="text-gray-700 dark:text-slate-300 text-sm leading-relaxed font-normal whitespace-pre-wrap break-words">
+                          {cleanDescriptionHtml(getLocalized(place.description, language))}
                         </p>
                       </div>
                     )}
@@ -595,8 +595,8 @@ export function ViewPlaceModal({
                           <Compass size={14} className="text-amber-600 dark:text-amber-400" />
                           <span>{t("place.access_and_getting_here")}</span>
                         </div>
-                        <p className="text-gray-700 dark:text-slate-300 text-sm leading-relaxed font-normal">
-                          {getLocalized(place.access, language)}
+                        <p className="text-gray-700 dark:text-slate-300 text-sm leading-relaxed font-normal whitespace-pre-wrap break-words">
+                          {cleanDescriptionHtml(getLocalized(place.access, language))}
                         </p>
                       </div>
                     )}

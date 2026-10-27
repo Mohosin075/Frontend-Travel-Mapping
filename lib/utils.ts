@@ -675,6 +675,47 @@ export async function downloadFileWithCustomName(
   }, 200);
 }
 
+/**
+ * Strips HTML tags (especially <img>, <br>, <b>, etc. from Google My Maps / KML imports),
+ * decodes entities, and normalizes spacing so descriptions render cleanly.
+ */
+export function cleanDescriptionHtml(raw: unknown): string {
+  if (!raw || typeof raw !== "string") return "";
+  return raw
+    .replace(/<img[^>]*>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<p[^>]*>/gi, "")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
+ * Extracts any image URLs from raw HTML <img> tags (useful for KML imported placemarks
+ * where photos were placed inside the description CDATA).
+ */
+export function extractImagesFromHtml(raw: unknown): string[] {
+  if (!raw) return [];
+  const str = typeof raw === "string" ? raw : typeof raw === "object" ? Object.values(raw).join(" ") : "";
+  if (!str) return [];
+  const images: string[] = [];
+  const imgRegex = /src=["']([^"']+)["']/gi;
+  let match;
+  while ((match = imgRegex.exec(str)) !== null) {
+    if (match[1] && !images.includes(match[1])) {
+      images.push(match[1]);
+    }
+  }
+  return images;
+}
+
 
 
 
