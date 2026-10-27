@@ -30,15 +30,15 @@ function FeaturedMapsInner() {
   const featuredMaps = maps.filter((map) => map.isActive);
 
   return (
-    <div className="bg-gray-50 dark:bg-[#0b0f19] py-10 font-inter min-h-screen">
+    <div className="bg-gray-50 dark:bg-[#0b0f19] pt-4 pb-12 sm:pt-6 sm:pb-14 md:py-10 font-inter min-h-screen transition-colors">
       <div className="mx-auto px-4 md:px-6" style={{ maxWidth: "1300px" }}>
-        <div className="px-4 md:px-6">
-          <div className="flex justify-between items-center mb-5 mt-2">
-            <div className="">
-              <h2 className="text-3xl font-bold leading-normal text-gray-900 dark:text-slate-100">
+        <div>
+          <div className="flex justify-between items-center mb-3 sm:mb-4 md:mb-5">
+            <div>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight text-gray-900 dark:text-slate-100">
                 {language === "es" ? "Mapas Destacados" : "Featured Maps"}
               </h2>
-              <p className="text-gray-500/80 dark:text-slate-400">
+              <p className="text-sm sm:text-base text-gray-500/80 dark:text-slate-400 mt-1">
                 {language === "es"
                   ? "Explora los mejores recorridos guiados por profesionales."
                   : "Explore the best walking tours curated by professionals."}
@@ -47,7 +47,7 @@ function FeaturedMapsInner() {
           </div>
 
           <div
-            className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-7 mt-10"
+            className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-7 mt-4 sm:mt-6 md:mt-8"
           >
             {isLoading ? (
               [1, 2, 3, 4].map((i) => (

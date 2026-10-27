@@ -249,17 +249,17 @@ export default function ExplorePlaces() {
   }, [enterSearching, isFetching]);
 
   return (
-    <section className="bg-gray-50 dark:bg-[#0b0f19] py-16 min-h-screen transition-colors">
+    <section className="bg-gray-50 dark:bg-[#0b0f19] pt-4 pb-12 sm:pt-6 sm:pb-14 md:py-12 min-h-screen transition-colors">
       <div className="max-w-360 mx-auto px-4 md:px-6">
         {/* Title */}
-        <div className="mb-6">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-slate-100 leading-14">
+        <div className="mb-3 sm:mb-4 md:mb-6">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-slate-100 tracking-tight leading-tight">
             {t("place.title") || (language === "es" ? "Lugares" : "Places")}
           </h1>
         </div>
 
         {/* Search */}
-        <div className="mb-6">
+        <div className="mb-3 sm:mb-4 md:mb-6">
           <div className="relative w-full">
             <div className="flex items-center gap-3 bg-white dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 rounded-xl px-2 shadow-sm">
               <Search className="text-gray-400 ml-2" size={20} />
@@ -327,7 +327,7 @@ export default function ExplorePlaces() {
         </div>
 
         {/* Filters — Horizontal scrollable single row on mobile, inline wrap on desktop */}
-        <div className="flex items-center gap-2.5 mb-8 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap no-scrollbar">
+        <div className="flex items-center gap-2.5 mb-4 sm:mb-6 md:mb-8 overflow-x-auto pt-1 pb-2.5 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap no-scrollbar">
           {/* Country Filter Selector */}
           <select
             value={selectedCountry}

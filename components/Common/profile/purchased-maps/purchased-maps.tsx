@@ -58,14 +58,14 @@ export default function PurchasedMapsPage() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] dark:bg-[#0b0f19] flex flex-col">
-      <main className="flex-1 max-w-[1440px] mx-auto w-full px-6 py-12">
+      <main className="flex-1 max-w-[1440px] mx-auto w-full px-4 sm:px-6 pt-4 pb-12 sm:pt-6 sm:pb-14 md:py-12">
         {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b dark:border-slate-800 pb-4 mb-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 border-b dark:border-slate-800 pb-3 sm:pb-4 mb-3 sm:mb-4">
           <div>
-            <h1 className="text-4xl font-black font-public-sans text-gray-900 dark:text-slate-100 mb-2">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black font-public-sans text-gray-900 dark:text-slate-100 mb-1 sm:mb-2">
               {t("purchased_maps_page.title")}
             </h1>
-            <p className="text-gray-500/80 dark:text-slate-400 text-lg font-public-sans">
+            <p className="text-gray-500/80 dark:text-slate-400 text-sm sm:text-base md:text-lg font-public-sans">
               {t("purchased_maps_page.subtitle")}
             </p>
           </div>

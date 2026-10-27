@@ -106,13 +106,13 @@ export default function OfferSection() {
 
   if (isLoading) {
     return (
-      <section className="bg-gray-50 dark:bg-[#0b0f19] min-h-screen py-12">
+      <section className="bg-gray-50 dark:bg-[#0b0f19] min-h-screen pt-4 pb-12 sm:pt-6 sm:pb-14 md:py-12">
         <div className="max-w-360 mx-auto px-4 md:px-6">
-          <div className="flex gap-4 mb-8">
-            <Skeleton className="h-10 w-24 rounded-md dark:bg-slate-800" />
-            <Skeleton className="h-10 w-24 rounded-full dark:bg-slate-800" />
-            <Skeleton className="h-10 w-24 rounded-full dark:bg-slate-800" />
-            <Skeleton className="h-10 w-24 rounded-full dark:bg-slate-800" />
+          <div className="flex items-center gap-2.5 mb-4 sm:mb-6 md:mb-8 overflow-x-auto pt-1 pb-2.5 -mx-4 px-4 md:mx-0 md:px-0 no-scrollbar">
+            <Skeleton className="h-10 w-24 rounded-full dark:bg-slate-800 shrink-0" />
+            <Skeleton className="h-10 w-24 rounded-full dark:bg-slate-800 shrink-0" />
+            <Skeleton className="h-10 w-24 rounded-full dark:bg-slate-800 shrink-0" />
+            <Skeleton className="h-10 w-24 rounded-full dark:bg-slate-800 shrink-0" />
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -125,17 +125,17 @@ export default function OfferSection() {
   }
 
   return (
-    <section className="bg-gray-50 dark:bg-[#0b0f19] min-h-screen">
-      <div className="max-w-360 mx-auto px-4 md:px-6 py-12">
-        <div className="mb-6">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-slate-100 leading-14">
+    <section className="bg-gray-50 dark:bg-[#0b0f19] min-h-screen transition-colors">
+      <div className="max-w-360 mx-auto px-4 md:px-6 pt-4 pb-12 sm:pt-6 sm:pb-14 md:py-12">
+        <div className="mb-3 sm:mb-4 md:mb-6">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-slate-100 tracking-tight leading-tight">
             {t("offer.title")}
           </h1>
         </div>
         {/* Search */}
-        <div className="mb-6">
+        <div className="mb-3 sm:mb-4 md:mb-6">
           <div className="relative w-full">
-            <div className="flex items-center gap-3 bg-white dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 rounded-lg px-2 shadow-sm">
+            <div className="flex items-center gap-3 bg-white dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 rounded-xl px-2 shadow-sm">
               <Search className="text-gray-400 dark:text-slate-400 ml-2" size={20} />
 
               <Input
@@ -188,14 +188,14 @@ export default function OfferSection() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-3 mb-8 flex-wrap items-center">
+        <div className="flex items-center gap-2.5 mb-4 sm:mb-6 md:mb-8 overflow-x-auto pt-1 pb-2.5 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap no-scrollbar">
           {filters.map((filter) => (
             <Button
               key={filter.id}
               variant={activeFilter === filter.id ? "default" : "outline"}
-              className={`rounded-full transition-all ${
+              className={`rounded-full transition-all shrink-0 whitespace-nowrap ${
                 activeFilter === filter.id
-                  ? "bg-yellow-400 text-black hover:bg-yellow-500 border-yellow-500 shadow-md"
+                  ? "bg-yellow-400 text-black hover:bg-yellow-500 border-yellow-500 shadow-md font-bold"
                   : "hover:bg-gray-100 dark:bg-[#131b2e] dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800"
               }`}
               onClick={() => setActiveFilter(filter.id)}
