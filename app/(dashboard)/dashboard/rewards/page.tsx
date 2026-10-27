@@ -41,7 +41,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 const DEFAULT_LEVEL_THRESHOLDS = [
   { level: 0, title: "Explorador", name: "Explorador", xp: 0, points: 0, reviews: 0 },
   { level: 1, title: "Aventurero", name: "Aventurero", xp: 100, points: 100, reviews: 6 },
-  { level: 2, title: "Tlacuilo", name: "Tlacuilo", xp: 200, points: 200, reviews: 13 },
+  { level: 2, title: "Tlacuilo", name: "Tlacuilo", xp: 250, points: 250, reviews: 13 },
   { level: 3, title: "Expedicionario", name: "Expedicionario", xp: 400, points: 400, reviews: 26 },
   { level: 4, title: "Viajero", name: "Viajero", xp: 700, points: 700, reviews: 46 },
   { level: 5, title: "Chasqui", name: "Chasqui", xp: 1300, points: 1300, reviews: 86 },

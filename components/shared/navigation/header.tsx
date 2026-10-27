@@ -286,27 +286,46 @@ export default function Header() {
     }
   };
 
-  const USER_LEVELS = [
-    { level: 0, name: t("levels.explorador") || "Explorador", points: 0 },
-    { level: 1, name: t("levels.aventurero") || "Aventurero", points: 100 },
-    { level: 2, name: t("levels.tlacuilo") || "Tlacuilo", points: 200 },
-    { level: 3, name: t("levels.expedicionario") || "Expedicionario", points: 400 },
-    { level: 4, name: t("levels.viajero") || "Viajero", points: 700 },
-    { level: 5, name: t("levels.chasqui") || "Chasqui", points: 1300 },
-    { level: 6, name: t("levels.cronista") || "Cronista", points: 2200 },
-    { level: 7, name: t("levels.baquiano") || "Baquiano", points: 3500 },
-    { level: 8, name: t("levels.cartografo") || "Cartógrafo", points: 5500 },
-    { level: 9, name: t("levels.maestro_ruta") || "Maestro Ruta", points: 8500 },
-    { level: 10, name: t("levels.leyenda") || "Leyenda", points: 13000 },
-    { level: 11, name: t("levels.gran_leyenda") || "Gran Leyenda", points: 20000 },
-    { level: 12, name: t("levels.mitico") || "Mítico", points: 30000 },
-    { level: 13, name: t("levels.inmortal") || "Inmortal", points: 45000 },
-    { level: 14, name: t("levels.supremo") || "Supremo", points: 65000 }
-  ];
-  const currentLevelIndex = user?.level || 0;
-  const nextLevelIndex = currentLevelIndex < 14 ? currentLevelIndex + 1 : 14;
-  const maxPoints = USER_LEVELS[nextLevelIndex]?.points || 1000;
-  const progress = maxPoints > 0 ? ((user?.points || 0) / maxPoints) * 100 : 100;
+  const { data: levelsRes } = useGetLevelConfigsQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+
+  const effectiveLevels = useMemo(
+    () => getEffectiveLevels(levelsRes, language),
+    [levelsRes, language]
+  );
+
+  const levelCalc = useMemo(
+    () =>
+      calculateUserLevel(
+        user?.points || 0,
+        user?.totalReviewsApproved || 0,
+        effectiveLevels
+      ),
+    [user?.points, user?.totalReviewsApproved, effectiveLevels]
+  );
+
+  const currentLevelNumber =
+    user?.levelInfo?.levelNumber ?? user?.level ?? levelCalc.currentLevelNumber;
+  const currentLevelName =
+    user?.levelInfo?.title ||
+    (typeof user?.levelInfo?.name === "string"
+      ? user.levelInfo.name
+      : getLocalized(user?.levelInfo?.name, language)) ||
+    levelCalc.currentLevelName;
+
+  // Max points required for next level from dynamic configuration
+  const maxPoints =
+    user?.levelInfo?.nextLevel?.pointsRequired ?? levelCalc.nextLevelMinPoints;
+
+  // Percentage progress to next level
+  const progress =
+    maxPoints > 0
+      ? Math.min(
+          100,
+          Math.max(0, user?.levelInfo?.progressPercent ?? levelCalc.percent)
+        )
+      : 100;
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -592,13 +611,14 @@ export default function Header() {
                       )}
 
                       <div className="space-y-1 mb-4">
-                        <p>
-                          {t("levels.level")} <span className="font-bold">{user?.level}</span>
+                        <p className="text-sm font-medium text-gray-700 dark:text-slate-300">
+                          {t("levels.level")} <span className="font-bold">{currentLevelNumber}</span>
+                          {currentLevelName ? ` · ${currentLevelName}` : ""}
                         </p>
 
                         <Progress value={progress} className="h-2" />
 
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-slate-400">
                           {user?.points || 0} / {maxPoints} {t("levels.points")}
                         </p>
                       </div>
@@ -780,10 +800,8 @@ export default function Header() {
                           </p>
                         )}
                         <p className="mt-0.5 text-xs font-semibold text-gray-500 dark:text-slate-400">
-                          {t("levels.level")} {user?.level ?? 0}
-                          {USER_LEVELS[user?.level ?? 0]?.name
-                            ? ` · ${USER_LEVELS[user?.level ?? 0].name}`
-                            : ""}
+                          {t("levels.level")} {currentLevelNumber}
+                          {currentLevelName ? ` · ${currentLevelName}` : ""}
                         </p>
                         <div className="mt-2">
                           <Progress value={progress} className="h-1.5 dark:bg-slate-800" />

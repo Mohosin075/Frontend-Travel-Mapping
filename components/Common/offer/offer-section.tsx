@@ -280,10 +280,11 @@ export default function OfferSection() {
                 key={offer._id}
                 href={offerHref}
                 onClick={handleOfferClick}
+                className="group block h-full"
               >
-                <div className="group rounded-xl overflow-hidden border border-gray-200 dark:border-slate-800/80 bg-white dark:bg-[#131b2e]/90 hover:shadow-md hover:dark:border-amber-400/40 backdrop-blur-md transition">
+                <div className="h-full flex flex-col justify-between group rounded-xl overflow-hidden border border-gray-200 dark:border-slate-800/80 bg-white dark:bg-[#131b2e]/90 hover:shadow-md hover:dark:border-amber-400/40 backdrop-blur-md transition">
                   {/* Image */}
-                  <div className="relative h-36 sm:h-48 md:h-72 w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
+                  <div className="relative h-36 sm:h-48 md:h-72 w-full overflow-hidden bg-slate-100 dark:bg-slate-900 shrink-0">
                     <Image
                       src={getImageUrl(offer?.images || offer?.photo || offer?.photos)}
                       alt={offer.title}
@@ -325,11 +326,13 @@ export default function OfferSection() {
                   </div>
 
                   {/* Text */}
-                  <div className="p-2.5 md:p-4">
-                    <h3 className="font-semibold text-sm md:text-lg line-clamp-2 text-gray-900 dark:text-slate-100">
-                      {offer.title}
-                    </h3>
-                    <p className="text-xs md:text-sm text-gray-500 dark:text-slate-400 line-clamp-1">
+                  <div className="p-2.5 md:p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-semibold text-sm md:text-base line-clamp-2 min-h-[2.5rem] md:min-h-[2.75rem] leading-snug text-gray-900 dark:text-slate-100">
+                        {offer.title}
+                      </h3>
+                    </div>
+                    <p className="text-xs md:text-sm text-gray-500 dark:text-slate-400 truncate mt-1.5">
                       {offer.business?.name || offer.place?.name || "Multiple Locations"}
                     </p>
                   </div>

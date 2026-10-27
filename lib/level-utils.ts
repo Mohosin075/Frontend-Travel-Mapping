@@ -16,7 +16,7 @@ export interface ILevelItem {
 export const DEFAULT_LEVEL_THRESHOLDS: ILevelItem[] = [
   { level: 0, name: "Explorador", points: 0, reviews: 0, reward: "10% OFF 1 Map" },
   { level: 1, name: "Aventurero", points: 100, reviews: 6, reward: "Itinerary in PDF" },
-  { level: 2, name: "Tlacuilo", points: 200, reviews: 13, reward: "Itinerary in PDF" },
+  { level: 2, name: "Tlacuilo", points: 250, reviews: 13, reward: "Itinerary in PDF" },
   { level: 3, name: "Expedicionario", points: 400, reviews: 26, reward: "25% OFF 1 Map" },
   { level: 4, name: "Viajero", points: 700, reviews: 46, reward: "Itinerary in PDF" },
   { level: 5, name: "Chasqui", points: 1300, reviews: 86, reward: "1 Free Map" },

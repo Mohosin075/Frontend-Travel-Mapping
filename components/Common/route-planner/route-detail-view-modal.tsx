@@ -298,8 +298,8 @@ export default function RouteDetailViewModal({
 
                       {/* Stop Info (Name & Address) */}
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate group-hover:text-amber-500 transition-colors">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 line-clamp-2 leading-snug group-hover:text-amber-500 transition-colors break-words">
                             {getLocalized(stop.name, language)}
                           </h4>
                           {isSelected && (
@@ -309,7 +309,7 @@ export default function RouteDetailViewModal({
                           )}
                         </div>
                         {stop.address && (
-                          <p className="text-xs text-gray-500 dark:text-slate-400 truncate mt-0.5">
+                          <p className="text-[11px] sm:text-xs text-gray-500 dark:text-slate-400 line-clamp-1 truncate mt-0.5">
                             {stop.address}
                           </p>
                         )}
@@ -324,7 +324,7 @@ export default function RouteDetailViewModal({
                             handleStopDirections(stop.coordinates);
                           }}
                           title={t("route_planner.directions") || (language === "es" ? "Cómo llegar" : "Get directions")}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-[#FFC107] hover:bg-[#e6ad06] text-gray-950 font-bold text-xs shadow-sm active:scale-95 transition-all cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-[#FFC107] hover:bg-[#e6ad06] text-gray-950 font-bold text-xs shadow-sm active:scale-95 transition-all cursor-pointer whitespace-nowrap"
                         >
                           <Navigation className="w-3.5 h-3.5 fill-gray-950 -rotate-45 shrink-0" />
                           <span>{t("route_planner.directions") || (language === "es" ? "Cómo llegar" : "Get directions")}</span>

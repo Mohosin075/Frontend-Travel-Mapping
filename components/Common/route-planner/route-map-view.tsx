@@ -495,12 +495,12 @@ export default function RouteMapView({
               {activeStop.placeId ? (
                 <Link
                   href={`/places/${activeStop.placeId}`}
-                  className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 hover:text-amber-500 hover:underline underline-offset-2 transition-colors truncate block"
+                  className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 hover:text-amber-500 hover:underline underline-offset-2 transition-colors line-clamp-2 leading-snug break-words block"
                 >
                   {getLocalized(activeStop.name, language)}
                 </Link>
               ) : (
-                <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 truncate">
+                <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 line-clamp-2 leading-snug break-words">
                   {getLocalized(activeStop.name, language)}
                 </h4>
               )}

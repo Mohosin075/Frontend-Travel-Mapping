@@ -69,10 +69,10 @@ function FeaturedMapsInner() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
                     onClick={() => router.push(mapHref(map._id))}
-                    className="bg-white dark:bg-[#131b2e]/90 backdrop-blur-md rounded-xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-none border border-gray-100 dark:border-slate-800/80 hover:dark:border-amber-400/40 transition-colors flex flex-col cursor-pointer pb-2"
+                    className="h-full bg-white dark:bg-[#131b2e]/90 backdrop-blur-md rounded-xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-none border border-gray-100 dark:border-slate-800/80 hover:dark:border-amber-400/40 transition-colors flex flex-col justify-between cursor-pointer pb-2"
                   >
                     {/* Image Container */}
-                    <div className="relative aspect-square mb-2 overflow-hidden">
+                    <div className="relative aspect-square mb-2 overflow-hidden shrink-0">
                       <Image
                         src={getImageUrl(map.images?.[0])}
                         alt={map.name}
@@ -93,16 +93,18 @@ function FeaturedMapsInner() {
                     </div>
 
                     {/* Card Details */}
-                    <div className="p-2 sm:p-3 flex flex-col flex-1">
-                      <h3 className="text-sm sm:text-base md:text-lg font-bold text-[#1A1A1A] dark:text-slate-100 leading-tight mb-1 line-clamp-2">
-                        {getLocalized(map.name, language)}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-[#9E9E9E] dark:text-slate-400 mb-2 line-clamp-2">
-                        {getLocalized(map.description, language) ||
-                          (language === "es"
-                            ? "Explora lo mejor de la ciudad con esta guía seleccionada."
-                            : "Explore the best of the city with this curated guide.")}
-                      </p>
+                    <div className="p-2 sm:p-3 flex flex-col flex-1 justify-between">
+                      <div>
+                        <h3 className="text-sm sm:text-base md:text-lg font-bold text-[#1A1A1A] dark:text-slate-100 leading-tight mb-1 line-clamp-2 min-h-[2.5rem] sm:min-h-[2.75rem]">
+                          {getLocalized(map.name, language)}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-[#9E9E9E] dark:text-slate-400 mb-2 line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">
+                          {getLocalized(map.description, language) ||
+                            (language === "es"
+                              ? "Explora lo mejor de la ciudad con esta guía seleccionada."
+                              : "Explore the best of the city with this curated guide.")}
+                        </p>
+                      </div>
                       <div className="mt-auto">
                         <span className="text-base sm:text-lg md:text-xl font-bold text-[#1A1A1A] dark:text-slate-100 block mb-2">
                           ${map.price || "0.00"}
