@@ -4,7 +4,7 @@ import { SafeImage } from "@/components/shared/safe-image";
 import { NoImage } from "@/lib/others/others";
 import { TPlace } from "@/lib/types/place/place";
 import { getUsableMediaUrl, getLocalized } from "@/lib/utils";
-import { MapPin, Star, Lock, Check } from "lucide-react";
+import { MapPin, Star, Lock } from "lucide-react";
 import Link from "next/link";
 import { appAlert } from "@/lib/app-alert";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -89,14 +89,6 @@ export function PlaceCard({ data, priority = false }: { data: TPlace; priority?:
             <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
             {data?.isLocked ? "—" : parseFloat(data?.rating?.toFixed(1))}
           </div>
-
-          {/* Visited Badge */}
-          {isVisited && (
-            <div className={`absolute ${data?.isLocked ? "bottom-3 left-3" : "top-3 left-3"} bg-[#FFC107] text-gray-950 px-2.5 py-1 rounded-full flex items-center gap-1 text-[11px] font-black shadow-md border border-amber-300/80 z-10`}>
-              <Check className="w-3 h-3 stroke-[3]" />
-              <span>{t("common.visited") || "Visited"}</span>
-            </div>
-          )}
 
           {/* Lock Badge on top of image */}
           {data?.isLocked && (
