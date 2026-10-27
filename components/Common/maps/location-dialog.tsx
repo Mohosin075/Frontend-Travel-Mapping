@@ -197,14 +197,14 @@ export default function LocationDialog({ id, onClose, mapId, initialData }: Prop
   // Smooth skeleton card instead of small jumpy spinner box
   if (isLoading && !location) {
     return (
-      <div className="absolute inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-16 sm:pb-4">
+      <div className="absolute inset-0 z-50 flex items-center justify-center p-3 sm:p-4 pt-4 pb-4">
         <div
           className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 animate-in fade-in"
           onClick={onClose}
           aria-hidden="true"
         />
-        <div className="bg-white dark:bg-[#131b2e] border border-gray-100 dark:border-slate-800 rounded-t-[28px] rounded-b-[20px] sm:rounded-[32px] shadow-2xl w-full max-w-md relative z-10 flex flex-col overflow-hidden max-h-[85dvh] sm:max-h-[90vh] min-h-0 transition-all duration-300 ease-out animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-6 sm:slide-in-from-bottom-4">
-          <div className="h-[260px] sm:h-[300px] shrink-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 animate-pulse" />
+        <div className="bg-white dark:bg-[#131b2e] border border-gray-100 dark:border-slate-800 rounded-[28px] sm:rounded-[32px] shadow-2xl w-full max-w-md relative z-10 flex flex-col overflow-hidden max-h-[calc(100%-1.5rem)] sm:max-h-[85vh] min-h-0 transition-all duration-300 ease-out animate-in fade-in-0 zoom-in-95">
+          <div className="h-[235px] sm:h-[285px] shrink-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 animate-pulse" />
           <div className="p-4 sm:p-6 space-y-3">
             <div className="h-6 w-3/4 bg-gray-200 dark:bg-slate-800 rounded-lg animate-pulse" />
             <div className="h-4 w-1/3 bg-gray-100 dark:bg-slate-700 rounded animate-pulse" />
@@ -249,44 +249,46 @@ export default function LocationDialog({ id, onClose, mapId, initialData }: Prop
   }
 
   return (
-    <div className="absolute inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-16 sm:pb-4">
+    <div className="absolute inset-0 z-50 flex items-center justify-center p-3 sm:p-4 pt-4 pb-4">
       {/* Click outside backdrop */}
       <div
         className="absolute inset-0 bg-black/25 backdrop-blur-[2px] transition-opacity duration-300 animate-in fade-in"
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="bg-white dark:bg-[#131b2e]/95 backdrop-blur-xl border border-transparent dark:border-slate-800 text-gray-900 dark:text-slate-100 rounded-t-[28px] rounded-b-[20px] sm:rounded-[32px] shadow-2xl w-full max-w-md relative z-10 flex flex-col overflow-hidden max-h-[80dvh] sm:max-h-[85vh] min-h-0 transition-all duration-300 ease-out animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-6 sm:slide-in-from-bottom-4">
-        {/* Close — always tappable above image + description */}
+      <div className="bg-white dark:bg-[#131b2e]/95 backdrop-blur-xl border border-transparent dark:border-slate-800 text-gray-900 dark:text-slate-100 rounded-[28px] sm:rounded-[32px] shadow-2xl w-full max-w-md relative z-10 flex flex-col overflow-hidden max-h-[calc(100%-1.5rem)] sm:max-h-[85vh] min-h-0 transition-all duration-300 ease-out animate-in fade-in-0 zoom-in-95">
+        {/* Close — always floating and tappable above image + description */}
         <button
           type="button"
           onClick={onClose}
           aria-label="Close location"
-          className="absolute top-3 right-3 z-[60] w-9 h-9 sm:w-11 sm:h-11 bg-white/95 dark:bg-[#0b0f19]/90 text-gray-900 dark:text-slate-100 rounded-full flex items-center justify-center shadow-lg hover:bg-white dark:hover:bg-slate-800 border border-transparent dark:border-slate-800 transition-transform active:scale-95"
+          className="absolute top-3 right-3 z-[60] w-9 h-9 sm:w-11 sm:h-11 bg-white/95 dark:bg-[#0b0f19]/90 text-gray-900 dark:text-slate-100 rounded-full flex items-center justify-center shadow-lg hover:bg-white dark:hover:bg-slate-800 border border-transparent dark:border-slate-800 transition-transform active:scale-95 cursor-pointer"
         >
           <X size={20} className="sm:hidden" />
           <X size={22} className="hidden sm:block" />
         </button>
 
-        {/* Image stays visible; long copy only scrolls below */}
-        <div className="relative h-[260px] sm:h-[300px] shrink-0 grow-0 overflow-hidden rounded-t-[28px] sm:rounded-t-[32px] bg-gray-100 dark:bg-slate-800">
-          {coverImage ? (
-            <SafeImage
-              src={coverImage}
-              alt={location?.name}
-              fill
-              priority={true}
-              className="w-full h-full object-cover object-center"
-            />
-          ) : isLoading ? (
-            <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse" />
-          ) : (
-            <NoImage />
-          )}
-        </div>
+        {/* Unified scroll container for full card: image + content */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          {/* Image */}
+          <div className="relative h-[240px] sm:h-[290px] w-full shrink-0 overflow-hidden rounded-t-[28px] sm:rounded-t-[32px] bg-gray-100 dark:bg-slate-800">
+            {coverImage ? (
+              <SafeImage
+                src={coverImage}
+                alt={location?.name}
+                fill
+                priority={true}
+                className="w-full h-full object-cover object-center"
+              />
+            ) : isLoading ? (
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse" />
+            ) : (
+              <NoImage />
+            )}
+          </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
-          <h2 className="text-xl sm:text-2xl font-black mb-1.5 pr-8 leading-tight">{getSafeString(location?.name, language)}</h2>
+          <div className="p-4 sm:p-6">
+            <h2 className="text-xl sm:text-2xl font-black mb-1.5 pr-8 leading-tight">{getSafeString(location?.name, language)}</h2>
 
           <div className="flex items-center gap-2 mb-3">
             <div className="flex items-center text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100">
@@ -403,6 +405,7 @@ export default function LocationDialog({ id, onClose, mapId, initialData }: Prop
           </div>
         </div>
       </div>
+    </div>
 
       <AddToRouteModal
         isOpen={isAddToRouteModalOpen}
