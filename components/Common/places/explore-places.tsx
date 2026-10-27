@@ -28,17 +28,17 @@ export default function ExplorePlaces() {
   const filters = [
     {
       id: "Near me",
-      label: t("filters.near_me"),
+      label: t("filters.near_me") || (language === "es" ? "Cerca de mí" : "Near me"),
       icon: MapPin,
     },
     {
       id: "Popular",
-      label: t("filters.popular"),
+      label: t("filters.popular") || (language === "es" ? "Populares" : "Popular"),
       icon: Flame,
     },
     {
       id: "New",
-      label: t("filters.new"),
+      label: t("filters.new") || (language === "es" ? "Nuevos" : "New"),
       icon: Sparkles,
     },
   ];
@@ -254,7 +254,7 @@ export default function ExplorePlaces() {
         {/* Title */}
         <div className="mb-6">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-slate-100 leading-14">
-            {t("place.title")}
+            {t("place.title") || (language === "es" ? "Lugares" : "Places")}
           </h1>
         </div>
 
@@ -265,7 +265,7 @@ export default function ExplorePlaces() {
               <Search className="text-gray-400 ml-2" size={20} />
 
               <Input
-                placeholder={t("search.search_places")}
+                placeholder={t("search.search_places") || (language === "es" ? "Buscar lugares, parques o playas..." : "Search locations, parks, or beaches...")}
                 className="border-none h-12 focus-visible:ring-0 shadow-none text-base text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
@@ -339,7 +339,10 @@ export default function ExplorePlaces() {
             }}
             className="h-10 px-3 sm:px-4 max-w-[130px] sm:max-w-[180px] truncate border border-gray-200 dark:border-slate-800 rounded-full focus:outline-none focus:ring-2 focus:ring-[#fabf13] text-sm bg-white dark:bg-[#131b2e] font-semibold text-gray-700 dark:text-slate-200 cursor-pointer shadow-sm hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors shrink-0"
           >
-            <option value="">{t("filters.all_countries") || "All Countries"}</option>
+            <option value="">
+              {t("filters.all_countries") ||
+                (language === "es" ? "Todos los Países" : "All Countries")}
+            </option>
             {mapsResponse?.data?.map((map: any) => {
               const nameStr = getMapName(map);
               return (
@@ -359,7 +362,10 @@ export default function ExplorePlaces() {
             }}
             className="h-10 px-3 sm:px-4 max-w-[130px] sm:max-w-[180px] truncate border border-gray-200 dark:border-slate-800 rounded-full focus:outline-none focus:ring-2 focus:ring-[#fabf13] text-sm bg-white dark:bg-[#131b2e] font-semibold text-gray-700 dark:text-slate-200 cursor-pointer shadow-sm hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors shrink-0"
           >
-            <option value="">{t("filters.all_categories")}</option>
+            <option value="">
+              {t("filters.all_categories") ||
+                (language === "es" ? "Todas las Categorías" : "All Categories")}
+            </option>
             {categoriesResponse?.data?.map((cat: any) => (
               <option key={cat._id} value={cat._id}>
                 {getLocalized(cat.name, language)}
