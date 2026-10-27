@@ -214,10 +214,10 @@ Link {
   animation: pin-ripple 0.7s ease-out both;
 }
 
-/* Mobile touch feedback & active press animation */
-button,
-[role="button"],
-a[role="button"],
+/* Mobile touch feedback & active press animation — strictly exclude Google Maps markers and internal map controls */
+button:not(.gm-style *):not(gmp-advanced-marker):not(gmp-advanced-marker *),
+[role="button"]:not(.gm-style *):not(gmp-advanced-marker):not(gmp-advanced-marker *):not(.cat-marker-root),
+a[role="button"]:not(.gm-style *),
 input[type="button"],
 input[type="submit"],
 .btn {
@@ -227,29 +227,30 @@ input[type="submit"],
   -webkit-user-select: none;
 }
 
-button:active:not(:disabled),
-[role="button"]:active:not([aria-disabled="true"]):not([disabled]),
-a[role="button"]:active,
+button:not(.gm-style *):not(gmp-advanced-marker):not(gmp-advanced-marker *):active:not(:disabled),
+[role="button"]:not(.gm-style *):not(gmp-advanced-marker):not(gmp-advanced-marker *):not(.cat-marker-root):active:not([aria-disabled="true"]):not([disabled]),
+a[role="button"]:not(.gm-style *):active,
 input[type="button"]:active:not(:disabled),
 input[type="submit"]:active:not(:disabled),
 .btn:active:not(:disabled) {
-  transform: scale(0.95) !important;
-  opacity: 0.88 !important;
-  transition: transform 0.08s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.08s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transform: scale(0.95);
+  opacity: 0.88;
+  transition: transform 0.08s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.08s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Enhanced mobile touch feedback specifically on touch devices */
+/* Enhanced mobile touch feedback specifically on touch devices (exclude Google Maps) */
 @media (hover: none) and (pointer: coarse) {
-  button:active:not(:disabled),
-  [role="button"]:active:not([aria-disabled="true"]):not([disabled]),
-  a[role="button"]:active,
+  button:not(.gm-style *):not(gmp-advanced-marker):not(gmp-advanced-marker *):active:not(:disabled),
+  [role="button"]:not(.gm-style *):not(gmp-advanced-marker):not(gmp-advanced-marker *):not(.cat-marker-root):active:not([aria-disabled="true"]):not([disabled]),
+  a[role="button"]:not(.gm-style *):active,
   input[type="button"]:active:not(:disabled),
   input[type="submit"]:active:not(:disabled),
   .btn:active:not(:disabled) {
-    transform: scale(0.93) !important;
-    opacity: 0.82 !important;
+    transform: scale(0.93);
+    opacity: 0.82;
     filter: brightness(0.95);
-    box-shadow: 0 0 0 2px rgba(250, 191, 19, 0.35) !important;
-    transition: transform 0.05s ease-out, opacity 0.05s ease-out !important;
+    box-shadow: 0 0 0 2px rgba(250, 191, 19, 0.35);
+    transition: transform 0.05s ease-out, opacity 0.05s ease-out;
   }
 }
+

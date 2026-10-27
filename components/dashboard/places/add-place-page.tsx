@@ -577,15 +577,19 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
             : findCategoryById(place.category);
 
         const isSelected = selectedPlace?._id === place._id;
+        const handleMarkerClick = (e?: React.MouseEvent | any) => {
+          if (e && typeof e.stopPropagation === "function") {
+            e.stopPropagation();
+          }
+          handleSelectPlace(place);
+        };
 
         return (
           <AdvancedMarker
-            key={place._id}
+            key={placeId}
             position={position}
             zIndex={isSelected ? 9999 : 10}
-            onClick={() => {
-              handleSelectPlace(place);
-            }}
+            onClick={handleMarkerClick}
           >
             <CategoryMarker
               icon={cat?.icon || "📍"}
@@ -594,6 +598,7 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
               isSelected={isSelected}
               status={place.status}
               size="md"
+              onClick={handleMarkerClick}
             />
           </AdvancedMarker>
         );
@@ -1499,6 +1504,14 @@ export default function AddPlacePage() {
                     isSelected={true}
                     status="Draft"
                     size="md"
+                    onClick={(e) => {
+                      e?.stopPropagation();
+                      setSelectedPlace({
+                        position: tempMarker,
+                        isNew: true,
+                        address: selectedPlace?.address || "",
+                      });
+                    }}
                   />
                 </AdvancedMarker>
               )}

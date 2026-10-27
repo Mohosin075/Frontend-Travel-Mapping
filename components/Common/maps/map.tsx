@@ -445,29 +445,37 @@ function ViewportPlaceMarkers({
         const icon = cat?.icon || "📍";
         const color = getCategoryColor(cat);
 
+        const placeId = place._id || place.id;
+        const isSelected = selectedLocation?.id === placeId;
+
+        const handleMarkerClick = (e?: React.MouseEvent | any) => {
+          if (e && typeof e.stopPropagation === "function") {
+            e.stopPropagation();
+          }
+          const cover = getUsableMediaUrl(place.media?.photos || place.media);
+          if (cover && typeof window !== "undefined") {
+            const img = new Image();
+            img.src = cover;
+          }
+          setSelectedLocation({
+            id: placeId,
+            type: normalizePinType(place),
+            data: place,
+          });
+        };
+
         return (
           <AdvancedMarker
-            key={place._id}
+            key={placeId}
             position={position}
-            zIndex={selectedLocation?.id === place._id ? 9999 : 10}
-            onClick={() => {
-              const cover = getUsableMediaUrl(place.media?.photos || place.media);
-              if (cover && typeof window !== "undefined") {
-                const img = new Image();
-                img.src = cover;
-              }
-              setSelectedLocation({
-                id: place._id,
-                type: normalizePinType(place),
-                data: place,
-              });
-            }}
+            zIndex={isSelected ? 9999 : 10}
+            onClick={handleMarkerClick}
           >
             <CategoryMarker
               icon={icon}
               color={color}
               name={place.name}
-              isSelected={selectedLocation?.id === place._id}
+              isSelected={isSelected}
               isLocked={place.isLocked}
               isMobile={isMobile}
               isVisited={
@@ -475,6 +483,7 @@ function ViewportPlaceMarkers({
                 (place.id ? visitedPlaceIds?.has(String(place.id)) : false) ||
                 Boolean(place.isVisited)
               }
+              onClick={handleMarkerClick}
             />
           </AdvancedMarker>
         );
