@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl, getProfileImageUrl, isUnusableMediaPath } from "@/lib/utils";
+import { useChangePasswordMutation } from "@/redux/features/auth/authApi";
 import { NoImage } from "@/lib/others/others";
 import { useUpdateProfileMutation } from "@/redux/features/user/userApi";
 import {
@@ -117,6 +118,48 @@ export default function ProfileUpdateModal({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // Password change state
+  const [changePasswordApi, { isLoading: isChangingPassword }] = useChangePasswordMutation();
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPassword) {
+      toast.error(t("auth.current_password_required") || (isEs ? "Ingresa tu contraseña actual." : "Current password is required."));
+      return;
+    }
+    if (!newPassword || newPassword.length < 8) {
+      toast.error(t("auth.password_min_length") || (isEs ? "La nueva contraseña debe tener al menos 8 caracteres." : "New password must be at least 8 characters."));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error(t("auth.password_mismatch") || (isEs ? "Las contraseñas no coinciden." : "Passwords do not match."));
+      return;
+    }
+
+    try {
+      await changePasswordApi({
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      }).unwrap();
+      toast.success(t("auth.password_change_success") || (isEs ? "¡Contraseña actualizada exitosamente!" : "Password updated successfully!"));
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowPasswordSection(false);
+    } catch (err: any) {
+      const msg = err?.data?.message || err?.message || (isEs ? "Error al cambiar la contraseña." : "Failed to change password.");
+      toast.error(msg);
+    }
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -157,8 +200,7 @@ export default function ProfileUpdateModal({
     }
   };
 
-  const currentImage =
-    preview || (data?.profile ? getImageUrl(data.profile) : null);
+  const currentImage = preview || getProfileImageUrl(data?.profile);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -506,6 +548,116 @@ export default function ProfileUpdateModal({
                   </div>
                 </button>
               </div>
+            </div>
+
+            {/* Password & Security Section */}
+            <div className="space-y-3 pt-3 border-t border-gray-100 dark:border-slate-800/80">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300">
+                    <Lock size={15} />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-200">
+                      {t("settings_admin.change_password") || (isEs ? "Cambiar Contraseña" : "Change Password")}
+                    </h3>
+                    <p className="text-[11px] text-gray-500 dark:text-slate-400">
+                      {isEs ? "Actualiza la contraseña de tu cuenta" : "Update your account password"}
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowPasswordSection(!showPasswordSection)}
+                  className="rounded-xl border-gray-200 dark:border-slate-700 text-xs font-bold hover:bg-yellow-50 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  {showPasswordSection ? (isEs ? "Cancelar" : "Cancel") : (isEs ? "Modificar" : "Change")}
+                </Button>
+              </div>
+
+              {showPasswordSection && (
+                <div className="p-4 rounded-2xl bg-gray-50 dark:bg-slate-900/60 border border-gray-200/80 dark:border-slate-800 space-y-3 animate-in fade-in-50 duration-200">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-700 dark:text-slate-300">
+                      {isEs ? "Contraseña actual" : "Current Password"}
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type={showCurrentPass ? "text" : "password"}
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="h-10 pr-9 rounded-xl bg-white dark:bg-[#131b2e] border-gray-200 dark:border-slate-700 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPass(!showCurrentPass)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 cursor-pointer"
+                      >
+                        {showCurrentPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-700 dark:text-slate-300">
+                      {isEs ? "Nueva contraseña (mínimo 8 caracteres)" : "New Password (min 8 characters)"}
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type={showNewPass ? "text" : "password"}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="h-10 pr-9 rounded-xl bg-white dark:bg-[#131b2e] border-gray-200 dark:border-slate-700 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPass(!showNewPass)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 cursor-pointer"
+                      >
+                        {showNewPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-700 dark:text-slate-300">
+                      {isEs ? "Confirmar nueva contraseña" : "Confirm New Password"}
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type={showConfirmPass ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="h-10 pr-9 rounded-xl bg-white dark:bg-[#131b2e] border-gray-200 dark:border-slate-700 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPass(!showConfirmPass)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 cursor-pointer"
+                      >
+                        {showConfirmPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pt-1 flex justify-end">
+                    <Button
+                      type="button"
+                      onClick={handleChangePassword}
+                      disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
+                      className="h-9 px-4 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold cursor-pointer"
+                    >
+                      {isChangingPassword ? <Loader2 size={14} className="animate-spin" /> : (isEs ? "Guardar Contraseña" : "Save Password")}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

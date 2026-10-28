@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { formatDate, getImageUrl } from "@/lib/utils";
+import { formatDate, getImageUrl, getProfileImageUrl } from "@/lib/utils";
 import { shareProfile } from "@/lib/share-profile";
 import {
   Bell,
@@ -136,19 +136,15 @@ export function ProfileSidebar({ data }: ProfileProps) {
       <div className="bg-white dark:bg-[#131b2e] rounded-xl p-3 border border-gray-200/70 dark:border-slate-800 text-center space-y-3 transition-colors">
         <div className="border border-gray-100 dark:border-slate-800/80 p-3 rounded-lg">
           {/* Avatar with Achievement Badge */}
-          <div className="relative w-32 h-32 mx-auto mb-4 overflow-hidden rounded-lg">
-            {data?.profile ? (
-              <Image
-                src={getImageUrl(data?.profile)}
-                alt={"profile"}
-                width={500}
-                height={500}
-                unoptimized
-                className="object-cover h-full"
-              />
-            ) : (
-              <NoImage />
-            )}
+          <div className="relative w-32 h-32 mx-auto mb-4 overflow-hidden rounded-lg border border-gray-100 dark:border-slate-800 bg-amber-50/40 dark:bg-slate-800">
+            <Image
+              src={getProfileImageUrl(data?.profile)}
+              alt={"profile"}
+              width={500}
+              height={500}
+              unoptimized
+              className="object-cover h-full w-full"
+            />
 
             <div className="absolute bottom-0 right-0 w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center text-black font-bold text-sm border-2 border-white dark:border-slate-900 shadow-sm">
               L{currentLevelNumber}

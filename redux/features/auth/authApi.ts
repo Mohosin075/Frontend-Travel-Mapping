@@ -78,6 +78,14 @@ export const authApi = baseApi.injectEndpoints({
       }),
     }),
 
+    changePassword: builder.mutation({
+      query: (data: { currentPassword: string; newPassword: string; confirmPassword: string }) => ({
+        url: "/auth/change-password",
+        method: "POST",
+        body: data,
+      }),
+    }),
+
     logout: builder.mutation({
       query: () => ({
         url: "/auth/logout",
@@ -95,5 +103,6 @@ export const {
   useForgetPasswordMutation,
   useResetPasswordMutation,
   useGoogleLoginMutation,
+  useChangePasswordMutation,
   useLogoutMutation,
 } = authApi;

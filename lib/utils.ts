@@ -160,7 +160,20 @@ const extractMediaPath = (item: any): string => {
 export const isUnusableMediaPath = (path?: string) => {
   if (!path || typeof path !== "string") return true;
   const value = path.trim();
-  return !value || value === "undefined" || value === "null";
+  return (
+    !value ||
+    value === "undefined" ||
+    value === "null" ||
+    value.includes("1767048629458-l94gk7")
+  );
+};
+
+export const DEFAULT_AVATAR = "/default-avatar.svg";
+
+export const getProfileImageUrl = (profilePath?: any): string => {
+  if (!profilePath || isUnusableMediaPath(profilePath)) return DEFAULT_AVATAR;
+  const url = getImageUrl(profilePath);
+  return !url || url === FALLBACK_IMAGE ? DEFAULT_AVATAR : url;
 };
 
 export const removeAccents = (str?: string): string => {

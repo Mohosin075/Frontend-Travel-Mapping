@@ -5,7 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { formatDate, getImageUrl, getLocalized } from "@/lib/utils";
+import { formatDate, getImageUrl, getLocalized, getProfileImageUrl } from "@/lib/utils";
+import ProfileUpdateModal from "@/components/Common/profile/profile-update-modal";
+import { useGetProfileQuery } from "@/redux/features/user/userApi";
+import { useAppSelector } from "@/redux/hook";
 import { NoImage } from "@/lib/others/others";
 import { shareProfile } from "@/lib/share-profile";
 import { useGetPublicProfileQuery } from "@/redux/features/user/userApi";
@@ -30,6 +33,7 @@ import {
   ShieldCheck,
   Check,
   Copy,
+  Edit2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -75,11 +79,24 @@ export default function ExplorerProfilePage() {
   const params = useParams();
   const userId = String(params?.id || "");
 
-  const { data, isLoading, isError, error } = useGetPublicProfileQuery(userId, {
+  const isAuthenticated = useAppSelector((state) => state.auth.accessToken);
+  const { data: myProfile } = useGetProfileQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+
+  const isOwner = Boolean(
+    myProfile?._id && String(myProfile._id) === String(userId)
+  );
+
+  const { data: publicData, isLoading, isError, error } = useGetPublicProfileQuery(userId, {
     skip: !userId,
   });
 
+  // Owner fallback: if public profile query fails (e.g. private or verified flag), owner can still view their profile
+  const data = publicData || (isOwner ? myProfile : null);
+
   const [isSharing, setIsSharing] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"places" | "reviews">("places");
   const [copied, setCopied] = useState(false);
 
@@ -176,25 +193,38 @@ export default function ExplorerProfilePage() {
             <span>{isEs ? "Volver a los mapas" : "Back to maps"}</span>
           </Link>
 
-          <Button
-            type="button"
-            onClick={handleShare}
-            disabled={isSharing}
-            variant="outline"
-            className="h-9 px-3.5 rounded-xl border-gray-200 dark:border-slate-800 bg-white dark:bg-[#131b2e] hover:bg-amber-500/10 text-xs font-bold text-gray-800 dark:text-slate-200 hover:text-amber-500 dark:hover:text-amber-400 inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
-          >
-            {copied ? (
-              <>
-                <Check size={14} className="text-emerald-500" />
-                <span className="text-emerald-500">{isEs ? "¡Enlace copiado!" : "Link copied!"}</span>
-              </>
-            ) : (
-              <>
-                <Share2 size={14} />
-                <span>{isEs ? "Compartir" : "Share"}</span>
-              </>
+          <div className="flex items-center gap-2">
+            {isOwner && (
+              <Button
+                type="button"
+                onClick={() => setIsEditModalOpen(true)}
+                className="h-9 px-3.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-black text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+              >
+                <Edit2 size={14} />
+                <span>{isEs ? "Editar Perfil" : "Edit Profile"}</span>
+              </Button>
             )}
-          </Button>
+
+            <Button
+              type="button"
+              onClick={handleShare}
+              disabled={isSharing}
+              variant="outline"
+              className="h-9 px-3.5 rounded-xl border-gray-200 dark:border-slate-800 bg-white dark:bg-[#131b2e] hover:bg-amber-500/10 text-xs font-bold text-gray-800 dark:text-slate-200 hover:text-amber-500 dark:hover:text-amber-400 inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+            >
+              {copied ? (
+                <>
+                  <Check size={14} className="text-emerald-500" />
+                  <span className="text-emerald-500">{isEs ? "¡Enlace copiado!" : "Link copied!"}</span>
+                </>
+              ) : (
+                <>
+                  <Share2 size={14} />
+                  <span>{isEs ? "Compartir" : "Share"}</span>
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* HERO PROFILE CARD */}
@@ -214,18 +244,14 @@ export default function ExplorerProfilePage() {
               {/* Avatar + Level Badge */}
               <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 text-center sm:text-left">
                 <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-3xl border-4 border-white dark:border-[#131b2e] shadow-2xl overflow-hidden bg-gray-100 dark:bg-slate-800 shrink-0">
-                  {data.profile ? (
-                    <Image
-                      src={getImageUrl(data.profile)}
-                      alt={data.name || "Explorer"}
-                      width={200}
-                      height={200}
-                      unoptimized
-                      className="object-cover w-full h-full"
-                    />
-                  ) : (
-                    <NoImage />
-                  )}
+                  <Image
+                    src={getProfileImageUrl(data.profile)}
+                    alt={data.name || "Explorer"}
+                    width={200}
+                    height={200}
+                    unoptimized
+                    className="object-cover w-full h-full"
+                  />
                   {/* Floating Level Pill */}
                   <div className="absolute bottom-1.5 right-1.5 px-2 py-0.5 bg-amber-400 text-black font-black text-[11px] rounded-lg shadow-md border border-black/10">
                     Lv {levelNumber}
@@ -651,6 +677,14 @@ export default function ExplorerProfilePage() {
           )}
         </div>
       </div>
+
+      {isOwner && (
+        <ProfileUpdateModal
+          data={myProfile || data}
+          open={isEditModalOpen}
+          onOpenChange={setIsEditModalOpen}
+        />
+      )}
     </main>
   );
 }

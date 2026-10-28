@@ -33,7 +33,7 @@ import {
   Compass,
 } from "lucide-react";
 
-import { getImageUrl, getLocalized } from "@/lib/utils";
+import { getImageUrl, getLocalized, getProfileImageUrl } from "@/lib/utils";
 import { useLogoutMutation } from "@/redux/features/auth/authApi";
 import { logout } from "@/redux/features/auth/authSlice";
 import { broadcastLogout } from "@/components/shared/cross-tab-logout-listener";
@@ -104,6 +104,7 @@ export default function Header() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { t, language } = useLanguage();
+  const isEs = language === "es";
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -560,7 +561,7 @@ export default function Header() {
                       <Avatar className="h-10 w-10 cursor-pointer border">
                         {user?.profile ? (
                           <AvatarImage
-                            src={getImageUrl(user.profile)}
+                            src={getProfileImageUrl(user?.profile)}
                             width={500}
                             height={500}
                             className="object-cover"
@@ -583,7 +584,7 @@ export default function Header() {
                       <div className="relative w-32 h-32 mx-auto mb-4 overflow-hidden rounded-lg border">
                         {user?.profile ? (
                           <Image
-                            src={getImageUrl(user?.profile)}
+                            src={getProfileImageUrl(user?.profile)}
                             alt={"Logo"}
                             width={500}
                             height={500}
@@ -632,32 +633,44 @@ export default function Header() {
                       </div> */}
 
                       {/* Action Buttons */}
-                      <div className="space-y-3">
-                        <Button
-                          type="button"
-                          onClick={handleEditProfile}
-                          className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded flex items-center justify-center gap-2"
+                      <div className="space-y-2">
+                        <Link
+                          href={user?._id ? `/explorer/${user._id}` : "/profile"}
+                          onClick={() => setIsProfileMenuOpen(false)}
+                          className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded h-10 flex items-center justify-center gap-2 transition-colors shadow-xs"
                         >
-                          <Edit2 size={18} />
-                          {t("profile.edit_profile")}
-                        </Button>
+                          <User size={18} />
+                          <span>{t("profile.view_public") || (isEs ? "Ver mi perfil" : "View Profile")}</span>
+                        </Link>
 
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={handleShareProfile}
-                          disabled={isSharingProfile || !user?._id}
-                          className="w-full rounded flex items-center justify-center gap-2 border-gray-200 hover:bg-yellow-50"
-                        >
-                          {isSharingProfile ? (
-                            <Loader2 size={18} className="animate-spin" />
-                          ) : shareCopied ? (
-                            <Check size={18} className="text-green-600" />
-                          ) : (
-                            <Share2 size={18} />
-                          )}
-                          {shareCopied ? t("common.copied") : t("profile.share_profile")}
-                        </Button>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleEditProfile}
+                            className="w-full rounded border-gray-200 dark:border-slate-700 hover:bg-yellow-50 dark:hover:bg-slate-800 text-gray-800 dark:text-slate-200 font-semibold flex items-center justify-center gap-1.5 h-9 text-xs cursor-pointer"
+                          >
+                            <Edit2 size={14} />
+                            <span>{t("profile.edit_profile") || (isEs ? "Editar" : "Edit")}</span>
+                          </Button>
+
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleShareProfile}
+                            disabled={isSharingProfile || !user?._id}
+                            className="w-full rounded border-gray-200 dark:border-slate-700 hover:bg-yellow-50 dark:hover:bg-slate-800 text-gray-800 dark:text-slate-200 font-semibold flex items-center justify-center gap-1.5 h-9 text-xs cursor-pointer"
+                          >
+                            {isSharingProfile ? (
+                              <Loader2 size={14} className="animate-spin" />
+                            ) : shareCopied ? (
+                              <Check size={14} className="text-green-600" />
+                            ) : (
+                              <Share2 size={14} />
+                            )}
+                            <span>{shareCopied ? (t("common.copied") || "Copiado") : (t("profile.share") || (isEs ? "Compartir" : "Share"))}</span>
+                          </Button>
+                        </div>
                       </div>
                     </div>
                     <div className="py-2">
@@ -748,7 +761,7 @@ export default function Header() {
                     <Avatar className="h-9 w-9 cursor-pointer">
                       {user?.profile ? (
                         <AvatarImage
-                          src={getImageUrl(user.profile)}
+                          src={getProfileImageUrl(user?.profile)}
                           className="object-cover"
                         />
                       ) : (
@@ -776,7 +789,7 @@ export default function Header() {
                         <div className="h-16 w-16 overflow-hidden rounded-2xl border-2 border-white dark:border-slate-700 shadow-sm bg-gray-100 dark:bg-slate-800">
                           {user?.profile ? (
                             <Image
-                              src={getImageUrl(user?.profile)}
+                              src={getProfileImageUrl(user?.profile)}
                               alt=""
                               width={128}
                               height={128}
@@ -813,31 +826,43 @@ export default function Header() {
                       </div>
                     </div>
 
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <Button
-                        type="button"
-                        onClick={handleEditProfile}
-                        className="h-10 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded-xl cursor-pointer"
+                    <div className="mt-3 space-y-2">
+                      <Link
+                        href={user?._id ? `/explorer/${user._id}` : "/profile"}
+                        onClick={() => setIsMobileProfileMenuOpen(false)}
+                        className="w-full h-10 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors"
                       >
-                        <Edit2 size={15} />
-                        {t("profile.edit_profile")}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleShareProfile}
-                        disabled={isSharingProfile || !user?._id}
-                        className="h-10 rounded-xl border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
-                      >
-                        {isSharingProfile ? (
-                          <Loader2 size={15} className="animate-spin" />
-                        ) : shareCopied ? (
-                          <Check size={15} className="text-green-600" />
-                        ) : (
-                          <Share2 size={15} />
-                        )}
-                        {shareCopied ? t("common.copied") : t("profile.share_profile")}
-                      </Button>
+                        <User size={16} />
+                        <span>{t("profile.view_public") || (isEs ? "Ver mi perfil" : "View Profile")}</span>
+                      </Link>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleEditProfile}
+                          className="h-9 rounded-xl border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 text-xs font-semibold cursor-pointer"
+                        >
+                          <Edit2 size={14} />
+                          <span>{t("profile.edit_profile") || (isEs ? "Editar" : "Edit")}</span>
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleShareProfile}
+                          disabled={isSharingProfile || !user?._id}
+                          className="h-9 rounded-xl border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 text-xs font-semibold cursor-pointer"
+                        >
+                          {isSharingProfile ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : shareCopied ? (
+                            <Check size={14} className="text-green-600" />
+                          ) : (
+                            <Share2 size={14} />
+                          )}
+                          <span>{shareCopied ? (t("common.copied") || "Copiado") : (t("profile.share") || (isEs ? "Compartir" : "Share"))}</span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
