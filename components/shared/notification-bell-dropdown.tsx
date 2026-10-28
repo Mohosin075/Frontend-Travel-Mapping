@@ -24,9 +24,11 @@ import {
 import { getSocket, emitWhenReady } from "@/lib/socket";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { toast } from "sonner";
+import { useGetProfileQuery } from "@/redux/features/user/userApi";
 import {
   formatRelativeTime,
   getNotificationText,
+  getVisibleNotification,
   getNotificationIconConfig,
 } from "@/components/shared/notifications/notification-helpers";
 
@@ -42,6 +44,7 @@ export default function NotificationBellDropdown({
   className = "",
 }: NotificationBellDropdownProps) {
   const router = useRouter();
+  const { currentData: user } = useGetProfileQuery({}, { skip: !userId });
   const { t, language } = useLanguage();
   const [open, setOpen] = useState(false);
   const [filterUnread, setFilterUnread] = useState(false);
@@ -88,7 +91,7 @@ export default function NotificationBellDropdown({
       refetchUnread();
       refetchNotifs();
 
-      const notif = payload?.data;
+      const notif = payload?.data ? getVisibleNotification(payload.data, user) : undefined;
       if (notif) {
         const titleStr = getNotificationText(notif.title, language) || "New Notification";
         const contentStr = getNotificationText(notif.content, language);
@@ -145,7 +148,7 @@ export default function NotificationBellDropdown({
       socket.off("notification", handleNewNotification);
       socket.off("unread_count_update", handleCountUpdate);
     };
-  }, [userId, open, language, refetchUnread, refetchNotifs, router, viewAllHref]);
+  }, [userId, user, open, language, refetchUnread, refetchNotifs, router, viewAllHref]);
 
   const handleMarkAll = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -175,9 +178,9 @@ export default function NotificationBellDropdown({
   };
 
   const rawNotifs = notifData as any;
-  const notifications: INotificationItem[] = Array.isArray(rawNotifs)
+  const notifications: INotificationItem[] = (Array.isArray(rawNotifs)
     ? rawNotifs
-    : (Array.isArray(rawNotifs?.data) ? rawNotifs.data : []);
+    : (Array.isArray(rawNotifs?.data) ? rawNotifs.data : [])).map((item: INotificationItem) => getVisibleNotification(item, user));
 
   return (
     <DropdownMenu

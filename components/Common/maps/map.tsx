@@ -1303,7 +1303,10 @@ export default function MapPage() {
       if (!belongsToSelectedMap(place)) return false;
 
       // Municipality/region/city/town address filter when searching (accent-insensitive)
-      if (searchQuery && !matchesSearch(place, searchQuery)) {
+      if (searchQuery && (
+        (!isCurrentMapPurchased && !isBusinessLocation(place) && !inherentlyBusinessCatIds.has(getCategoryId(place))) ||
+        processPlaceForUser(place).isLocked || !matchesSearch(place, searchQuery)
+      )) {
         return false;
       }
 
@@ -1319,7 +1322,10 @@ export default function MapPage() {
     ? fetchedPlaces.filter((place: any) => {
         if (!belongsToSelectedMap(place)) return false;
 
-        if (searchQuery && !matchesSearch(place, searchQuery)) {
+        if (searchQuery && (
+          (!isCurrentMapPurchased && !isBusinessLocation(place) && !inherentlyBusinessCatIds.has(getCategoryId(place))) ||
+          processPlaceForUser(place).isLocked || !matchesSearch(place, searchQuery)
+        )) {
           return false;
         }
 

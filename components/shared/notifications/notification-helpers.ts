@@ -1,3 +1,5 @@
+import { canRevealPlace } from "@/lib/place-access";
+import type { INotificationItem } from "@/redux/features/notification/notificationApi";
 import {
   Bell,
   Star,
@@ -10,6 +12,32 @@ import {
   MessageSquare,
   Compass,
 } from "lucide-react";
+
+export function getVisibleNotification(
+  notification: INotificationItem,
+  user: any,
+): INotificationItem {
+  if (notification.type !== "NEW_LOCATION") return notification;
+  const metadata = notification.metadata || {};
+  // The backend resolves free-map and purchase access before returning this flag.
+  if (metadata.canRevealPlace === true) return notification;
+  const place = metadata.place || metadata.location || {};
+  if (canRevealPlace({
+    ...place,
+    map: place.map || metadata.map || metadata.mapId,
+    isLocked: place.isLocked || metadata.isLocked,
+  }, user)) return notification;
+  return {
+    ...notification,
+    title: { en: "New place added", es: "Nuevo lugar añadido" },
+    content: {
+      en: "A new place has been added to explore.",
+      es: "Se ha añadido un nuevo lugar para explorar.",
+    },
+    actionText: { en: "View maps", es: "Ver mapas" },
+    actionUrl: "/maps",
+  };
+}
 
 /**
  * Format relative time in Spanish or English

@@ -40,6 +40,7 @@ import {
 import {
   formatRelativeTime,
   getNotificationText,
+  getVisibleNotification,
   getNotificationIconConfig,
 } from "@/components/shared/notifications/notification-helpers";
 
@@ -65,7 +66,7 @@ export default function NotificationsPage() {
     { skip: !isAuthenticated }
   );
 
-  const { data: user } = useGetProfileQuery({}, { skip: !isAuthenticated });
+  const { currentData: user } = useGetProfileQuery({}, { skip: !isAuthenticated });
 
   const { data: unreadCounts, refetch: refetchUnread } = useGetUnreadCountQuery(
     undefined,
@@ -142,7 +143,7 @@ export default function NotificationsPage() {
     const handleUpdate = (payload?: any) => {
       refetch();
       refetchUnread();
-      const notif = payload?.data;
+      const notif = payload?.data ? getVisibleNotification(payload.data, user) : undefined;
       if (notif) {
         const titleStr = getNotificationText(notif.title, language) || "Roadtripeado";
         const contentStr = getNotificationText(notif.content, language);
@@ -160,12 +161,12 @@ export default function NotificationsPage() {
       socket.off("notification", handleUpdate);
       socket.off("unread_count_update", handleUpdate);
     };
-  }, [isAuthenticated, user?._id, refetch, refetchUnread, language]);
+  }, [isAuthenticated, user, refetch, refetchUnread, language]);
 
   const rawNotifs = notifData as any;
-  const notifications: INotificationItem[] = Array.isArray(rawNotifs)
+  const notifications: INotificationItem[] = (Array.isArray(rawNotifs)
     ? rawNotifs
-    : (Array.isArray(rawNotifs?.data) ? rawNotifs.data : []);
+    : (Array.isArray(rawNotifs?.data) ? rawNotifs.data : [])).map((item: INotificationItem) => getVisibleNotification(item, user));
 
   const handleMarkAllRead = async () => {
     try {

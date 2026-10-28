@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { canRevealPlace } from "@/lib/place-access";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -176,22 +177,22 @@ export default function Header() {
     { skip: debouncedSearch.trim().length === 0 },
   );
   const rawPlaces = placesRes?.data || [];
+  const isAuthenticated = useAppSelector((state) => state.auth.accessToken);
+  const { currentData: user } = useGetProfileQuery({}, { skip: !isAuthenticated });
   const places = useMemo(() => {
     const seen = new Set<string>();
     return rawPlaces.filter((p: any) => {
+      if (!canRevealPlace(p, isAuthenticated ? user : undefined)) return false;
       const name = (typeof p.name === "string" ? p.name : p.name?.es || p.name?.en || "").trim().toLowerCase();
       if (!name || seen.has(name)) return false;
       seen.add(name);
       return true;
     });
-  }, [rawPlaces]);
+  }, [rawPlaces, user, isAuthenticated]);
   const isSearchPending =
     enterSearching ||
     (searchTerm.trim().length > 0 &&
       (searchTerm !== debouncedSearch || isFetching));
-  const isAuthenticated = useAppSelector((state) => state.auth.accessToken);
-
-  const { data: user } = useGetProfileQuery({});
 
   const { data: unreadData, refetch: refetchUnread } = useGetUnreadCountQuery(
     undefined,
