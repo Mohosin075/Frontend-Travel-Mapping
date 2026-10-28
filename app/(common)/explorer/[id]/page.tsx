@@ -100,6 +100,16 @@ export default function ExplorerProfilePage() {
   const [activeTab, setActiveTab] = useState<"places" | "reviews">("places");
   const [copied, setCopied] = useState(false);
 
+  const { data: levelsRes } = useGetLevelConfigsQuery();
+  const effectiveLevels = useMemo(
+    () => getEffectiveLevels(levelsRes, language),
+    [levelsRes, language]
+  );
+  const levelCalc = useMemo(
+    () => calculateUserLevel(data?.points || 0, data?.totalReviewsApproved || 0, effectiveLevels),
+    [data?.points, data?.totalReviewsApproved, effectiveLevels]
+  );
+
   const handleShare = async () => {
     setIsSharing(true);
     try {
@@ -156,16 +166,6 @@ export default function ExplorerProfilePage() {
       </main>
     );
   }
-
-  const { data: levelsRes } = useGetLevelConfigsQuery();
-  const effectiveLevels = useMemo(
-    () => getEffectiveLevels(levelsRes, language),
-    [levelsRes, language]
-  );
-  const levelCalc = useMemo(
-    () => calculateUserLevel(data?.points || 0, data?.totalReviewsApproved || 0, effectiveLevels),
-    [data?.points, data?.totalReviewsApproved, effectiveLevels]
-  );
 
   const levelNumber = data?.levelInfo?.levelNumber ?? levelCalc.currentLevelNumber;
   const levelName =
