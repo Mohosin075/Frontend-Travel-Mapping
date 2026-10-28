@@ -546,7 +546,7 @@ export default function AddToRouteModal({
                         ? "Ej. Roadtrip Fin de Semana"
                         : "e.g. Weekend Roadtrip"
                     }
-                    className="flex-1 px-3 py-2 rounded-xl bg-white dark:bg-[#131b2e] border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-900 dark:text-slate-100 focus:outline-none focus:border-amber-400"
+                    className="min-w-0 flex-1 px-3 py-2 rounded-xl bg-white dark:bg-[#131b2e] border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-900 dark:text-slate-100 focus:outline-none focus:border-amber-400"
                     autoFocus
                   />
                   <button
