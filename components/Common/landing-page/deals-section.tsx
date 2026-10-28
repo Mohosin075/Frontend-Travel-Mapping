@@ -71,28 +71,28 @@ export default function DealsSection() {
       name: t("landing.deal1_business"),
       badge: t("landing.deal1_badge"),
       description: t("landing.deal1_desc"),
-      image: "/landing/Piscinas Naturales de Culebrita.png",
+      image: "/offer/Adventure & Water Sport.png",
     },
     {
       id: "dokas",
       name: t("landing.deal2_business"),
       badge: t("landing.deal2_badge"),
       description: t("landing.deal2_desc"),
-      image: "/landing/Cueva de Punta Borinquen.png",
+      image: "/offer/Dokas.png",
     },
     {
       id: "labranza",
       name: t("landing.deal3_business"),
       badge: t("landing.deal3_badge"),
       description: t("landing.deal3_desc"),
-      image: "/landing/Cascada Barrio Perchgas - Morovis.png",
+      image: "/offer/Labranza Rest.jpg",
     },
     {
       id: "best-ice-cream",
       name: t("landing.deal4_business"),
       badge: t("landing.deal4_badge"),
       description: t("landing.deal4_desc"),
-      image: "/landing/La Playita - Cabo Rojo.png",
+      image: "/offer/Best Ice Cream Planet.png",
     },
   ];
 
