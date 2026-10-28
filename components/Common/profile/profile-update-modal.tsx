@@ -210,7 +210,7 @@ export default function ProfileUpdateModal({
       >
         <div className="mx-auto mt-2 h-1.5 w-12 shrink-0 rounded-full bg-gray-200 dark:bg-slate-700 sm:hidden" />
 
-        <DialogHeader className="relative shrink-0 px-5 pt-4 pb-3 sm:px-6 sm:pt-5 border-b border-gray-100 dark:border-slate-800/80 text-left">
+        <DialogHeader className="relative shrink-0 px-5 pt-12 pb-3 sm:px-6 sm:pt-14 border-b border-gray-100 dark:border-slate-800/80 text-left">
           <DialogTitle className="text-xl font-bold pr-10 text-gray-900 dark:text-slate-100 flex items-center gap-2">
             <span>{t("profile.edit_profile") || (isEs ? "Editar Perfil" : "Edit Profile")}</span>
           </DialogTitle>

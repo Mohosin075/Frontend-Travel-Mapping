@@ -16,7 +16,6 @@ import {
   Check,
   CheckCircle2,
   CircleDollarSign,
-  Edit2,
   Grid2x2,
   Heart,
   Loader2,
@@ -263,17 +262,10 @@ export default function Header() {
   const [logoutApi] = useLogoutMutation();
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [isMobileProfileMenuOpen, setIsMobileProfileMenuOpen] = useState(false);
   const [isSharingProfile, setIsSharingProfile] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleEditProfile = () => {
-    setIsProfileMenuOpen(false);
-    setIsMobileProfileMenuOpen(false);
-    // Let dropdown close before opening dialog (avoids focus trap conflicts)
-    setTimeout(() => setIsUpdateModalOpen(true), 50);
-  };
 
   const handleShareProfile = async () => {
     setIsSharingProfile(true);
@@ -354,7 +346,6 @@ export default function Header() {
     setIsMenuOpen(next);
     if (next) {
       setIsSearchOpen(false);
-      setIsMobileProfileMenuOpen(false);
       setIsProfileMenuOpen(false);
       setSearchTerm("");
     }
@@ -365,7 +356,6 @@ export default function Header() {
     setIsSearchOpen(next);
     if (next) {
       setIsMenuOpen(false);
-      setIsMobileProfileMenuOpen(false);
       setIsProfileMenuOpen(false);
     } else {
       setSearchTerm("");
@@ -376,7 +366,6 @@ export default function Header() {
     dismissKeyboard();
     setIsMenuOpen(false);
     setIsSearchOpen(false);
-    setIsMobileProfileMenuOpen(false);
     setIsProfileMenuOpen(false);
     setSearchTerm("");
   };
@@ -642,17 +631,7 @@ export default function Header() {
                           <span>{t("profile.view_public") || (isEs ? "Ver mi perfil" : "View Profile")}</span>
                         </Link>
 
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleEditProfile}
-                            className="w-full rounded border-gray-200 dark:border-slate-700 hover:bg-yellow-50 dark:hover:bg-slate-800 text-gray-800 dark:text-slate-200 font-semibold flex items-center justify-center gap-1.5 h-9 text-xs cursor-pointer"
-                          >
-                            <Edit2 size={14} />
-                            <span>{t("profile.edit_profile") || (isEs ? "Editar" : "Edit")}</span>
-                          </Button>
-
+                        <div>
                           <Button
                             type="button"
                             variant="outline"
@@ -740,171 +719,27 @@ export default function Header() {
               />
             )}
 
-            {/* Profile Icon - Mobile */}
             {isAuthenticated ? (
-              <DropdownMenu
-                open={isMobileProfileMenuOpen}
-                onOpenChange={(open) => {
-                  setIsMobileProfileMenuOpen(open);
-                  if (open) {
-                    setIsMenuOpen(false);
-                    setIsSearchOpen(false);
-                  }
-                }}
+              <button
+                type="button"
+                onClick={toggleMenu}
+                className="outline-none rounded-full ring-2 ring-yellow-400/70 ring-offset-2"
+                aria-label="Open profile menu"
+                aria-expanded={isMenuOpen}
               >
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className="outline-none rounded-full ring-2 ring-yellow-400/70 ring-offset-2"
-                    aria-label="Open profile"
-                  >
-                    <Avatar className="h-9 w-9 cursor-pointer">
-                      {user?.profile ? (
-                        <AvatarImage
-                          src={getProfileImageUrl(user?.profile)}
-                          className="object-cover"
-                        />
-                      ) : (
-                        <AvatarFallback className="bg-yellow-100">
-                          <User className="size-4" />
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                  </button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent
-                  align="end"
-                  sideOffset={10}
-                  className="w-[min(22rem,calc(100vw-1.25rem))] max-h-[min(32rem,80vh)] overflow-y-auto p-0 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-[#131b2e] shadow-xl"
-                >
-                  <div className="bg-gradient-to-b from-yellow-50 to-white dark:from-slate-900/90 dark:to-[#131b2e] px-4 pt-4 pb-3 border-b border-gray-100 dark:border-slate-800/80">
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={handleEditProfile}
-                        className="relative shrink-0"
-                        aria-label="Edit photo and profile"
-                      >
-                        <div className="h-16 w-16 overflow-hidden rounded-2xl border-2 border-white dark:border-slate-700 shadow-sm bg-gray-100 dark:bg-slate-800">
-                          <Image
-                            src={getProfileImageUrl(user?.profile)}
-                            alt=""
-                            width={128}
-                            height={128}
-                            unoptimized
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src = DEFAULT_AVATAR;
-                            }}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-black shadow border-2 border-white dark:border-[#131b2e]">
-                          <Edit2 size={13} />
-                        </span>
-                      </button>
-                      <div className="min-w-0 flex-1">
-                        <h2 className="truncate text-lg font-bold text-gray-900 dark:text-slate-100 leading-tight">
-                          {user?.name || "Explorer"}
-                        </h2>
-                        {user?.email && (
-                          <p className="truncate text-xs text-gray-500 dark:text-slate-400">
-                            {user.email}
-                          </p>
-                        )}
-                        <p className="mt-0.5 text-xs font-semibold text-gray-500 dark:text-slate-400">
-                          {t("levels.level")} {currentLevelNumber}
-                          {currentLevelName ? ` · ${currentLevelName}` : ""}
-                        </p>
-                        <div className="mt-2">
-                          <Progress value={progress} className="h-1.5 dark:bg-slate-800" />
-                          <p className="mt-1 text-[11px] text-gray-500 dark:text-slate-400">
-                            {user?.points || 0} / {maxPoints} {t("levels.points")}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 space-y-2">
-                      <Link
-                        href={user?._id ? `/explorer/${user._id}` : "/profile"}
-                        onClick={() => setIsMobileProfileMenuOpen(false)}
-                        className="w-full h-10 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors"
-                      >
-                        <User size={16} />
-                        <span>{t("profile.view_public") || (isEs ? "Ver mi perfil" : "View Profile")}</span>
-                      </Link>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={handleEditProfile}
-                          className="h-9 rounded-xl border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 text-xs font-semibold cursor-pointer"
-                        >
-                          <Edit2 size={14} />
-                          <span>{t("profile.edit_profile") || (isEs ? "Editar" : "Edit")}</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={handleShareProfile}
-                          disabled={isSharingProfile || !user?._id}
-                          className="h-9 rounded-xl border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 text-xs font-semibold cursor-pointer"
-                        >
-                          {isSharingProfile ? (
-                            <Loader2 size={14} className="animate-spin" />
-                          ) : shareCopied ? (
-                            <Check size={14} className="text-green-600" />
-                          ) : (
-                            <Share2 size={14} />
-                          )}
-                          <span>{shareCopied ? (t("common.copied") || "Copiado") : (t("profile.share") || (isEs ? "Compartir" : "Share"))}</span>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="px-1.5 py-1.5">
-                    {isAdminOrEditor && (
-                      <Link
-                        href="/dashboard"
-                        onClick={() => setIsMobileProfileMenuOpen(false)}
-                      >
-                        <DropdownMenuItem className="rounded-xl px-3 py-3 cursor-pointer dark:text-slate-200 dark:hover:bg-slate-800/60 dark:hover:text-white">
-                          <Grid2x2 className="mr-3 size-5" />
-                          {t("nav.dashboard") || "Dashboard"}
-                        </DropdownMenuItem>
-                      </Link>
-                    )}
-                    {visibleMenuItems.map((item, index) => {
-                      const Icon = item.icon;
-                      return (
-                        <Link
-                          key={index}
-                          href={item.href}
-                          onClick={() => setIsMobileProfileMenuOpen(false)}
-                        >
-                          <DropdownMenuItem className="rounded-xl px-3 py-3 cursor-pointer dark:text-slate-200 dark:hover:bg-slate-800/60 dark:hover:text-white">
-                            <Icon className="mr-3 size-5" />
-                            {item.label}
-                          </DropdownMenuItem>
-                        </Link>
-                      );
-                    })}
-                  </div>
-
-                  <div className="border-t border-gray-100 dark:border-slate-800 px-3 py-2.5">
-                    <Button
-                      onClick={handleLogout}
-                      disabled={isLoggingOut}
-                      variant="ghost"
-                      className="w-full h-10 rounded-xl text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 font-semibold cursor-pointer"
-                    >
-                      {isLoggingOut ? t("common.loading") : t("nav.logout")}
-                    </Button>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                <Avatar className="h-9 w-9 cursor-pointer">
+                  {user?.profile ? (
+                    <AvatarImage
+                      src={getProfileImageUrl(user.profile)}
+                      className="object-cover"
+                    />
+                  ) : (
+                    <AvatarFallback className="bg-yellow-100">
+                      <User className="size-4" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+              </button>
             ) : (
               <Link href="/login">
                 <Button className="bg-[#FFC107] hover:bg-[#FFB300] text-black font-bold font-public-sans rounded-xl px-4 py-2 text-sm shadow-none">
@@ -912,7 +747,6 @@ export default function Header() {
                 </Button>
               </Link>
             )}
-
             {/* Hamburger Menu Button */}
             <button
               onClick={toggleMenu}
@@ -1146,6 +980,14 @@ export default function Header() {
                     </h3>
 
                     <div className="space-y-1">
+                      <Link
+                        href={user?._id ? `/explorer/${user._id}` : "/profile"}
+                        onClick={closeMenus}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-slate-800/60 text-gray-900 dark:text-slate-100 rounded-lg transition-colors"
+                      >
+                        <User className="size-5" />
+                        <span>{t("profile.view_public") || (isEs ? "Ver mi perfil" : "View Profile")}</span>
+                      </Link>
                       {isAdminOrEditor && (
                         <Link
                           href={"/dashboard"}
