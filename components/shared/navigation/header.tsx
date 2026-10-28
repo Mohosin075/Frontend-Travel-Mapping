@@ -33,7 +33,7 @@ import {
   Compass,
 } from "lucide-react";
 
-import { getImageUrl, getLocalized, getProfileImageUrl } from "@/lib/utils";
+import { DEFAULT_AVATAR, getImageUrl, getLocalized, getProfileImageUrl } from "@/lib/utils";
 import { useLogoutMutation } from "@/redux/features/auth/authApi";
 import { logout } from "@/redux/features/auth/authSlice";
 import { broadcastLogout } from "@/components/shared/cross-tab-logout-listener";
@@ -582,18 +582,17 @@ export default function Header() {
                     <div className="border p-3 rounded-md text-center">
                       {/* Avatar with Achievement Badge */}
                       <div className="relative w-32 h-32 mx-auto mb-4 overflow-hidden rounded-lg border">
-                        {user?.profile ? (
-                          <Image
+                        <Image
                             src={getProfileImageUrl(user?.profile)}
-                            alt={"Logo"}
+                            alt={user?.name || "Explorer"}
                             width={500}
                             height={500}
                             unoptimized
-                            className="object-cover h-full"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = DEFAULT_AVATAR;
+                            }}
+                            className="object-cover h-full w-full"
                           />
-                        ) : (
-                          <NoImage />
-                        )}
 
                         <div className="absolute bottom-0 right-0 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-white font-bold text-lg border-2 border-white">
                           ⭐
@@ -787,18 +786,17 @@ export default function Header() {
                         aria-label="Edit photo and profile"
                       >
                         <div className="h-16 w-16 overflow-hidden rounded-2xl border-2 border-white dark:border-slate-700 shadow-sm bg-gray-100 dark:bg-slate-800">
-                          {user?.profile ? (
-                            <Image
-                              src={getProfileImageUrl(user?.profile)}
-                              alt=""
-                              width={128}
-                              height={128}
-                              unoptimized
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <NoImage />
-                          )}
+                          <Image
+                            src={getProfileImageUrl(user?.profile)}
+                            alt=""
+                            width={128}
+                            height={128}
+                            unoptimized
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = DEFAULT_AVATAR;
+                            }}
+                            className="h-full w-full object-cover"
+                          />
                         </div>
                         <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-black shadow border-2 border-white dark:border-[#131b2e]">
                           <Edit2 size={13} />

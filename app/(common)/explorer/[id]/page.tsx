@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { formatDate, getImageUrl, getLocalized, getProfileImageUrl } from "@/lib/utils";
+import { DEFAULT_AVATAR, formatDate, getImageUrl, getLocalized, getProfileImageUrl } from "@/lib/utils";
 import ProfileUpdateModal from "@/components/Common/profile/profile-update-modal";
 import { useGetProfileQuery } from "@/redux/features/user/userApi";
 import { useAppSelector } from "@/redux/hook";
@@ -129,7 +129,7 @@ export default function ExplorerProfilePage() {
     );
   }
 
-  if (isError || !data) {
+  if (!isLoading && !data) {
     const message =
       (error as any)?.data?.message ||
       (isEs ? "Este perfil de explorador no está disponible o es privado." : "This explorer profile is not available or private.");
@@ -250,6 +250,9 @@ export default function ExplorerProfilePage() {
                     width={200}
                     height={200}
                     unoptimized
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = DEFAULT_AVATAR;
+                    }}
                     className="object-cover w-full h-full"
                   />
                   {/* Floating Level Pill */}
@@ -519,7 +522,7 @@ export default function ExplorerProfilePage() {
                           {/* Rating Pill */}
                           <div className="absolute top-3 right-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-black/60 backdrop-blur-md text-amber-300 text-xs font-black border border-white/10 shadow-sm">
                             <Star size={12} className="fill-amber-400 text-amber-400" />
-                            <span>{(place.rating || 5).toFixed(1)}</span>
+                            <span>{(Number(place.rating) || 5).toFixed(1)}</span>
                           </div>
                         </div>
 
@@ -637,7 +640,7 @@ export default function ExplorerProfilePage() {
 
                             <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-lg text-amber-600 dark:text-amber-400 font-black text-xs shrink-0">
                               <Star size={12} className="fill-amber-400 text-amber-400" />
-                              <span>{rev.rating || 5}</span>
+                              <span>{Number(rev.rating) || 5}</span>
                             </div>
                           </div>
 

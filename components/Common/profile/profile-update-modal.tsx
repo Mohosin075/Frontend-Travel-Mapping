@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { getImageUrl, getProfileImageUrl, isUnusableMediaPath } from "@/lib/utils";
+import { DEFAULT_AVATAR, getImageUrl, getProfileImageUrl, isUnusableMediaPath } from "@/lib/utils";
 import { useChangePasswordMutation } from "@/redux/features/auth/authApi";
 import { NoImage } from "@/lib/others/others";
 import { useUpdateProfileMutation } from "@/redux/features/user/userApi";
@@ -281,18 +281,17 @@ export default function ProfileUpdateModal({
                 aria-label="Change profile photo"
               >
                 <div className="h-full w-full overflow-hidden rounded-full border-4 border-yellow-400 dark:border-yellow-400/80 bg-gray-100 dark:bg-slate-800 shadow-md">
-                  {currentImage ? (
-                    <Image
-                      src={currentImage}
-                      alt="profile"
-                      width={224}
-                      height={224}
-                      unoptimized
-                      className="h-full w-full object-cover transition-opacity group-hover:opacity-90"
-                    />
-                  ) : (
-                    <NoImage />
-                  )}
+                  <Image
+                    src={currentImage || DEFAULT_AVATAR}
+                    alt="profile"
+                    width={224}
+                    height={224}
+                    unoptimized
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = DEFAULT_AVATAR;
+                    }}
+                    className="h-full w-full object-cover transition-opacity group-hover:opacity-90"
+                  />
                 </div>
                 <span className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-yellow-400 text-black shadow-md border-2 border-white dark:border-slate-900 group-hover:bg-yellow-500 transition-colors">
                   <Camera size={16} />

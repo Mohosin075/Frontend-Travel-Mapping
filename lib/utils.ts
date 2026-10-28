@@ -110,7 +110,7 @@ export function formatLocalizedSchedule(val: any, lang: string = "es"): string {
   if (!val) return "";
   const str = getLocalized(val, lang);
   if (!str) return "";
-  
+
   let result = str;
   if (lang === "en") {
     result = str
@@ -287,9 +287,10 @@ export const getImageUrl = (media?: any) => {
   return `${fileOrigin}${path}`;
 };
 
-export const formatDate = (dateString: string) => {
+export const formatDate = (dateString?: any) => {
+  if (!dateString) return "";
   const date = new Date(dateString);
-
+  if (isNaN(date.getTime())) return "";
   return date.toLocaleDateString("en-GB");
 };
 

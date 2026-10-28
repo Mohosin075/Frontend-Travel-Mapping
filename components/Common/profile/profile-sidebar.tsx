@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { formatDate, getImageUrl, getProfileImageUrl } from "@/lib/utils";
+import { DEFAULT_AVATAR, formatDate, getImageUrl, getProfileImageUrl } from "@/lib/utils";
 import { shareProfile } from "@/lib/share-profile";
 import {
   Bell,
@@ -139,10 +139,13 @@ export function ProfileSidebar({ data }: ProfileProps) {
           <div className="relative w-32 h-32 mx-auto mb-4 overflow-hidden rounded-lg border border-gray-100 dark:border-slate-800 bg-amber-50/40 dark:bg-slate-800">
             <Image
               src={getProfileImageUrl(data?.profile)}
-              alt={"profile"}
+              alt="profile"
               width={500}
               height={500}
               unoptimized
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = DEFAULT_AVATAR;
+              }}
               className="object-cover h-full w-full"
             />
 
@@ -187,26 +190,16 @@ export function ProfileSidebar({ data }: ProfileProps) {
             📅 {t("profile.joined")} {formatDate(data?.createdAt) || 0}
           </p>
 
-          {/* Action Buttons */}
+          {/* Action Buttons: View Profile first, Edit Profile afterward */}
           <div className="space-y-2.5">
-            <Button
-              type="button"
-              onClick={() => setOpen(true)}
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded flex items-center justify-center gap-2"
-            >
-              <Edit2 size={18} />
-              {t("profile.edit_profile")}
-            </Button>
-
             {data?._id && (
               <Link href={`/explorer/${data._id}`} className="block w-full">
                 <Button
                   type="button"
-                  variant="outline"
-                  className="w-full rounded flex items-center justify-center gap-2 border-amber-400/50 bg-amber-500/10 dark:bg-amber-500/10 text-amber-900 dark:text-amber-300 hover:bg-amber-500/20 font-semibold"
+                  className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                 >
-                  <Compass size={18} className="text-amber-600 dark:text-amber-400" />
-                  {t("profile.view_public_profile") || "Ver mi perfil público"}
+                  <Compass size={18} />
+                  <span>{t("profile.view_public_profile") || (language === "es" ? "Ver mi perfil público" : "View Profile")}</span>
                 </Button>
               </Link>
             )}
@@ -214,9 +207,19 @@ export function ProfileSidebar({ data }: ProfileProps) {
             <Button
               type="button"
               variant="outline"
+              onClick={() => setOpen(true)}
+              className="w-full rounded flex items-center justify-center gap-2 border-gray-200 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200 hover:bg-yellow-50 dark:hover:bg-slate-800 font-semibold cursor-pointer"
+            >
+              <Edit2 size={18} />
+              <span>{t("profile.edit_profile") || (language === "es" ? "Editar perfil" : "Edit Profile")}</span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
               onClick={handleShare}
               disabled={isSharing || !data?._id}
-              className="w-full rounded flex items-center justify-center gap-2 border-gray-200 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200 hover:bg-yellow-50 dark:hover:bg-slate-800"
+              className="w-full rounded flex items-center justify-center gap-2 border-gray-200 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200 hover:bg-yellow-50 dark:hover:bg-slate-800 cursor-pointer"
             >
               {isSharing ? (
                 <Loader2 size={18} className="animate-spin" />
