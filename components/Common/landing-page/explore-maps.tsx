@@ -55,7 +55,7 @@ export default function ExploreMaps() {
         >
           <div className="rounded-2xl overflow-hidden w-full h-72 sm:h-96 md:h-115 relative">
             <Image
-              src="/map-img.jpg"
+              src="/offer/Landing Page Reward - Dark.png"
               alt={t("landing.interactive_title")}
               fill
               className="object-cover"

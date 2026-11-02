@@ -54,6 +54,7 @@ export function ProfileSidebar({ data }: ProfileProps) {
   const [shareCopied, setShareCopied] = useState(false);
   const { t, language } = useLanguage();
   const { data: profile } = useGetProfileQuery({});
+  const profileUserId = data?._id || (profile as any)?._id;
   const purchasedMaps = Array.isArray((data as any)?.purchasedMaps)
     ? (data as any).purchasedMaps
     : Array.isArray((profile as any)?.purchasedMaps)
@@ -190,19 +191,17 @@ export function ProfileSidebar({ data }: ProfileProps) {
             📅 {t("profile.joined")} {formatDate(data?.createdAt) || 0}
           </p>
 
-          {/* Action Buttons: View Profile first, Edit Profile afterward */}
+          {/* Action Buttons: View Profile and Edit Profile */}
           <div className="space-y-2.5">
-            {data?._id && (
-              <Link href={`/explorer/${data._id}`} className="block w-full">
-                <Button
-                  type="button"
-                  className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-                >
-                  <Compass size={18} />
-                  <span>{t("profile.view_public_profile") || (language === "es" ? "Ver mi perfil público" : "View Profile")}</span>
-                </Button>
-              </Link>
-            )}
+            <Link href={profileUserId ? `/explorer/${profileUserId}` : "/profile"} className="block w-full">
+              <Button
+                type="button"
+                className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <Compass size={18} />
+                <span>{t("profile.view_public_profile") || (language === "es" ? "Ver mi perfil público" : "View Profile")}</span>
+              </Button>
+            </Link>
 
             <Button
               type="button"
@@ -218,7 +217,7 @@ export function ProfileSidebar({ data }: ProfileProps) {
               type="button"
               variant="outline"
               onClick={handleShare}
-              disabled={isSharing || !data?._id}
+              disabled={isSharing || !profileUserId}
               className="w-full rounded flex items-center justify-center gap-2 border-gray-200 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200 hover:bg-yellow-50 dark:hover:bg-slate-800 cursor-pointer"
             >
               {isSharing ? (

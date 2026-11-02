@@ -58,7 +58,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { FavouriteButton } from "@/components/shared/favourite-button";
 import { NoImage } from "@/lib/others/others";
 import { formatOfferDiscountLabel } from "@/lib/offer-label";
-import { formatEntryCost, formatHikeTime, getImageUrl, getUsableMediaList, isVideoUrl, getLocalized, convertTo12Hour, formatLocalizedDifficulty, formatLocalizedSchedule, cleanDescriptionHtml, extractImagesFromHtml } from "@/lib/utils";
+import { formatEntryCost, formatHikeTime, getImageUrl, getProfileImageUrl, getUsableMediaList, isVideoUrl, getLocalized, convertTo12Hour, formatLocalizedDifficulty, formatLocalizedSchedule, cleanDescriptionHtml, extractImagesFromHtml } from "@/lib/utils";
 import { SafeImage } from "@/components/shared/safe-image";
 import { useGetSingleBusinessQuery } from "@/redux/features/business/businessApi";
 import { useGetOffersByPlaceOrBusinessIdQuery } from "@/redux/features/offer/offerApi";
@@ -1920,12 +1920,10 @@ export default function MapDetails() {
                       >
                         <Avatar className="w-11 h-11 border-2 border-white dark:border-slate-800 shadow-xs shrink-0 group-hover/user:scale-105 transition-transform">
                           <AvatarImage
-                            src={getImageUrl(rev.reviewer?.profile)}
+                            src={getProfileImageUrl(rev.reviewer?.profile)}
                             alt={rev.reviewer?.name}
                           />
-                          <AvatarFallback className="capitalize bg-gradient-to-br from-amber-100 to-yellow-200 text-yellow-900 font-black text-sm">
-                            {rev.reviewer?.name?.slice(0, 2) || "EX"}
-                          </AvatarFallback>
+                          <AvatarFallback />
                         </Avatar>
                         <div>
                           <div className="flex items-center gap-2">
@@ -1949,12 +1947,10 @@ export default function MapDetails() {
                       <div className="flex items-center gap-3">
                         <Avatar className="w-11 h-11 border-2 border-white dark:border-slate-800 shadow-xs shrink-0">
                           <AvatarImage
-                            src={getImageUrl(rev.reviewer?.profile)}
+                            src={getProfileImageUrl(rev.reviewer?.profile)}
                             alt={rev.reviewer?.name}
                           />
-                          <AvatarFallback className="capitalize bg-gradient-to-br from-amber-100 to-yellow-200 text-yellow-900 font-black text-sm">
-                            {rev.reviewer?.name?.slice(0, 2) || "EX"}
-                          </AvatarFallback>
+                          <AvatarFallback />
                         </Avatar>
                         <div>
                           <div className="flex items-center gap-2">

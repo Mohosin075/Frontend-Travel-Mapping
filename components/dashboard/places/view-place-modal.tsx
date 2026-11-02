@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { formatEntryCost, formatHikeTime, getImageUrl, getLocalized, convertTo12Hour, formatLocalizedSchedule, cleanDescriptionHtml } from "@/lib/utils";
+import { formatEntryCost, formatHikeTime, getImageUrl, getProfileImageUrl, getLocalized, convertTo12Hour, formatLocalizedSchedule, cleanDescriptionHtml } from "@/lib/utils";
 import {
   useGetPlaceDetailsQuery,
   useReviewRecommendedPlaceMutation,
@@ -1032,11 +1032,9 @@ export function ViewPlaceModal({
                                 <div className="flex items-center gap-3">
                                   <Avatar className="h-9 w-9 border border-gray-100 dark:border-slate-800">
                                     <AvatarImage
-                                      src={getImageUrl(review?.reviewer?.profile)}
+                                      src={getProfileImageUrl(review?.reviewer?.profile)}
                                     />
-                                    <AvatarFallback className="bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 font-bold text-xs">
-                                      {review?.reviewer?.name?.charAt(0) || "U"}
-                                    </AvatarFallback>
+                                    <AvatarFallback />
                                   </Avatar>
                                   <div>
                                     <p className="text-xs font-bold text-gray-900 dark:text-slate-100">

@@ -16,6 +16,7 @@ import {
   Check,
   CheckCircle2,
   CircleDollarSign,
+  Edit2,
   Grid2x2,
   Heart,
   Loader2,
@@ -262,7 +263,14 @@ export default function Header() {
   const [logoutApi] = useLogoutMutation();
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isMobileProfileMenuOpen, setIsMobileProfileMenuOpen] = useState(false);
   const [isSharingProfile, setIsSharingProfile] = useState(false);
+
+  const handleEditProfile = () => {
+    setIsProfileMenuOpen(false);
+    setIsMobileProfileMenuOpen(false);
+    setTimeout(() => setIsUpdateModalOpen(true), 50);
+  };
   const [shareCopied, setShareCopied] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -347,6 +355,18 @@ export default function Header() {
     if (next) {
       setIsSearchOpen(false);
       setIsProfileMenuOpen(false);
+      setIsMobileProfileMenuOpen(false);
+      setSearchTerm("");
+    }
+  };
+
+  const toggleMobileProfile = () => {
+    const next = !isMobileProfileMenuOpen;
+    setIsMobileProfileMenuOpen(next);
+    if (next) {
+      setIsMenuOpen(false);
+      setIsSearchOpen(false);
+      setIsProfileMenuOpen(false);
       setSearchTerm("");
     }
   };
@@ -357,6 +377,7 @@ export default function Header() {
     if (next) {
       setIsMenuOpen(false);
       setIsProfileMenuOpen(false);
+      setIsMobileProfileMenuOpen(false);
     } else {
       setSearchTerm("");
     }
@@ -367,6 +388,7 @@ export default function Header() {
     setIsMenuOpen(false);
     setIsSearchOpen(false);
     setIsProfileMenuOpen(false);
+    setIsMobileProfileMenuOpen(false);
     setSearchTerm("");
   };
 
@@ -548,18 +570,13 @@ export default function Header() {
                   <DropdownMenuTrigger asChild>
                     <button className="outline-none">
                       <Avatar className="h-10 w-10 cursor-pointer border">
-                        {user?.profile ? (
-                          <AvatarImage
-                            src={getProfileImageUrl(user?.profile)}
-                            width={500}
-                            height={500}
-                            className="object-cover"
-                          />
-                        ) : (
-                          <AvatarFallback>
-                            <User className="size-5" />
-                          </AvatarFallback>
-                        )}
+                        <AvatarImage
+                          src={getProfileImageUrl(user?.profile)}
+                          width={500}
+                          height={500}
+                          className="object-cover"
+                        />
+                        <AvatarFallback />
                       </Avatar>
                     </button>
                   </DropdownMenuTrigger>
@@ -625,30 +642,38 @@ export default function Header() {
                         <Link
                           href={user?._id ? `/explorer/${user._id}` : "/profile"}
                           onClick={() => setIsProfileMenuOpen(false)}
-                          className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded h-10 flex items-center justify-center gap-2 transition-colors shadow-xs"
+                          className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded h-10 flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer"
                         >
                           <User size={18} />
                           <span>{t("profile.view_public") || (isEs ? "Ver mi perfil" : "View Profile")}</span>
                         </Link>
 
-                        <div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleShareProfile}
-                            disabled={isSharingProfile || !user?._id}
-                            className="w-full rounded border-gray-200 dark:border-slate-700 hover:bg-yellow-50 dark:hover:bg-slate-800 text-gray-800 dark:text-slate-200 font-semibold flex items-center justify-center gap-1.5 h-9 text-xs cursor-pointer"
-                          >
-                            {isSharingProfile ? (
-                              <Loader2 size={14} className="animate-spin" />
-                            ) : shareCopied ? (
-                              <Check size={14} className="text-green-600" />
-                            ) : (
-                              <Share2 size={14} />
-                            )}
-                            <span>{shareCopied ? (t("common.copied") || "Copiado") : (t("profile.share") || (isEs ? "Compartir" : "Share"))}</span>
-                          </Button>
-                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleEditProfile}
+                          className="w-full rounded border-gray-200 dark:border-slate-700 hover:bg-yellow-50 dark:hover:bg-slate-800 text-gray-800 dark:text-slate-200 font-semibold flex items-center justify-center gap-1.5 h-9 text-xs cursor-pointer"
+                        >
+                          <Edit2 size={14} />
+                          <span>{t("profile.update_profile") || t("profile.edit_profile") || (isEs ? "Actualizar Perfil" : "Update Profile")}</span>
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleShareProfile}
+                          disabled={isSharingProfile || !user?._id}
+                          className="w-full rounded border-gray-200 dark:border-slate-700 hover:bg-yellow-50 dark:hover:bg-slate-800 text-gray-800 dark:text-slate-200 font-semibold flex items-center justify-center gap-1.5 h-9 text-xs cursor-pointer"
+                        >
+                          {isSharingProfile ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : shareCopied ? (
+                            <Check size={14} className="text-green-600" />
+                          ) : (
+                            <Share2 size={14} />
+                          )}
+                          <span>{shareCopied ? (t("common.copied") || "Copiado") : (t("profile.share") || (isEs ? "Compartir" : "Share"))}</span>
+                        </Button>
                       </div>
                     </div>
                     <div className="py-2">
@@ -722,22 +747,17 @@ export default function Header() {
             {isAuthenticated ? (
               <button
                 type="button"
-                onClick={toggleMenu}
+                onClick={toggleMobileProfile}
                 className="outline-none rounded-full ring-2 ring-yellow-400/70 ring-offset-2"
                 aria-label="Open profile menu"
-                aria-expanded={isMenuOpen}
+                aria-expanded={isMobileProfileMenuOpen}
               >
                 <Avatar className="h-9 w-9 cursor-pointer">
-                  {user?.profile ? (
-                    <AvatarImage
-                      src={getProfileImageUrl(user.profile)}
-                      className="object-cover"
-                    />
-                  ) : (
-                    <AvatarFallback className="bg-yellow-100">
-                      <User className="size-4" />
-                    </AvatarFallback>
-                  )}
+                  <AvatarImage
+                    src={getProfileImageUrl(user?.profile)}
+                    className="object-cover"
+                  />
+                  <AvatarFallback />
                 </Avatar>
               </button>
             ) : (
@@ -912,6 +932,170 @@ export default function Header() {
                       )}
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Profile Backdrop */}
+            {isMobileProfileMenuOpen && (
+              <div
+                className="fixed inset-0 bg-black/50 z-[90] lg:hidden transition-opacity duration-300 animate-in fade-in"
+                onClick={closeMenus}
+                aria-hidden="true"
+              />
+            )}
+
+            {/* Mobile Profile Slide-in / Drawer */}
+            <div
+              className={`fixed inset-y-0 right-0 w-full sm:w-96 bg-white dark:bg-[#0e1424] border-l border-transparent dark:border-slate-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-[100] lg:hidden ${
+                isMobileProfileMenuOpen
+                  ? "translate-x-0 pointer-events-auto"
+                  : "translate-x-full pointer-events-none"
+              }`}
+            >
+              <div className="p-6 h-full flex flex-col overflow-y-auto">
+                <div className="flex justify-between items-center mb-4 shrink-0">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">
+                    {t("nav.profile") || "Mi Perfil"}
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <ThemeToggle size="sm" />
+                    <LanguageSwitcher />
+                    <button
+                      type="button"
+                      onClick={closeMenus}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-gray-600 dark:text-slate-300 transition-colors cursor-pointer"
+                      aria-label="Close profile menu"
+                    >
+                      <X className="size-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Profile Card Header */}
+                <div className="bg-gradient-to-b from-yellow-50 to-white dark:from-slate-900/90 dark:to-[#131b2e] p-4 rounded-2xl border border-gray-100 dark:border-slate-800/80 mb-4 text-center">
+                  {/* Avatar with Achievement Badge */}
+                  <div className="relative w-24 h-24 mx-auto mb-3 overflow-hidden rounded-2xl border-2 border-white dark:border-slate-700 shadow-sm bg-gray-100 dark:bg-slate-800">
+                    <Image
+                      src={getProfileImageUrl(user?.profile)}
+                      alt={user?.name || "Explorer"}
+                      width={128}
+                      height={128}
+                      unoptimized
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = DEFAULT_AVATAR;
+                      }}
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute bottom-0 right-0 w-7 h-7 bg-yellow-400 rounded-full flex items-center justify-center text-white font-bold text-sm border-2 border-white shadow">
+                      ⭐
+                    </div>
+                  </div>
+
+                  {/* Name and Email */}
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-0.5 truncate">
+                    {user?.name || "Explorer"}
+                  </h2>
+                  {user?.email && (
+                    <p className="text-xs text-gray-500 dark:text-slate-400 font-medium mb-3 truncate">
+                      {user.email}
+                    </p>
+                  )}
+
+                  {/* Level & Points Progress */}
+                  <div className="space-y-1.5 mb-3 bg-white/80 dark:bg-slate-800/70 p-2.5 rounded-xl border border-gray-100 dark:border-slate-700/60">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-gray-800 dark:text-slate-200">
+                        {t("levels.level")} {currentLevelNumber} {currentLevelName ? ` · ${currentLevelName}` : ""}
+                      </span>
+                      <span className="text-gray-500 dark:text-slate-400 font-medium">
+                        {user?.points || 0} / {maxPoints} {t("levels.points")}
+                      </span>
+                    </div>
+                    <Progress value={progress} className="h-2" />
+                  </div>
+
+                  {/* Action Buttons: View Profile + Edit Profile + Share */}
+                  <div className="space-y-2">
+                    <Link
+                      href={user?._id ? `/explorer/${user._id}` : "/profile"}
+                      onClick={closeMenus}
+                      className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded-xl h-10 flex items-center justify-center gap-2 transition-colors shadow-xs text-sm cursor-pointer"
+                    >
+                      <User size={16} />
+                      <span>{t("profile.view_public") || (isEs ? "Ver mi perfil" : "View Profile")}</span>
+                    </Link>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleEditProfile}
+                        className="w-full rounded-xl border-gray-200 dark:border-slate-700 hover:bg-yellow-50 dark:hover:bg-slate-800 text-gray-800 dark:text-slate-200 font-semibold flex items-center justify-center gap-1.5 h-9 text-xs cursor-pointer"
+                      >
+                        <Edit2 size={14} />
+                        <span>{t("profile.edit_profile") || (isEs ? "Editar" : "Edit Profile")}</span>
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleShareProfile}
+                        disabled={isSharingProfile || !user?._id}
+                        className="w-full rounded-xl border-gray-200 dark:border-slate-700 hover:bg-yellow-50 dark:hover:bg-slate-800 text-gray-800 dark:text-slate-200 font-semibold flex items-center justify-center gap-1.5 h-9 text-xs cursor-pointer"
+                      >
+                        {isSharingProfile ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : shareCopied ? (
+                          <Check size={14} className="text-green-600" />
+                        ) : (
+                          <Share2 size={14} />
+                        )}
+                        <span>{shareCopied ? (t("common.copied") || "Copiado") : (t("profile.share") || (isEs ? "Compartir" : "Share"))}</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Menu items list (Mis Rutas, Lugares Visitados, Contribuciones, etc.) */}
+                <div className="space-y-1 overflow-y-auto">
+                  {isAdminOrEditor && (
+                    <Link
+                      href="/dashboard"
+                      onClick={closeMenus}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-slate-800/60 text-gray-900 dark:text-slate-100 rounded-lg transition-colors font-semibold"
+                    >
+                      <Grid2x2 className="size-5" />
+                      <span>{t("nav.dashboard") || "Dashboard"}</span>
+                    </Link>
+                  )}
+                  {visibleMenuItems.map((item, index) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={index}
+                        href={item.href}
+                        onClick={closeMenus}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-slate-800/60 text-gray-900 dark:text-slate-100 rounded-lg transition-colors"
+                      >
+                        <Icon className="size-5" />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                {/* Logout Button */}
+                <div className="mt-auto pt-4 border-t border-gray-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => handleLogout()}
+                    disabled={isLoggingOut}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-left font-semibold cursor-pointer text-sm"
+                  >
+                    <Map className="size-5" />
+                    <span>{isLoggingOut ? (t("common.logging_out") || "Logging out...") : t("nav.logout")}</span>
+                  </button>
                 </div>
               </div>
             </div>

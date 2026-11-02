@@ -70,9 +70,13 @@ export function MapsTable({ onEditMap }: { onEditMap?: (map: Map) => void }) {
 
   const displayedMaps =
     user?.role === "map_editor"
-      ? mapsData.filter((map: any) =>
-          editorCanAccessMap(user, map._id, map.country),
-        )
+      ? mapsData.filter((map: any) => {
+          const mapName =
+            typeof map.name === "object"
+              ? map.name?.es || map.name?.en
+              : map.name;
+          return editorCanAccessMap(user, map._id, map.country || mapName);
+        })
       : mapsData;
 
   const handleDelete = async (id: string) => {
@@ -229,7 +233,7 @@ export function MapsTable({ onEditMap }: { onEditMap?: (map: Map) => void }) {
                         onClick={() =>
                           handleToggleStatus(map._id, map.status || "Draft")
                         }
-                        className="text-orange-500 hover:text-orange-700 transition-colors"
+                        className="text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 transition-colors"
                         aria-label={map.isActive ? "Hide map" : "Show map"}
                       >
                         {map.isActive ? (

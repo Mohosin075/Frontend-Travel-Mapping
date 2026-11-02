@@ -13,9 +13,11 @@ import {
   Ticket,
   ArrowRight,
   Globe,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { EntityUsersModal } from "./entity-users-modal";
 
 interface StatItem {
   id?: string;
@@ -33,11 +35,18 @@ function StatColumn({
   items,
   type,
   forceExpand,
+  onSelectEntityUsers,
 }: {
   title: string;
   items: StatItem[];
   type: "map" | "place" | "offer" | "business";
   forceExpand?: boolean;
+  onSelectEntityUsers?: (entity: {
+    type: "map" | "place" | "offer" | "business";
+    id: string;
+    name: string;
+    count: number;
+  }) => void;
 }) {
   const { t, language } = useLanguage();
   const router = useRouter();
@@ -108,13 +117,13 @@ function StatColumn({
   const getSectionIcon = () => {
     switch (type) {
       case "map":
-        return <Map size={16} className="text-amber-600 dark:text-amber-400" />;
+        return <Map size={16} className="text-[#fabf13]" />;
       case "place":
-        return <MapPin size={16} className="text-amber-600 dark:text-amber-400" />;
+        return <MapPin size={16} className="text-[#fabf13]" />;
       case "offer":
-        return <Ticket size={16} className="text-amber-600 dark:text-amber-400" />;
+        return <Ticket size={16} className="text-[#fabf13]" />;
       case "business":
-        return <Store size={16} className="text-amber-600 dark:text-amber-400" />;
+        return <Store size={16} className="text-[#fabf13]" />;
     }
   };
 
@@ -137,7 +146,7 @@ function StatColumn({
       <div
         className={`space-y-2.5 transition-all ${
           effectiveExpanded
-            ? "max-h-[380px] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-amber-200 dark:scrollbar-thumb-slate-700 hover:scrollbar-thumb-amber-300"
+            ? "max-h-[380px] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-yellow-200 dark:scrollbar-thumb-slate-700 hover:scrollbar-thumb-yellow-300"
             : ""
         }`}
       >
@@ -149,28 +158,30 @@ function StatColumn({
               ? getLocalized(item.businessName, language)
               : "";
 
+            const targetId = item.id || item.placeId || "";
+
             return (
               <div
                 key={item.id || idx}
                 onClick={() => router.push(itemUrl)}
-                className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-slate-900/60 hover:bg-amber-50/40 dark:hover:bg-slate-800/80 hover:border-amber-200 dark:hover:border-slate-700 p-3 rounded-lg border border-gray-100 dark:border-slate-800 transition-all cursor-pointer group shadow-2xs hover:shadow-xs"
+                className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-slate-900/60 hover:bg-yellow-50/40 dark:hover:bg-slate-800/80 hover:border-yellow-300 dark:hover:border-slate-700 p-3 rounded-lg border border-gray-100 dark:border-slate-800 transition-all cursor-pointer group shadow-2xs hover:shadow-xs"
                 title={`${t("common.view_details") || "View details"}: ${localizedName}`}
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 truncate">
-                    <span className="text-xs font-semibold text-gray-800 dark:text-slate-200 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">
+                    <span className="text-xs font-semibold text-gray-800 dark:text-slate-200 group-hover:text-yellow-700 dark:group-hover:text-yellow-400 transition-colors truncate">
                       {localizedName}
                     </span>
                     <ExternalLink
                       size={11}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-amber-600 dark:text-amber-400"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-[#fabf13]"
                     />
                   </div>
 
-                  {/* Meta: spots count per map (Requirement 5) / Country / Business Name */}
+                  {/* Meta: spots count per map / Country / Business Name */}
                   <div className="flex items-center gap-2 flex-wrap mt-0.5">
                     {type === "map" && item.placesCount !== undefined && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/50 dark:border-amber-800/40 px-1.5 py-0.5 rounded">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-yellow-800 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-950/50 border border-yellow-300/50 dark:border-yellow-800/40 px-1.5 py-0.5 rounded">
                         <MapPin size={9} />
                         <span>
                           {item.placesCount}{" "}
@@ -192,7 +203,7 @@ function StatColumn({
                       <Link
                         href={getBusinessUrl(item)}
                         onClick={(e) => e.stopPropagation()}
-                        className="text-[11px] text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 font-medium inline-flex items-center gap-1 max-w-full truncate hover:underline"
+                        className="text-[11px] text-yellow-700 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-300 font-medium inline-flex items-center gap-1 max-w-full truncate hover:underline"
                         title={`${t("business_admin.view_business") || "View details"}: ${localizedBusinessName}`}
                       >
                         {item.placeId && !item.businessId ? (
@@ -206,10 +217,26 @@ function StatColumn({
                   </div>
                 </div>
 
-                {/* Count Badge */}
-                <span className="text-xs font-bold text-amber-600 dark:text-amber-400 shrink-0 bg-amber-50/80 dark:bg-amber-950/50 px-2 py-0.5 rounded-md border border-amber-100 dark:border-amber-900/40">
-                  {item.count.toLocaleString()}
-                </span>
+                {/* Count Badge - Clickable to see who these users are */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onSelectEntityUsers && targetId) {
+                      onSelectEntityUsers({
+                        type,
+                        id: targetId,
+                        name: localizedName,
+                        count: item.count,
+                      });
+                    }
+                  }}
+                  className="text-xs font-bold text-yellow-900 dark:text-yellow-300 shrink-0 bg-yellow-100 hover:bg-[#fabf13] hover:text-black dark:bg-yellow-950/60 dark:hover:bg-[#fabf13] dark:hover:text-black px-2.5 py-1 rounded-md border border-yellow-300 dark:border-yellow-700/60 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs group/btn"
+                  title={t("reports_admin.click_to_view_users") || "Click to view interacting users"}
+                >
+                  <Users size={12} className="opacity-70 group-hover/btn:opacity-100" />
+                  <span>{item.count.toLocaleString()}</span>
+                </button>
               </div>
             );
           })
@@ -226,7 +253,7 @@ function StatColumn({
           <button
             type="button"
             onClick={() => setIsExpanded(!effectiveExpanded)}
-            className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold rounded-lg text-amber-700 dark:text-amber-400 bg-amber-50 hover:bg-amber-100/80 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-200/60 dark:border-amber-800/60 transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold rounded-lg text-yellow-800 dark:text-yellow-300 bg-yellow-50 hover:bg-yellow-100/80 dark:bg-yellow-950/40 dark:hover:bg-yellow-900/60 border border-yellow-300/60 dark:border-yellow-800/60 transition-all cursor-pointer"
           >
             <span>
               {effectiveExpanded
@@ -239,7 +266,7 @@ function StatColumn({
 
         <Link
           href={getAllDestinationUrl()}
-          className="inline-flex items-center justify-between text-[11px] font-semibold text-gray-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 px-2 py-1 rounded-md transition-colors"
+          className="inline-flex items-center justify-between text-[11px] font-semibold text-gray-500 dark:text-slate-400 hover:text-yellow-600 dark:hover:text-[#fabf13] px-2 py-1 rounded-md transition-colors"
         >
           <span>{getAllDestinationLabel()}</span>
           <ArrowRight size={12} />
@@ -266,6 +293,24 @@ export function UsageStatistics({
 }) {
   const { t } = useLanguage();
   const [expandAll, setExpandAll] = useState<boolean | undefined>(undefined);
+
+  const [selectedEntity, setSelectedEntity] = useState<{
+    type: "map" | "place" | "offer" | "business";
+    id: string;
+    name: string;
+    count: number;
+  } | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleOpenEntityUsers = (entity: {
+    type: "map" | "place" | "offer" | "business";
+    id: string;
+    name: string;
+    count: number;
+  }) => {
+    setSelectedEntity(entity);
+    setIsModalOpen(true);
+  };
 
   const mapsCount = data?.mostViewedMaps?.length || 0;
   const placesCount = data?.mostOpenedPlaces?.length || 0;
@@ -309,6 +354,7 @@ export function UsageStatistics({
           items={data?.mostViewedMaps || []}
           type="map"
           forceExpand={expandAll}
+          onSelectEntityUsers={handleOpenEntityUsers}
         />
         <StatColumn
           title={
@@ -319,14 +365,23 @@ export function UsageStatistics({
           items={data?.mostOpenedPlaces || []}
           type={placeColumnTitle === "Business visits" ? "business" : "place"}
           forceExpand={expandAll}
+          onSelectEntityUsers={handleOpenEntityUsers}
         />
         <StatColumn
           title={t("reports_admin.most_redeemed_offers") || "Most Redeemed Offers"}
           items={data?.mostRedeemedOffers || []}
           type="offer"
           forceExpand={expandAll}
+          onSelectEntityUsers={handleOpenEntityUsers}
         />
       </div>
+
+      {/* Modal to view interacting users */}
+      <EntityUsersModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        entity={selectedEntity}
+      />
     </div>
   );
 }

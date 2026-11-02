@@ -343,7 +343,7 @@ export default function ReportsPage() {
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="w-10 h-10 text-amber-600 animate-spin" />
+        <Loader2 className="w-10 h-10 text-[#fabf13] animate-spin" />
       </div>
     );
   }
@@ -354,7 +354,7 @@ export default function ReportsPage() {
         <p>{t("reports.failed_load") || "Failed to load reports data."}</p>
         <Link
           href="/dashboard"
-          className="text-amber-600 hover:underline flex items-center gap-2 font-medium"
+          className="text-[#fabf13] hover:underline flex items-center gap-2 font-medium"
         >
           <ArrowLeft size={16} /> Back to dashboard
         </Link>
@@ -387,7 +387,7 @@ export default function ReportsPage() {
           </button>
           <button
             onClick={handleExportPDF}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-[#fabf13] hover:bg-yellow-500 text-black font-bold text-xs font-semibold rounded-lg shadow-sm transition-all cursor-pointer"
           >
             <Download size={14} />
             {t("reports_admin.export_pdf") || "Export PDF"}
@@ -397,7 +397,7 @@ export default function ReportsPage() {
             disabled={isFetching}
             className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 text-xs font-semibold rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw size={14} className={isFetching ? "animate-spin text-amber-600" : ""} />
+            <RefreshCw size={14} className={isFetching ? "animate-spin text-[#fabf13]" : ""} />
             {t("common.refresh") || "Refresh"}
           </button>
         </div>
@@ -408,13 +408,13 @@ export default function ReportsPage() {
         {/* Search place, business, map, or offer */}
         <div ref={searchBoxRef} className="relative min-w-[260px] flex-1 max-w-md">
           {selectedEntity ? (
-            <div className="flex h-10 items-center gap-2 rounded-lg border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/40 px-3">
+            <div className="flex h-10 items-center gap-2 rounded-lg border border-yellow-400 dark:border-yellow-700/60 bg-yellow-50 dark:bg-yellow-950/40 px-3">
               {(() => {
                 const { Icon, label } = ENTITY_META[selectedEntity.type];
                 return (
                   <>
-                    <Icon className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                    <Icon className="h-4 w-4 shrink-0 text-yellow-800 dark:text-yellow-300" />
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-yellow-800 dark:text-yellow-300">
                       {label}
                     </span>
                     <span className="min-w-0 truncate text-xs font-semibold text-gray-900 dark:text-slate-100">
@@ -423,7 +423,7 @@ export default function ReportsPage() {
                     <button
                       type="button"
                       onClick={handleClearEntity}
-                      className="ml-auto rounded p-0.5 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60"
+                      className="ml-auto rounded p-0.5 text-yellow-900 dark:text-yellow-300 hover:bg-yellow-100 dark:hover:bg-yellow-900/60"
                       aria-label={t("common.clear") || "Clear selected"}
                     >
                       <X className="h-3.5 w-3.5" />
@@ -448,7 +448,7 @@ export default function ReportsPage() {
                 placeholder={
                   t("reports_admin.search_placeholder") || "Search place, business, map, or offer..."
                 }
-                className="h-10 w-full rounded-lg border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 pl-9 pr-3 text-xs font-semibold text-gray-700 dark:text-slate-100 placeholder:text-gray-400 outline-none transition focus:ring-2 focus:ring-amber-500/30"
+                className="h-10 w-full rounded-lg border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 pl-9 pr-3 text-xs font-semibold text-gray-700 dark:text-slate-100 placeholder:text-gray-400 outline-none transition focus:ring-2 focus:ring-yellow-400/40"
               />
             </>
           )}
@@ -457,7 +457,7 @@ export default function ReportsPage() {
             <div className="absolute top-full z-50 mt-2 w-full overflow-hidden rounded-xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-[#131b2e] shadow-xl">
               {isSuggestionPending ? (
                 <div className="flex items-center justify-center gap-2 p-4 text-sm text-gray-500 dark:text-slate-400">
-                  <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+                  <Loader2 className="h-4 w-4 animate-spin text-[#fabf13]" />
                   {t("common.loading") || "Searching..."}
                 </div>
               ) : groupedSuggestions.length === 0 ? (
@@ -478,9 +478,9 @@ export default function ReportsPage() {
                             key={`${item.type}-${item.id}`}
                             type="button"
                             onClick={() => handleSelectEntity(item)}
-                            className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-amber-50 dark:hover:bg-slate-800/60"
+                            className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-yellow-50 dark:hover:bg-slate-800/60"
                           >
-                            <Icon className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                            <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[#fabf13] dark:text-amber-400" />
                             <span className="min-w-0">
                               <span className="block truncate text-sm font-semibold text-gray-900 dark:text-slate-100">
                                 {item.name}
@@ -506,7 +506,7 @@ export default function ReportsPage() {
         <select
           value={timeFilter}
           onChange={(e) => setTimeFilter(e.target.value)}
-          className="h-10 px-3 border border-gray-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-xs font-semibold bg-white dark:bg-slate-900 min-w-[140px] text-gray-700 dark:text-slate-200 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+          className="h-10 px-3 border border-gray-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400/40 text-xs font-semibold bg-white dark:bg-slate-900 min-w-[140px] text-gray-700 dark:text-slate-200 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
         >
           <option value="">{t("reports_admin.all_time") || "All Time"}</option>
           <option value="today">{t("reports_admin.today") || "Today"}</option>
@@ -519,7 +519,7 @@ export default function ReportsPage() {
         <select
           value={country}
           onChange={(e) => setCountry(e.target.value)}
-          className="h-10 px-3 border border-gray-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-xs font-semibold bg-white dark:bg-slate-900 min-w-[140px] text-gray-700 dark:text-slate-200 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+          className="h-10 px-3 border border-gray-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400/40 text-xs font-semibold bg-white dark:bg-slate-900 min-w-[140px] text-gray-700 dark:text-slate-200 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
         >
           <option value="">{t("filters.all_countries") || "All Countries"}</option>
           {countriesResponse?.map((c: string) => (
@@ -533,7 +533,7 @@ export default function ReportsPage() {
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="h-10 px-3 border border-gray-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-xs font-semibold bg-white dark:bg-slate-900 min-w-[140px] text-gray-700 dark:text-slate-200 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+          className="h-10 px-3 border border-gray-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400/40 text-xs font-semibold bg-white dark:bg-slate-900 min-w-[140px] text-gray-700 dark:text-slate-200 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
         >
           <option value="">{t("filters.all_categories") || "All Categories"}</option>
           {categoriesResponse?.data?.map((cat: any) => (
@@ -557,7 +557,7 @@ export default function ReportsPage() {
       {/* Selected Entity Banner */}
       {selectedEntity && (
         <div className="mb-8 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30 px-4 py-3">
-          <p className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+          <p className="text-xs font-bold uppercase tracking-wide text-yellow-800 dark:text-yellow-300">
             {t("reports_admin.filtering_by") || "Showing reports for"}
           </p>
           <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-slate-100">

@@ -497,6 +497,15 @@ const COUNTRY_COORDINATES: Record<string, { lat: number; lng: number; zoom: numb
   "republica dominicana": { lat: 18.7357, lng: -70.1627, zoom: 8 },
   "república dominicana": { lat: 18.7357, lng: -70.1627, zoom: 8 },
   "dominican republic": { lat: 18.7357, lng: -70.1627, zoom: 8 },
+  "costa rica": { lat: 9.7489, lng: -83.7534, zoom: 8 },
+  "colombia": { lat: 4.5709, lng: -74.2973, zoom: 6 },
+  "mexico": { lat: 23.6345, lng: -102.5528, zoom: 5 },
+  "méxico": { lat: 23.6345, lng: -102.5528, zoom: 5 },
+  "panama": { lat: 8.5379, lng: -80.7821, zoom: 8 },
+  "panamá": { lat: 8.5379, lng: -80.7821, zoom: 8 },
+  "espana": { lat: 40.4637, lng: -3.7492, zoom: 6 },
+  "españa": { lat: 40.4637, lng: -3.7492, zoom: 6 },
+  "spain": { lat: 40.4637, lng: -3.7492, zoom: 6 },
   "estados unidos": { lat: 37.0902, lng: -95.7129, zoom: 5 },
   "usa": { lat: 37.0902, lng: -95.7129, zoom: 5 },
   "united states": { lat: 37.0902, lng: -95.7129, zoom: 5 },
@@ -520,33 +529,54 @@ function isSameCountry(a: string, b: string): boolean {
 
 function CountryPanner({
   selectedCountry,
-  isManualSelection,
+  places,
   disabled,
 }: {
   selectedCountry: string;
-  isManualSelection: boolean;
+  places?: any[];
   disabled?: boolean;
 }) {
   const map = useMap();
   const geocodingLib = useMapsLibrary("geocoding");
+  const lastPannedCountryRef = useRef<string>("");
 
   useEffect(() => {
-    if (
-      disabled ||
-      !map ||
-      !selectedCountry ||
-      !isManualSelection
-    )
-      return;
+    if (disabled || !map || !selectedCountry) return;
 
-    const key = selectedCountry.trim().toLowerCase();
-    const preset = COUNTRY_COORDINATES[key];
+    const norm = normalizeAccents(selectedCountry).trim().toLowerCase();
+    if (lastPannedCountryRef.current === norm) return;
+    lastPannedCountryRef.current = norm;
+
+    // 1. Preset coordinate lookup
+    const preset = COUNTRY_COORDINATES[norm];
     if (preset) {
       map.panTo({ lat: preset.lat, lng: preset.lng });
       map.setZoom(preset.zoom);
       return;
     }
 
+    // 2. Fit bounds to places if available for this country
+    if (places && places.length > 0) {
+      const validCoords = places
+        .map((p: any) => getPlaceLatLng(p))
+        .filter((c): c is { lat: number; lng: number } => !!c);
+
+      if (validCoords.length > 0) {
+        if (validCoords.length === 1) {
+          map.panTo(validCoords[0]);
+          map.setZoom(11);
+          return;
+        }
+        const bounds = new google.maps.LatLngBounds();
+        for (const coord of validCoords) {
+          bounds.extend(coord);
+        }
+        map.fitBounds(bounds, { top: 60, bottom: 60, left: 60, right: 60 });
+        return;
+      }
+    }
+
+    // 3. Google Geocoder fallback
     if (!geocodingLib) return;
     const geocoder = new geocodingLib.Geocoder();
     geocoder.geocode(
@@ -557,12 +587,12 @@ function CountryPanner({
             map.fitBounds(results[0].geometry.viewport);
           } else {
             map.setCenter(results[0].geometry.location);
-            map.setZoom(6);
+            map.setZoom(7);
           }
         }
       },
     );
-  }, [selectedCountry, map, geocodingLib, isManualSelection, disabled]);
+  }, [selectedCountry, places, map, geocodingLib, disabled]);
 
   return null;
 }
@@ -727,7 +757,12 @@ export default function MapPage() {
     }
     return "";
   });
-  const [selectedCountry, setSelectedCountry] = useState<string>("");
+  const [selectedCountry, setSelectedCountry] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("selectedCountryFilter") || "";
+    }
+    return "";
+  });
   const [detectedCountry, setDetectedCountry] = useState<string>("");
   const [isManualSelection, setIsManualSelection] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
@@ -806,7 +841,8 @@ export default function MapPage() {
   useEffect(() => {
     try {
       const savedCamera = sessionStorage.getItem("mapCameraState");
-      if (savedCamera) {
+      const savedCountry = localStorage.getItem("selectedCountryFilter");
+      if (savedCamera && !savedCountry) {
         setInitialMapState(JSON.parse(savedCamera));
       }
       const savedLoc = sessionStorage.getItem("mapSelectedLocation");
@@ -1155,9 +1191,10 @@ export default function MapPage() {
     }
   }, [pendingFocus, rawMapsList]);
 
-  // Set initial selectedCountry based on saved id, detection, profile, or default
+  // Set initial selectedCountry based on saved id, country, profile, or default
   useEffect(() => {
-    if (selectedMapId || selectedCountry || isManualSelection || rawMapsList.length === 0) return;
+    if (rawMapsList.length === 0) return;
+    if (selectedMapId && selectedCountry) return;
 
     const savedId = localStorage.getItem("selectedMapId");
     const savedCountry = localStorage.getItem("selectedCountryFilter");
@@ -1170,14 +1207,6 @@ export default function MapPage() {
             isSameCountry(m.name, savedCountry)
         )
       : null;
-    const matchedByDetected = detectedCountry
-      ? rawMapsList.find(
-          (m: any) =>
-            normalizeAccents(m.name).toLowerCase() === normalizeAccents(detectedCountry).toLowerCase() ||
-            isSameCountry(m.name, detectedCountry) ||
-            isSameCountry(m.country, detectedCountry)
-        )
-      : null;
     const matchedByProfile = userProfile?.country
       ? rawMapsList.find(
           (m: any) =>
@@ -1187,17 +1216,15 @@ export default function MapPage() {
         )
       : null;
 
-    const chosen = matchedById || matchedByCountry || matchedByDetected || matchedByProfile || rawMapsList[0];
+    const chosen = matchedById || matchedByCountry || matchedByProfile || rawMapsList[0];
     if (chosen) {
       setSelectedMapId(String(chosen._id));
       setSelectedCountry(chosen.name);
       localStorage.setItem("selectedMapId", String(chosen._id));
       localStorage.setItem("selectedCountryFilter", chosen.name);
-      if (!sessionStorage.getItem("mapCameraState")) {
-        setIsManualSelection(true);
-      }
+      setIsManualSelection(true);
     }
-  }, [detectedCountry, userProfile, isManualSelection, selectedMapId, selectedCountry, rawMapsList]);
+  }, [userProfile, selectedMapId, selectedCountry, rawMapsList]);
 
   useEffect(() => {
     if (selectedCountry) {
@@ -1381,7 +1408,7 @@ export default function MapPage() {
             />
             <CountryPanner
               selectedCountry={selectedCountry}
-              isManualSelection={isManualSelection}
+              places={displayPlaces}
               disabled={!!pendingFocus}
             />
             <FocusSetup

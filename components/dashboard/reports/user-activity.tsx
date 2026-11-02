@@ -181,7 +181,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
       {/* Section Header with Quick Active Users Inspection CTA */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Users size={18} className="text-amber-600 dark:text-amber-400" />
+          <Users size={18} className="text-yellow-700 dark:text-[#fabf13]" />
           <h3 className="text-base font-bold text-gray-900 dark:text-slate-100">
             {t("reports_admin.user_overview") || "User Overview"}
           </h3>
@@ -211,7 +211,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
           >
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-gray-500 dark:text-slate-400 text-xs font-semibold mb-1 truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                <p className="text-gray-500 dark:text-slate-400 text-xs font-semibold mb-1 truncate group-hover:text-[#fabf13] dark:group-hover:text-amber-400 transition-colors">
                   {stat.label}
                 </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">
@@ -238,7 +238,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
           <DialogHeader className="p-5 pb-3 border-b border-gray-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-yellow-700 dark:text-[#fabf13] flex items-center justify-center">
                   <Users size={20} />
                 </div>
                 <div>
@@ -259,7 +259,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                 onClick={() => setActiveTimeframe("today")}
                 className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   activeTimeframe === "today"
-                    ? "bg-white dark:bg-[#131b2e] text-amber-600 dark:text-amber-400 shadow-xs border border-gray-200/50 dark:border-slate-800"
+                    ? "bg-white dark:bg-[#131b2e] text-yellow-700 dark:text-[#fabf13] shadow-xs border border-gray-200/50 dark:border-slate-800"
                     : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
                 }`}
               >
@@ -278,7 +278,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                 onClick={() => setActiveTimeframe("week")}
                 className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   activeTimeframe === "week"
-                    ? "bg-white dark:bg-[#131b2e] text-amber-600 dark:text-amber-400 shadow-xs border border-gray-200/50 dark:border-slate-800"
+                    ? "bg-white dark:bg-[#131b2e] text-yellow-700 dark:text-[#fabf13] shadow-xs border border-gray-200/50 dark:border-slate-800"
                     : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
                 }`}
               >
@@ -297,7 +297,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                 onClick={() => setActiveTimeframe("month")}
                 className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   activeTimeframe === "month"
-                    ? "bg-white dark:bg-[#131b2e] text-amber-600 dark:text-amber-400 shadow-xs border border-gray-200/50 dark:border-slate-800"
+                    ? "bg-white dark:bg-[#131b2e] text-yellow-700 dark:text-[#fabf13] shadow-xs border border-gray-200/50 dark:border-slate-800"
                     : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
                 }`}
               >
@@ -316,7 +316,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                 onClick={() => setActiveTimeframe("all")}
                 className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   activeTimeframe === "all"
-                    ? "bg-white dark:bg-[#131b2e] text-amber-600 dark:text-amber-400 shadow-xs border border-gray-200/50 dark:border-slate-800"
+                    ? "bg-white dark:bg-[#131b2e] text-yellow-700 dark:text-[#fabf13] shadow-xs border border-gray-200/50 dark:border-slate-800"
                     : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
                 }`}
               >
@@ -354,12 +354,12 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
               filteredUsers.map((user) => (
                 <div
                   key={user._id}
-                  className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-gray-50/70 dark:bg-slate-900/60 hover:bg-amber-50/60 dark:hover:bg-slate-800/60 border border-gray-100 dark:border-slate-800/80 transition-all"
+                  className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-gray-50/70 dark:bg-slate-900/60 hover:bg-yellow-50/50 dark:hover:bg-slate-800/60 border border-gray-100 dark:border-slate-800/80 transition-all"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       onClick={() => handleOpenUserProfile(user._id)}
-                      className="w-10 h-10 rounded-full bg-amber-500 text-white font-bold flex items-center justify-center shrink-0 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                      className="w-10 h-10 rounded-full bg-[#fabf13] text-black font-bold flex items-center justify-center shrink-0 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                     >
                       {user.profile ? (
                         <img
@@ -377,7 +377,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                         <button
                           type="button"
                           onClick={() => handleOpenUserProfile(user._id)}
-                          className="font-bold text-sm text-gray-900 dark:text-slate-100 hover:text-amber-600 dark:hover:text-amber-400 hover:underline cursor-pointer truncate text-left"
+                          className="font-bold text-sm text-gray-900 dark:text-slate-100 hover:text-yellow-600 dark:hover:text-[#fabf13] hover:underline cursor-pointer truncate text-left"
                         >
                           {user.name}
                         </button>
@@ -391,7 +391,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                             {t("reports_admin.active_today_tag") || "Active Today"}
                           </span>
                         ) : user.isActiveWeek ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-yellow-700 dark:text-[#fabf13] border border-amber-500/20">
                             {t("reports_admin.active_week_tag") || "Active This Week"}
                           </span>
                         ) : user.isActiveMonth ? (
@@ -425,7 +425,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
       {/* Engagement Quick Strip */}
       <div className="bg-white dark:bg-[#131b2e] rounded-xl border border-gray-200 dark:border-slate-800 p-4 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200/50 dark:border-amber-800/40">
+          <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-yellow-700 dark:text-[#fabf13] flex items-center justify-center shrink-0 border border-amber-200/50 dark:border-amber-800/40">
             <MapPin size={18} />
           </div>
           <div>
@@ -439,7 +439,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
         </div>
 
         <div className="flex items-center gap-3 sm:border-l border-gray-100 dark:border-slate-800 sm:pl-4">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200/50 dark:border-amber-800/40">
+          <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-yellow-700 dark:text-[#fabf13] flex items-center justify-center shrink-0 border border-amber-200/50 dark:border-amber-800/40">
             <Ticket size={18} />
           </div>
           <div>
@@ -453,7 +453,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
         </div>
 
         <div className="flex items-center gap-3 sm:border-l border-gray-100 dark:border-slate-800 sm:pl-4">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200/50 dark:border-amber-800/40">
+          <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-yellow-700 dark:text-[#fabf13] flex items-center justify-center shrink-0 border border-amber-200/50 dark:border-amber-800/40">
             <Star size={18} />
           </div>
           <div>
@@ -522,7 +522,7 @@ export function RecentUserActivityLog({
         return {
           label: t("reports_admin.offer_redeemed") || "Claimed Offer",
           color:
-            "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60",
+            "bg-yellow-50 text-yellow-800 border-yellow-300 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800/60",
           Icon: Ticket,
         };
       case "review":
@@ -570,7 +570,7 @@ export function RecentUserActivityLog({
       {/* Header */}
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
-          <Activity size={18} className="text-amber-600 dark:text-amber-400" />
+          <Activity size={18} className="text-yellow-700 dark:text-[#fabf13]" />
           <h3 className="text-base font-bold text-gray-900 dark:text-slate-100">
             {t("reports_admin.recent_activity_title") || "Recent User Activity"}
           </h3>
@@ -581,7 +581,7 @@ export function RecentUserActivityLog({
 
         <Link
           href="/dashboard/users-roles"
-          className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 inline-flex items-center gap-1 hover:underline"
+          className="text-xs font-semibold text-yellow-700 dark:text-[#fabf13] hover:text-yellow-700 dark:hover:text-amber-300 inline-flex items-center gap-1 hover:underline"
         >
           <span>{t("reports_admin.view_all_users") || "Manage Users"}</span>
           <ArrowRight size={13} />
@@ -609,7 +609,7 @@ export function RecentUserActivityLog({
                   {/* Avatar */}
                   <div
                     onClick={() => handleOpenUser(act.userId)}
-                    className="w-8 h-8 rounded-full bg-amber-500 text-white font-bold flex items-center justify-center shrink-0 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                    className="w-8 h-8 rounded-full bg-[#fabf13] text-black font-bold flex items-center justify-center shrink-0 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                     title={act.userName}
                   >
                     {act.userProfile ? (
@@ -628,7 +628,7 @@ export function RecentUserActivityLog({
                       <button
                         type="button"
                         onClick={() => handleOpenUser(act.userId)}
-                        className="font-bold text-gray-900 dark:text-slate-100 hover:text-amber-600 dark:hover:text-amber-400 hover:underline cursor-pointer truncate max-w-[160px] text-left"
+                        className="font-bold text-gray-900 dark:text-slate-100 hover:text-yellow-600 dark:hover:text-[#fabf13] hover:underline cursor-pointer truncate max-w-[160px] text-left"
                       >
                         {act.userName}
                       </button>
@@ -645,7 +645,7 @@ export function RecentUserActivityLog({
                         {targetUrl ? (
                           <Link
                             href={targetUrl}
-                            className="hover:underline hover:text-amber-600 dark:hover:text-amber-400 inline-flex items-center gap-1 font-medium truncate max-w-sm"
+                            className="hover:underline hover:text-yellow-600 dark:hover:text-[#fabf13] inline-flex items-center gap-1 font-medium truncate max-w-sm"
                           >
                             <span className="truncate">{act.subtitle}</span>
                             <ExternalLink size={10} className="shrink-0 opacity-70" />
@@ -667,7 +667,7 @@ export function RecentUserActivityLog({
                     <button
                       type="button"
                       onClick={() => handleOpenUser(act.userId)}
-                      className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[11px] font-bold border border-amber-500/20 transition-all inline-flex items-center gap-1 cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg bg-yellow-400/15 hover:bg-yellow-400/25 text-yellow-800 dark:text-yellow-300 text-[11px] font-bold border border-yellow-400/30 transition-all inline-flex items-center gap-1 cursor-pointer"
                       title={t("reports_admin.view_profile") || "View Profile"}
                     >
                       <UserCheck size={11} />
@@ -684,7 +684,7 @@ export function RecentUserActivityLog({
               <button
                 type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold rounded-lg text-amber-700 dark:text-amber-400 bg-amber-50 hover:bg-amber-100/80 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-200/60 dark:border-amber-800/60 transition-all cursor-pointer"
+                className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold rounded-lg text-yellow-800 dark:text-yellow-300 bg-yellow-50 hover:bg-yellow-100/80 dark:bg-yellow-950/40 dark:hover:bg-yellow-900/60 border border-yellow-300/60 dark:border-yellow-800/60 transition-all cursor-pointer"
               >
                 <span>
                   {isExpanded

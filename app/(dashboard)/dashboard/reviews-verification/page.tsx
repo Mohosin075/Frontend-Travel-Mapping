@@ -26,7 +26,7 @@ import {
   useGetPlacesQuery,
   useReviewRecommendedPlaceMutation,
 } from "@/redux/features/place/placeApi";
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl, getProfileImageUrl } from "@/lib/utils";
 import {
   Check,
   X,
@@ -1087,10 +1087,8 @@ export default function ReviewsVerificationPage() {
                     <div className="px-5 pt-3.5 pb-2 flex items-center justify-between gap-3 text-xs">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <Avatar className="w-7 h-7 border border-gray-200 dark:border-slate-700 shrink-0">
-                          <AvatarImage src={getImageUrl(reviewerProfile)} alt={reviewerName} />
-                          <AvatarFallback className="text-[10px] font-bold bg-amber-100 text-amber-900">
-                            {reviewerName.slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
+                          <AvatarImage src={getProfileImageUrl(reviewerProfile)} alt={reviewerName} />
+                          <AvatarFallback />
                         </Avatar>
                         <div className="min-w-0 flex items-center gap-2">
                           <span className="font-bold text-gray-800 dark:text-slate-200 truncate">

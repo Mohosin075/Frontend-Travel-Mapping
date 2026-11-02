@@ -14,7 +14,7 @@ import {
 import { appAlert } from "@/lib/app-alert";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { getLocalized, getImageUrl } from "@/lib/utils";
+import { getLocalized, getImageUrl, getProfileImageUrl } from "@/lib/utils";
 import {
   ArrowLeft,
   Map as MapIcon,
@@ -34,6 +34,8 @@ import {
   Ticket,
   Ban,
   RotateCcw,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 export default function UserDetailPage() {
@@ -45,6 +47,8 @@ export default function UserDetailPage() {
   const [activeTab, setActiveTab] = useState<
     "activity" | "maps" | "prizes" | "contributions"
   >("activity");
+  const [isPlacesExpanded, setIsPlacesExpanded] = useState(false);
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
 
   const { data: user, isLoading, isError } = useGetUserByIdQuery(userId, {
     skip: !userId,
@@ -67,6 +71,16 @@ export default function UserDetailPage() {
   const deactivatedMaps = user?.deactivatedMaps || [];
   const offerRedemptions = user?.offerRedemptions || [];
   const awards = user?.awards || [];
+  const unlockedAwards = (awards as any[])
+    .filter((a: any) => Boolean(a.isUnlocked))
+    .sort((a: any, b: any) => {
+      const targetA = Number(a.target || a.configId?.target || 0);
+      const targetB = Number(b.target || b.configId?.target || 0);
+      if (targetA !== targetB) return targetA - targetB;
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateA - dateB;
+    });
   const reviews = user?.reviews || [];
   const visitedPlaces = user?.visitedPlaces || [];
   const activitySummary = user?.activitySummary || {};
@@ -177,10 +191,8 @@ export default function UserDetailPage() {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <Avatar className="w-20 h-20 border-2 border-gray-200 dark:border-slate-700 shadow-sm">
-              <AvatarImage src={getImageUrl(user.profile)} alt={user.name} />
-              <AvatarFallback className="bg-blue-600 text-white font-bold text-2xl">
-                {user.name?.slice(0, 2).toUpperCase() || "U"}
-              </AvatarFallback>
+              <AvatarImage src={getProfileImageUrl(user.profile)} alt={user.name} />
+              <AvatarFallback />
             </Avatar>
 
             <div className="space-y-1.5">
@@ -396,8 +408,9 @@ export default function UserDetailPage() {
                 No places marked as visited yet.
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {visitedPlaces.map((vp: any, idx: number) => {
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {(isPlacesExpanded ? visitedPlaces : visitedPlaces.slice(0, 6)).map((vp: any, idx: number) => {
                   const placeName = vp.place?.name
                     ? getLocalized(vp.place.name, language)
                     : vp.business?.name
@@ -465,8 +478,27 @@ export default function UserDetailPage() {
                   );
                 })}
               </div>
-            )}
-          </Card>
+              {visitedPlaces.length > 6 && (
+                <div className="pt-2 flex justify-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsPlacesExpanded(!isPlacesExpanded)}
+                    className="text-xs font-semibold flex items-center gap-1.5 rounded-lg border-gray-200 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer"
+                  >
+                    <span>
+                      {isPlacesExpanded
+                        ? (t("common.see_less") || "See less")
+                        : `${t("common.see_more") || "See more"} (${visitedPlaces.length - 6} ${t("reports_admin.more") || "more"})`}
+                    </span>
+                    {isPlacesExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </Card>
 
           {/* Activity Timeline */}
           <Card className="p-6 bg-white dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 shadow-xs rounded-2xl space-y-4">
@@ -480,8 +512,9 @@ export default function UserDetailPage() {
                 No recent activity recorded.
               </div>
             ) : (
-              <div className="space-y-3">
-                {activityTimeline.map((act: any, idx: number) => (
+              <>
+                <div className="space-y-3">
+                  {(isTimelineExpanded ? activityTimeline : activityTimeline.slice(0, 5)).map((act: any, idx: number) => (
                   <div
                     key={idx}
                     className="bg-gray-50/70 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 p-3.5 rounded-xl flex items-start gap-3"
@@ -512,8 +545,27 @@ export default function UserDetailPage() {
                   </div>
                 ))}
               </div>
-            )}
-          </Card>
+              {activityTimeline.length > 5 && (
+                <div className="pt-2 flex justify-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
+                    className="text-xs font-semibold flex items-center gap-1.5 rounded-lg border-gray-200 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer"
+                  >
+                    <span>
+                      {isTimelineExpanded
+                        ? (t("common.see_less") || "See less")
+                        : `${t("common.see_more") || "See more"} (${activityTimeline.length - 5} ${t("reports_admin.more") || "more"})`}
+                    </span>
+                    {isTimelineExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </Card>
         </div>
       )}
 
@@ -715,25 +767,21 @@ export default function UserDetailPage() {
             )}
           </div>
 
-          {/* Badges & Rewards */}
+          {/* Badges & Rewards (Unlocked Prizes only, in order) */}
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-gray-900 dark:text-slate-100 uppercase tracking-wider">
-              Achievement Badges & Rewards ({awards.length})
+              {t("rewards_admin.unlocked_badges_rewards") || "Unlocked Badges & Rewards"} ({unlockedAwards.length})
             </h3>
-            {awards.length === 0 ? (
+            {unlockedAwards.length === 0 ? (
               <p className="text-xs text-gray-400 dark:text-slate-500 bg-gray-50/50 dark:bg-slate-900/40 border border-gray-100 dark:border-slate-800 p-4 rounded-xl text-center">
-                No badges available.
+                {t("rewards_admin.no_badges_unlocked") || "No prizes or badges unlocked yet."}
               </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {awards.map((awardItem: any) => (
+                {unlockedAwards.map((awardItem: any) => (
                   <div
                     key={awardItem._id}
-                    className={`p-3 rounded-xl border flex items-center gap-3 text-xs ${
-                      awardItem.isUnlocked
-                        ? "bg-white dark:bg-[#0b0f19] border-blue-200 dark:border-blue-900/60 shadow-2xs"
-                        : "bg-gray-100/60 dark:bg-slate-900/40 border-gray-200 dark:border-slate-800 opacity-60"
-                    }`}
+                    className="p-3 rounded-xl border flex items-center gap-3 text-xs bg-white dark:bg-[#0b0f19] border-blue-200 dark:border-blue-900/60 shadow-2xs"
                   >
                     <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0 font-bold text-xs">
                       {awardItem.configId?.coverPhoto ? (
@@ -755,17 +803,10 @@ export default function UserDetailPage() {
                         {awardItem.progress} / {awardItem.target} XP
                       </p>
                     </div>
-                    {awardItem.isUnlocked ? (
-                      <CheckCircle2
-                        size={18}
-                        className="text-emerald-600 dark:text-emerald-400 shrink-0"
-                      />
-                    ) : (
-                      <Clock
-                        size={16}
-                        className="text-gray-400 dark:text-slate-500 shrink-0"
-                      />
-                    )}
+                    <CheckCircle2
+                      size={18}
+                      className="text-emerald-600 dark:text-emerald-400 shrink-0"
+                    />
                   </div>
                 ))}
               </div>

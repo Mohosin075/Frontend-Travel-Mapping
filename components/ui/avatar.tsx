@@ -40,17 +40,26 @@ function AvatarImage({
 
 function AvatarFallback({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
   return (
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
       className={cn(
-        "flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs",
+        "flex size-full items-center justify-center rounded-full overflow-hidden bg-yellow-400 text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs",
         className
       )}
       {...props}
-    />
+    >
+      {children || (
+        <img
+          src="/default-avatar.svg"
+          alt="Avatar"
+          className="size-full object-cover"
+        />
+      )}
+    </AvatarPrimitive.Fallback>
   )
 }
 

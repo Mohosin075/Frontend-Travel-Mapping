@@ -185,7 +185,7 @@ export function CategoryTable({ onEdit, onView }: CategoryTableProps) {
 
                       <button
                         onClick={() => onView && onView(category)}
-                        className="text-orange-500 hover:text-orange-700 transition-colors"
+                        className="text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 transition-colors"
                         aria-label="View category"
                       >
                         <Eye size={18} />

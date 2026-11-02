@@ -24,6 +24,13 @@ const statsApi = baseApi.injectEndpoints({
         params: { searchTerm },
       }),
     }),
+    getEntityUsers: builder.query<any, { type: string; id: string }>({
+      query: ({ type, id }) => ({
+        url: `/stats/entity-users?type=${type}&id=${id}`,
+        method: "GET",
+      }),
+      providesTags: ["Stats"],
+    }),
   }),
 });
 
@@ -31,4 +38,5 @@ export const {
   useGetDashboardStatsQuery,
   useGetReportsQuery,
   useSearchReportEntitiesQuery,
+  useGetEntityUsersQuery,
 } = statsApi;

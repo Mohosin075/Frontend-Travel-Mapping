@@ -83,17 +83,29 @@ export function editorCanAccessMap(
 ): boolean {
   if (!user || user.role !== "map_editor") return true;
   const assigned = new Set(normalizeIdList(user.assignedMaps));
-  const countries = user.assignedCountries || [];
+  const countries = (user.assignedCountries || []).map((c) =>
+    typeof c === "string" ? c.trim().toLowerCase() : String(c).toLowerCase()
+  );
   const id = normalizeId(mapId);
   if (id && assigned.has(id)) return true;
-  if (country && countries.includes(country)) return true;
+
+  const targetCountry = country ? country.trim().toLowerCase() : "";
+  if (targetCountry && countries.includes(targetCountry)) return true;
 
   // assignedMaps may be populated with { _id, name, country }
   for (const raw of user.assignedMaps || []) {
     if (!raw || typeof raw !== "object") continue;
-    const m = raw as { _id?: unknown; name?: string; country?: string };
+    const m = raw as { _id?: unknown; name?: any; country?: string };
     if (id && normalizeId(m._id) === id) return true;
-    if (country && (m.name === country || m.country === country)) return true;
+    const mCountry = m.country ? m.country.trim().toLowerCase() : "";
+    const mName =
+      typeof m.name === "object"
+        ? (m.name?.es || m.name?.en || "").trim().toLowerCase()
+        : (m.name || "").trim().toLowerCase();
+
+    if (targetCountry && (mName === targetCountry || mCountry === targetCountry)) {
+      return true;
+    }
   }
 
   return false;

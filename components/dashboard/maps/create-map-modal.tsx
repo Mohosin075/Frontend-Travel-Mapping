@@ -87,6 +87,7 @@ export default function CreateMapModal({
       features: data.features ? data.features.split(",").map((f) => f.trim()).filter(Boolean) : [],
       recommendations: { tips: data.tips || "" },
       status: status,
+      isActive: status === "Published",
       isPaid: true,
       rating: initialData?.rating ?? 0,
       totalReview: initialData?.totalReview ?? 0,
@@ -130,7 +131,7 @@ export default function CreateMapModal({
       <DialogContent className="min-w-3xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-xl bg-white dark:bg-[#131b2e] dark:border-slate-800">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold dark:text-slate-100">
-            {isEditing ? t("places_admin.update_place") : t("maps_admin.map_name")}
+            {isEditing ? (t("maps_admin.edit_map") || "Edit Map") : (t("maps_admin.create_new_map") || "Create New Map")}
           </DialogTitle>
         </DialogHeader>
 

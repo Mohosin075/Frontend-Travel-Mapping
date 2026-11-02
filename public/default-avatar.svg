@@ -1,21 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
   <defs>
-    <linearGradient id="avatarBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FBBF24" />
-      <stop offset="100%" stop-color="#D97706" />
+    <linearGradient id="rtAvatarBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FABF13" />
+      <stop offset="100%" stop-color="#F59E0B" />
     </linearGradient>
-    <linearGradient id="avatarFigureGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="rtAvatarSilhouette" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#FFFFFF" />
-      <stop offset="100%" stop-color="#FEF3C7" />
+      <stop offset="100%" stop-color="#FFFBEB" />
     </linearGradient>
-    <filter id="avatarShadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity="0.15" />
+    <filter id="rtAvatarShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity="0.18" />
     </filter>
   </defs>
-  <!-- Full background gradient (no inner rounding so it clips to any container perfectly) -->
-  <rect width="240" height="240" fill="url(#avatarBgGrad)" />
-  <!-- Head -->
-  <circle cx="120" cy="85" r="38" fill="url(#avatarFigureGrad)" filter="url(#avatarShadow)" />
-  <!-- Shoulders / Torso -->
-  <path d="M42 220 C42 160 74 142 120 142 C166 142 198 160 198 220 Z" fill="url(#avatarFigureGrad)" filter="url(#avatarShadow)" />
+  <!-- Full background in Roadtripeado Brand Yellow -->
+  <rect width="240" height="240" fill="url(#rtAvatarBg)" />
+  <!-- WhatsApp-style silhouette head -->
+  <circle cx="120" cy="86" r="40" fill="url(#rtAvatarSilhouette)" filter="url(#rtAvatarShadow)" />
+  <!-- WhatsApp-style silhouette shoulders and torso extending to bottom -->
+  <path d="M36 240 C36 166 74 144 120 144 C166 144 204 166 204 240 Z" fill="url(#rtAvatarSilhouette)" filter="url(#rtAvatarShadow)" />
 </svg>
