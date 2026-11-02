@@ -21,6 +21,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { PlaceCard } from "./place-card";
+import { editorCanAccessMap } from "@/lib/editor-access";
 
 export default function ExplorePlaces() {
   const { t, language } = useLanguage();
@@ -497,10 +498,16 @@ export default function ExplorePlaces() {
           ) : (
             places.map((place: any, index: number) => {
               const purchasedMaps = Array.isArray(profile?.purchasedMaps) ? profile.purchasedMaps : [];
-              const isAdminOrEditor = ["super_admin", "admin", "map_editor"].includes(profile?.role || "");
+              const isSuperOrAdmin = ["super_admin", "admin"].includes(profile?.role || "");
               const isBusinessLocation = (p: any) =>
                 p?.type === "business" || p?.type === "Business" || p?.placeType === "Business";
-              const isPurchased = isAdminOrEditor || (place?.map && purchasedMaps.some((m: any) => {
+              const placeMapId = typeof place.map === "object" ? (place.map._id || place.map.id) : place.map;
+              const isEditorForThisMap = profile?.role === "map_editor" && editorCanAccessMap(
+                profile,
+                placeMapId,
+                place?.country || (typeof place.map === "object" ? (place.map?.country || place.map?.name) : null)
+              );
+              const isPurchased = isSuperOrAdmin || isEditorForThisMap || (place?.map && purchasedMaps.some((m: any) => {
                 const mid = typeof m === "object" ? (m._id || m.id) : m;
                 const pmap = typeof place.map === "object" ? (place.map._id || place.map.id) : place.map;
                 return String(mid) === String(pmap);

@@ -27,6 +27,7 @@ import { useTheme } from "next-themes";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { MapFilters, SelectedMapFilter } from "./MapFilters";
 import LocationDialog from "./location-dialog";
+import { editorCanAccessMap } from "@/lib/editor-access";
 import { getUsableMediaUrl } from "@/lib/utils";
 import { X } from "lucide-react";
 
@@ -1274,10 +1275,15 @@ export default function MapPage() {
   const searchQuery = (searchParams.get("q") || searchParams.get("search") || "").trim();
 
   const purchasedMaps = Array.isArray(userProfile?.purchasedMaps) ? userProfile.purchasedMaps : [];
-  const isAdminOrEditor = ["super_admin", "admin", "map_editor"].includes(userProfile?.role || "");
+  const isSuperOrAdmin = ["super_admin", "admin"].includes(userProfile?.role || "");
+  const isEditorForThisMap = userProfile?.role === "map_editor" && editorCanAccessMap(
+    userProfile,
+    selectedMapObj?._id,
+    selectedMapObj?.country || selectedMapObj?.name
+  );
   const isFreeMap = selectedMapObj && selectedMapObj.isPaid === false;
 
-  const isCurrentMapPurchased = isAdminOrEditor || isFreeMap || (selectedMapObj && purchasedMaps.some((m: any) => {
+  const isCurrentMapPurchased = isSuperOrAdmin || isEditorForThisMap || isFreeMap || (selectedMapObj && purchasedMaps.some((m: any) => {
     const mid = typeof m === "object" ? (m._id || m.id) : m;
     return String(mid) === String(selectedMapObj._id);
   }));
@@ -1330,10 +1336,7 @@ export default function MapPage() {
       if (!belongsToSelectedMap(place)) return false;
 
       // Municipality/region/city/town address filter when searching (accent-insensitive)
-      if (searchQuery && (
-        (!isCurrentMapPurchased && !isBusinessLocation(place) && !inherentlyBusinessCatIds.has(getCategoryId(place))) ||
-        processPlaceForUser(place).isLocked || !matchesSearch(place, searchQuery)
-      )) {
+      if (searchQuery && !matchesSearch(place, searchQuery)) {
         return false;
       }
 
@@ -1349,10 +1352,7 @@ export default function MapPage() {
     ? fetchedPlaces.filter((place: any) => {
         if (!belongsToSelectedMap(place)) return false;
 
-        if (searchQuery && (
-          (!isCurrentMapPurchased && !isBusinessLocation(place) && !inherentlyBusinessCatIds.has(getCategoryId(place))) ||
-          processPlaceForUser(place).isLocked || !matchesSearch(place, searchQuery)
-        )) {
+        if (searchQuery && !matchesSearch(place, searchQuery)) {
           return false;
         }
 

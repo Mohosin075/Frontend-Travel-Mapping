@@ -58,6 +58,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { FavouriteButton } from "@/components/shared/favourite-button";
 import { NoImage } from "@/lib/others/others";
 import { formatOfferDiscountLabel } from "@/lib/offer-label";
+import { editorCanAccessMap } from "@/lib/editor-access";
 import { formatEntryCost, formatHikeTime, getImageUrl, getProfileImageUrl, getUsableMediaList, isVideoUrl, getLocalized, convertTo12Hour, formatLocalizedDifficulty, formatLocalizedSchedule, cleanDescriptionHtml, extractImagesFromHtml } from "@/lib/utils";
 import { SafeImage } from "@/components/shared/safe-image";
 import { useGetSingleBusinessQuery } from "@/redux/features/business/businessApi";
@@ -184,11 +185,16 @@ export default function MapDetails() {
 
   // Client-side purchase gate — same logic as explore-places.tsx and map.tsx
   const purchasedMaps = Array.isArray(userProfile?.purchasedMaps) ? userProfile.purchasedMaps : [];
-  const isAdminOrEditor = ["super_admin", "admin", "map_editor"].includes(userProfile?.role || "");
+  const isSuperOrAdmin = ["super_admin", "admin"].includes(userProfile?.role || "");
   const placeMapId = rawData?.map
     ? (typeof rawData.map === "object" ? (rawData.map._id || rawData.map.id) : rawData.map)
     : null;
-  const isMapPurchased = isAdminOrEditor || (placeMapId && purchasedMaps.some((m: any) => {
+  const isEditorForThisMap = userProfile?.role === "map_editor" && editorCanAccessMap(
+    userProfile,
+    placeMapId,
+    rawData?.country || (typeof rawData?.map === "object" ? (rawData.map?.country || rawData.map?.name) : null)
+  );
+  const isMapPurchased = isSuperOrAdmin || isEditorForThisMap || (placeMapId && purchasedMaps.some((m: any) => {
     const mid = typeof m === "object" ? (m._id || m.id) : m;
     return String(mid) === String(placeMapId);
   }));
