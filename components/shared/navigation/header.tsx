@@ -64,7 +64,7 @@ import { ThemeToggle } from "@/components/shared/theme-toggle";
 import NotificationBellDropdown from "@/components/shared/notification-bell-dropdown";
 
 function getPlaceSearchHref(place: any, onMapsPage: boolean) {
-  if (!onMapsPage) return `/places/${place._id || place.id}`;
+  if (!onMapsPage && !place.isLocked) return `/places/${place._id || place.id}`;
 
   const coords =
     place?.location?.mapLocation?.coordinates ||
@@ -73,7 +73,7 @@ function getPlaceSearchHref(place: any, onMapsPage: boolean) {
   const lng = Array.isArray(coords) ? coords[0] : place?.longitude;
   const lat = Array.isArray(coords) ? coords[1] : place?.latitude;
   const mapName =
-    (typeof place?.map === "object" && (place.map?.name || place.map?.country)) ||
+    (typeof place?.map === "object" && (place.map?._id || place.map?.id || getLocalized(place.map?.name) || place.map?.country)) ||
     place?.mapName ||
     place?.country ||
     "";
@@ -183,13 +183,12 @@ export default function Header() {
   const places = useMemo(() => {
     const seen = new Set<string>();
     return rawPlaces.filter((p: any) => {
-      if (!canRevealPlace(p, isAuthenticated ? user : undefined)) return false;
       const name = (typeof p.name === "string" ? p.name : p.name?.es || p.name?.en || "").trim().toLowerCase();
       if (!name || seen.has(name)) return false;
       seen.add(name);
       return true;
     });
-  }, [rawPlaces, user, isAuthenticated]);
+  }, [rawPlaces]);
   const isSearchPending =
     enterSearching ||
     (searchTerm.trim().length > 0 &&
@@ -479,7 +478,7 @@ export default function Header() {
                         {places.map((place: any) => (
                           <Link
                             key={place._id}
-                            href={getPlaceSearchHref(place, onMapsPage)}
+                            href={getPlaceSearchHref({ ...place, isLocked: !canRevealPlace(place, isAuthenticated ? user : undefined) }, onMapsPage)}
                             onClick={() => {
                               if (onMapsPage) {
                                 const mapName =
@@ -510,7 +509,7 @@ export default function Header() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="text-sm font-semibold text-gray-900 dark:text-slate-100 truncate">
-                                {getLocalized(place.name, language)}
+                                {!canRevealPlace(place, isAuthenticated ? user : undefined) ? t("map.premium_location", "Premium Location") : getLocalized(place.name, language)}
                               </h4>
                               <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
                                 {place.address}
@@ -882,7 +881,7 @@ export default function Header() {
                           {places.map((place: any) => (
                             <Link
                               key={place._id}
-                              href={getPlaceSearchHref(place, onMapsPage)}
+                              href={getPlaceSearchHref({ ...place, isLocked: !canRevealPlace(place, isAuthenticated ? user : undefined) }, onMapsPage)}
                               onClick={() => {
                                 if (onMapsPage) {
                                   const mapName =
@@ -916,7 +915,7 @@ export default function Header() {
                               </div>
                               <div className="min-w-0 flex-1">
                                 <h4 className="text-sm font-semibold text-gray-900 dark:text-slate-100 truncate">
-                                  {getLocalized(place.name, language)}
+                                  {!canRevealPlace(place, isAuthenticated ? user : undefined) ? t("map.premium_location", "Premium Location") : getLocalized(place.name, language)}
                                 </h4>
                                 <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
                                   {place.address}

@@ -1,5 +1,7 @@
 "use client";
 
+import { canRevealPlace } from "@/lib/place-access";
+
 import { HIDE_GOOGLE_POI_STYLES } from "@/components/Common/maps/map";
 
 import { useState, useMemo, useEffect } from "react";
@@ -136,32 +138,6 @@ export default function AddStopModal({
   // User profile & map ownership check
   const { data: profileRes } = useGetProfileQuery({}, { skip: !isOpen });
   const profile = profileRes?.data || profileRes;
-  const purchasedMaps = useMemo(() => {
-    return Array.isArray(profile?.purchasedMaps) ? profile.purchasedMaps : [];
-  }, [profile?.purchasedMaps]);
-  const isAdminOrEditor = ["super_admin", "admin", "map_editor"].includes(profile?.role || "");
-
-  const isBusinessLocation = (p: any) =>
-    p?.type === "business" || p?.type === "Business" || p?.placeType === "Business";
-
-  const isPlaceAccessible = (place: any) => {
-    if (isAdminOrEditor) return true;
-    if (isBusinessLocation(place)) return true;
-
-    const pMapId = typeof place?.map === "object" ? (place?.map?._id || place?.map?.id) : place?.map;
-    if (!pMapId) return true;
-
-    const mapObj = mapsList.find((m: any) => String(m._id || m.id) === String(pMapId));
-    if (mapObj && mapObj.isPaid === false) return true;
-
-    const isPurchased = purchasedMaps.some((m: any) => {
-      const mid = typeof m === "object" ? (m._id || m.id) : m;
-      return String(mid) === String(pMapId);
-    });
-
-    return isPurchased;
-  };
-
   // Filter places based on unadded toggle if enabled and compute isLocked
   const places = useMemo(() => {
     const rawPlaces = placesRes?.data?.data || placesRes?.data || [];
@@ -170,13 +146,15 @@ export default function AddStopModal({
       : rawPlaces;
 
     return filtered.map((p: any) => {
-      const isLocked = !isPlaceAccessible(p);
+      const mapId = typeof p?.map === "object" ? (p.map?._id || p.map?.id) : p?.map;
+      const map = mapsList.find((m: any) => String(m._id || m.id) === String(mapId));
+      const isLocked = !canRevealPlace({ ...p, map: map || p.map }, profile);
       return {
         ...p,
         isLocked,
       };
     });
-  }, [placesRes, onlyUnadded, selectedPlaceIds, isAdminOrEditor, mapsList, purchasedMaps]);
+  }, [placesRes, onlyUnadded, selectedPlaceIds, mapsList, profile]);
 
   const activeFiltersCount =
     (selectedCategory !== "all" ? 1 : 0) +
