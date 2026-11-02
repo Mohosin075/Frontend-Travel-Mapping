@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   GripVertical,
   Navigation,
@@ -71,6 +71,7 @@ const extractCoords = (loc: any): [number, number] => {
 };
 
 export function RoutePlannerInner() {
+  const router = useRouter();
   const { t, language } = useLanguage();
   const { openLoginRequired } = useLoginRequired();
   const accessToken = useAppSelector(selectAccessToken);
@@ -466,14 +467,24 @@ export function RoutePlannerInner() {
     };
 
     try {
+      let finalRouteId = selectedRouteId;
       if (selectedRouteId) {
         await updateRoutePlan({ id: selectedRouteId, data: payload }).unwrap();
         toast.success(t("route_planner.updated_success") || "¡Ruta actualizada con éxito!");
       } else {
         const res = await createRoutePlan(payload).unwrap();
         const createdId = res?.data?._id || res?.data?.id;
+        finalRouteId = createdId;
         if (createdId) setSelectedRouteId(createdId);
         toast.success(t("route_planner.saved_success") || "¡Ruta guardada con éxito!");
+      }
+      try {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+      } catch {}
+      if (finalRouteId) {
+        router.push(`/saved-routes?viewRouteId=${finalRouteId}`);
+      } else {
+        router.push("/saved-routes");
       }
     } catch (err: any) {
       toast.error(
@@ -494,10 +505,10 @@ export function RoutePlannerInner() {
 
   return (
     <APIProvider apiKey={apiKey}>
-      <div className="min-h-screen bg-slate-50/70 dark:bg-[#0b0f19] text-gray-900 dark:text-slate-100 pb-28 sm:pb-20 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+      <div className="min-h-screen bg-slate-50/70 dark:bg-[#0b0f19] text-gray-900 dark:text-slate-100 pt-20 sm:pt-24 pb-28 sm:pb-20 transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
           {/* Page Title & Actions Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-gray-200/70 dark:border-slate-800/80 mb-6">
+          <div className="flex items-center justify-between gap-4 pb-5 border-b border-gray-200/70 dark:border-slate-800/80 mb-6">
             <div>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span className="px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-extrabold text-[11px] uppercase tracking-wider">
@@ -512,6 +523,17 @@ export function RoutePlannerInner() {
               </p>
             </div>
 
+            {/* Exit / Close button back to saved routes */}
+            <button
+              type="button"
+              onClick={() => router.push("/saved-routes")}
+              className="p-2 sm:px-3.5 sm:py-2 rounded-2xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-[#131b2e] hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 hover:text-gray-950 dark:text-slate-300 dark:hover:text-white transition-all shadow-sm shrink-0 flex items-center gap-1.5 cursor-pointer"
+              title={t("common.close") || "Cerrar / Salir"}
+              aria-label="Cerrar"
+            >
+              <X className="w-5 h-5" />
+              <span className="hidden sm:inline text-xs font-bold">{t("common.close") || "Cerrar"}</span>
+            </button>
           </div>
 
           {/* Dedicated Route Planner Container */}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   useGetMyRoutePlansQuery,
+  useGetRoutePlanByIdQuery,
   useDeleteRoutePlanMutation,
 } from "@/redux/features/route-plan/routePlanApi";
 import {
@@ -43,6 +44,9 @@ export default function SavedRoutes() {
     { limit: 100 },
     { skip: !accessToken }
   );
+  const { data: directRouteRes } = useGetRoutePlanByIdQuery(viewRouteIdParam as string, {
+    skip: !viewRouteIdParam,
+  });
   const [deleteRoutePlan] = useDeleteRoutePlanMutation();
 
   const allRoutes: any[] = useMemo(() => {
@@ -51,17 +55,19 @@ export default function SavedRoutes() {
 
   // Sync viewingRoute with URL parameter ?viewRouteId=...
   useEffect(() => {
-    if (viewRouteIdParam && allRoutes.length > 0) {
+    if (viewRouteIdParam) {
       const match = allRoutes.find(
         (r) => (r._id || r.id) === viewRouteIdParam
       );
       if (match) {
         setViewingRoute(match);
+      } else if (directRouteRes?.data) {
+        setViewingRoute(directRouteRes.data);
       }
     } else if (!viewRouteIdParam && viewingRoute) {
       setViewingRoute(null);
     }
-  }, [viewRouteIdParam, allRoutes]);
+  }, [viewRouteIdParam, allRoutes, directRouteRes]);
 
   // Listen for browser popstate (Back/Forward buttons)
   useEffect(() => {
@@ -199,7 +205,7 @@ export default function SavedRoutes() {
   }
 
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 font-public-sans min-h-[calc(100vh-280px)]">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-8 sm:pb-12 font-public-sans min-h-[calc(100vh-280px)]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
         <div>

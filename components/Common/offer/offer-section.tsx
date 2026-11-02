@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import Image, { StaticImageData } from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { FavouriteButton } from "@/components/shared/favourite-button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useGetProfileQuery } from "@/redux/features/user/userApi";
 import { useGetFavouritesQuery } from "@/redux/features/favourite/favouriteApi";
 import { useGetOffersQuery } from "@/redux/features/offer/offerApi";
+import { useGetMapsQuery } from "@/redux/features/map/mapApi";
+import { getLocalized } from "@/lib/utils";
 import { useAppSelector } from "@/redux/hook";
 import Link from "next/link";
 import { Lock, Search } from "lucide-react";
@@ -19,7 +21,7 @@ import { formatOfferDiscountLabel } from "@/lib/offer-label";
 import { getImageUrl } from "@/lib/utils";
 
 export default function OfferSection() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const accessToken = useAppSelector((s) => s.auth.accessToken);
   const { data: userProfile } = useGetProfileQuery({}, { skip: !accessToken });
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,7 +30,32 @@ export default function OfferSection() {
 
 
 
-  const { data: offersRes, isLoading } = useGetOffersQuery({ limit: 45 });
+  const [selectedCountry, setSelectedCountry] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("selectedCountryFilter") || "";
+    }
+    return "";
+  });
+
+  const { data: mapsResponse } = useGetMapsQuery({ limit: 100 });
+
+  const getMapName = (m: any) => {
+    if (!m) return "";
+    return getLocalized(m.name, language) || m.country || getLocalized(m.name, "es") || getLocalized(m.name, "en") || "";
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = localStorage.getItem("selectedCountryFilter");
+    if (saved && !selectedCountry) {
+      setSelectedCountry(saved);
+    }
+  }, []);
+
+  const { data: offersRes, isLoading } = useGetOffersQuery({
+    country: selectedCountry || undefined,
+    limit: 100,
+  });
   const offersData = offersRes?.data || [];
 
   // Fetch the user's full favourites list — persists across reloads
@@ -65,11 +92,27 @@ export default function OfferSection() {
           offer.business?.location?.city?.toLowerCase().includes(term) ||
           offer.business?.location?.country?.toLowerCase().includes(term)));
 
+    const matchesCountry =
+      !selectedCountry ||
+      (typeof offer.place === "object" && (
+        offer.place?.country?.toLowerCase() === selectedCountry.toLowerCase() ||
+        offer.place?.map?.name?.toLowerCase?.() === selectedCountry.toLowerCase() ||
+        offer.place?.map?.country?.toLowerCase?.() === selectedCountry.toLowerCase() ||
+        getMapName(offer.place?.map)?.toLowerCase() === selectedCountry.toLowerCase()
+      )) ||
+      (typeof offer.business === "object" && (
+        offer.business?.location?.country?.toLowerCase() === selectedCountry.toLowerCase() ||
+        offer.business?.country?.toLowerCase() === selectedCountry.toLowerCase() ||
+        offer.business?.map?.name?.toLowerCase?.() === selectedCountry.toLowerCase() ||
+        offer.business?.map?.country?.toLowerCase?.() === selectedCountry.toLowerCase() ||
+        getMapName(offer.business?.map)?.toLowerCase() === selectedCountry.toLowerCase()
+      ));
+
     const matchesFilter =
       activeFilter === "All" ||
       (activeFilter === "Favorites" && isOfferFavourited(offer._id));
 
-    return matchesSearch && matchesFilter;
+    return matchesSearch && matchesFilter && matchesCountry;
   });
 
   const offerSuggestions = offersData
@@ -189,6 +232,33 @@ export default function OfferSection() {
 
         {/* Filters */}
         <div className="flex items-center gap-2.5 mb-4 sm:mb-6 md:mb-8 overflow-x-auto pt-1 pb-2.5 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap no-scrollbar">
+          {/* Country Filter Selector */}
+          <select
+            value={selectedCountry}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSelectedCountry(val);
+              if (val) {
+                localStorage.setItem("selectedCountryFilter", val);
+              } else {
+                localStorage.removeItem("selectedCountryFilter");
+              }
+            }}
+            className="h-10 px-3 sm:px-4 max-w-[140px] sm:max-w-[200px] truncate border border-gray-200 dark:border-slate-800 rounded-full focus:outline-none focus:ring-2 focus:ring-[#fabf13] text-sm bg-white dark:bg-[#131b2e] font-semibold text-gray-700 dark:text-slate-200 cursor-pointer shadow-sm hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+          >
+            <option value="">
+              {t("filters.all_countries") ||
+                (language === "es" ? "Todos los Países" : "All Countries")}
+            </option>
+            {mapsResponse?.data?.map((map: any) => {
+              const nameStr = getMapName(map);
+              return (
+                <option key={map._id} value={nameStr}>
+                  {nameStr}
+                </option>
+              );
+            })}
+          </select>
           {filters.map((filter) => (
             <Button
               key={filter.id}

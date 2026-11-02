@@ -507,12 +507,16 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
   selectedPlace,
   findCategoryById,
   handleSelectPlace,
+  draggedPositions,
+  onMarkerDragEnd,
 }: {
   places: any[];
   selectedPlaceId?: string;
   selectedPlace: any;
   findCategoryById: (catId?: string) => any;
   handleSelectPlace: (place: any) => void;
+  draggedPositions?: Record<string, { lat: number; lng: number }>;
+  onMarkerDragEnd?: (placeId: string, pos: { lat: number; lng: number }) => void;
 }) {
   const map = useMap();
   const [bounds, setBounds] = useState<google.maps.LatLngBounds | null>(null);
@@ -584,12 +588,25 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
           handleSelectPlace(place);
         };
 
+        const markerPosition = draggedPositions?.[placeId] || position;
+
         return (
           <AdvancedMarker
             key={placeId}
-            position={position}
+            position={markerPosition}
             zIndex={isSelected ? 9999 : 10}
             onClick={handleMarkerClick}
+            
+            draggable={true}
+            onDragEnd={(e: any) => {
+              if (e.latLng) {
+                const newPos = {
+                  lat: typeof e.latLng.lat === 'function' ? e.latLng.lat() : Number(e.latLng.lat),
+                  lng: typeof e.latLng.lng === 'function' ? e.latLng.lng() : Number(e.latLng.lng),
+                };
+                onMarkerDragEnd?.(placeId, newPos);
+              }
+            }}
           >
             <CategoryMarker
               icon={cat?.icon || "📍"}
@@ -881,6 +898,27 @@ export default function AddPlacePage() {
     [t]
   );
 
+
+  const handleMarkerDragEnd = useCallback(
+    (placeId: string, pos: { lat: number; lng: number }) => {
+      setDraggedPositions((prev) => ({
+        ...prev,
+        [placeId]: pos,
+      }));
+      const match = displayPlaces.find((p: any) => (p._id || p.id) === placeId);
+      setSelectedPlace((prev: any) => ({
+        ...(match || prev || {}),
+        position: pos,
+      }));
+      updateAddressFromCoords(pos.lat, pos.lng);
+      toast.success(
+        language === "es"
+          ? "Ubicación del pin actualizada. Haz clic en Guardar para confirmar."
+          : "Pin location updated. Click Save to confirm."
+      );
+    },
+    [displayPlaces, language, updateAddressFromCoords]
+  );
 
   const handleSelectPlace = async (place: any) => {
     setActivePoi(null);
@@ -1482,6 +1520,8 @@ export default function AddPlacePage() {
                 selectedPlace={selectedPlace}
                 findCategoryById={findCategoryById}
                 handleSelectPlace={handleSelectPlace}
+                draggedPositions={draggedPositions}
+                onMarkerDragEnd={handleMarkerDragEnd}
               />
 
               {/* ── Temporary marker (not yet saved) ── */}
@@ -1489,6 +1529,22 @@ export default function AddPlacePage() {
                 <AdvancedMarker
                   position={tempMarker}
                   zIndex={99999}
+                  
+                  draggable={true}
+                  onDragEnd={(e: any) => {
+                    if (e.latLng) {
+                      const newPos = {
+                        lat: typeof e.latLng.lat === 'function' ? e.latLng.lat() : Number(e.latLng.lat),
+                        lng: typeof e.latLng.lng === 'function' ? e.latLng.lng() : Number(e.latLng.lng),
+                      };
+                      setTempMarker(newPos);
+                      setSelectedPlace((prev: any) => ({
+                        ...prev,
+                        position: newPos,
+                      }));
+                      updateAddressFromCoords(newPos.lat, newPos.lng);
+                    }
+                  }}
                   onClick={() =>
                     setSelectedPlace({
                       position: tempMarker,

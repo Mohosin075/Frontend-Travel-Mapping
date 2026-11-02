@@ -95,7 +95,7 @@ export default function SavedRoutesModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 bg-black/65 backdrop-blur-md transition-opacity animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-2 sm:p-5 pt-16 sm:pt-20 bg-black/65 backdrop-blur-md transition-opacity animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl bg-white dark:bg-[#131b2e] rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 flex flex-col max-h-[92vh] sm:max-h-[85vh] overflow-hidden">
         {/* Header */}
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#131b2e]">

@@ -178,7 +178,7 @@ export default function RouteDetailViewModal({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-5 md:p-6 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[110] flex items-center justify-center p-2.5 sm:p-5 md:p-6 pt-16 sm:pt-20 md:pt-24 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div
         onClick={(e) => e.stopPropagation()}

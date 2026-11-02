@@ -52,6 +52,24 @@ import { motion } from "motion/react";
 import { formatFileSize, optimizeMediaFiles } from "@/lib/image-compress";
 import { asMediaUrls, isPlaceKind, normalizePlaceType, normalizeDifficulty, normalizeService } from "./place-payload";
 
+export const isAlwaysOpenSchedule = (s?: string | null): boolean => {
+  if (!s) return false;
+  const lower = s.trim().toLowerCase();
+  return (
+    lower === "always open" ||
+    lower === "always-open" ||
+    lower === "siempre abierto" ||
+    lower === "siempre-abierto" ||
+    lower === "abierto 24/7" ||
+    lower === "always open (24/7)" ||
+    lower === "24/7" ||
+    lower === "open 24/7" ||
+    lower.includes("always open") ||
+    lower.includes("siempre abierto") ||
+    lower.includes("24/7")
+  );
+};
+
 interface PlaceFormContentProps {
   categories: any[];
   onSave: (data: any) => Promise<void>;
@@ -194,7 +212,7 @@ export const PlaceFormContent = ({
     },
     tips: initialData?.tips || "",
     services: (initialData?.services || []).map(normalizeService),
-    schedules: initialData?.schedules || "",
+    schedules: isAlwaysOpenSchedule(initialData?.schedules) ? "Always open" : (initialData?.schedules || ""),
     entryCost: initialData?.entryCost !== undefined && initialData?.entryCost !== null ? String(initialData.entryCost) : "",
     hikeTime: initialData?.hikeTime !== undefined && initialData?.hikeTime !== null ? String(initialData.hikeTime) : "",
     atmosphere: initialData?.atmosphere || "",
@@ -242,7 +260,7 @@ export const PlaceFormContent = ({
         phone: initialData.phone || prev.phone || "",
         website: initialData.website || prev.website || "",
         instagram: initialData.instagram || prev.instagram || "",
-        schedules: initialData.schedules || prev.schedules || "",
+        schedules: isAlwaysOpenSchedule(initialData.schedules) ? "Always open" : (initialData.schedules ?? prev.schedules ?? ""),
         entryCost:
           initialData.entryCost !== undefined && initialData.entryCost !== null
             ? String(initialData.entryCost)
@@ -1262,7 +1280,7 @@ export const PlaceFormContent = ({
                   <div className="flex items-center gap-2 mb-2">
                     <Checkbox
                       id="always-open"
-                      checked={formData.schedules === "Always open"}
+                      checked={isAlwaysOpenSchedule(formData.schedules)}
                       onCheckedChange={(checked) =>
                         setFormData({
                           ...formData,
@@ -1277,7 +1295,7 @@ export const PlaceFormContent = ({
                       {t("place.always_open") || "Always open"}
                     </Label>
                   </div>
-                  {formData.schedules !== "Always open" && (
+                  {!isAlwaysOpenSchedule(formData.schedules) && (
                     <TimeRangePicker
                       value={formData.schedules}
                       onChange={(val) =>

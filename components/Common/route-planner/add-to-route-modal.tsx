@@ -94,7 +94,7 @@ export default function AddToRouteModal({
   if (location.isLocked) {
     const pMapId = typeof location.map === "object" ? (location.map?._id || location.map?.id) : location.map;
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 pt-16 sm:pt-20 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
         <div className="relative w-full max-w-md bg-white dark:bg-[#131b2e] rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-100 dark:border-slate-800 text-center space-y-5">
           <button
             onClick={onClose}
@@ -301,7 +301,7 @@ export default function AddToRouteModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md transition-opacity animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 pt-16 sm:pt-20 bg-black/75 backdrop-blur-md transition-opacity animate-in fade-in duration-200">
       <div className="relative w-full max-w-md bg-white dark:bg-[#131b2e] rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 flex flex-col max-h-[85vh] overflow-hidden">
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-100 dark:border-slate-800/80 flex items-center justify-between flex-shrink-0 bg-white/95 dark:bg-[#131b2e]/95 backdrop-blur-md">
