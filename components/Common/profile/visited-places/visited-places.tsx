@@ -21,6 +21,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { CountryFilter, useCountryFilter } from "@/components/shared/country-filter";
 
 const PAGE_SIZE = 12;
 
@@ -29,6 +30,7 @@ export default function VisitedPlaces() {
   const [search, setSearch] = useState("");
   const [activeType, setActiveType] = useState("all");
   const [page, setPage] = useState(1);
+  const countryFilter = useCountryFilter();
 
   const TYPE_FILTERS = [
     { label: t("common.all") || "All", value: "all" },
@@ -36,9 +38,10 @@ export default function VisitedPlaces() {
     { label: t("dashboard.sidebar.business") || "Business", value: "Business", icon: Building2 },
   ];
 
-  const { data: visitedRes, isLoading } = useGetMyVisitedPlacesQuery({
+  const { currentData: visitedRes, isFetching: isLoading } = useGetMyVisitedPlacesQuery({
     limit: 5000,
-  });
+    country: countryFilter.country || undefined,
+  }, { skip: !countryFilter.ready });
   const [toggleVisited, { isLoading: isToggling }] = useToggleVisitedMutation();
 
   const handleTypeChange = (value: string) => {
@@ -127,6 +130,7 @@ export default function VisitedPlaces() {
 
       {/* Type Filter Tabs */}
       <div className="flex gap-2 mb-7 flex-wrap">
+        <CountryFilter filter={countryFilter} onChange={() => setPage(1)} />
         {TYPE_FILTERS.map(({ label, value, icon: Icon }) => (
           <button
             key={value}

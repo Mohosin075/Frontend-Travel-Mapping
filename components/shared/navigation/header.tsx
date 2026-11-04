@@ -1173,14 +1173,6 @@ export default function Header() {
                     </h3>
 
                     <div className="space-y-1">
-                      <Link
-                        href={user?._id ? `/explorer/${user._id}` : "/profile"}
-                        onClick={closeMenus}
-                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-slate-800/60 text-gray-900 dark:text-slate-100 rounded-lg transition-colors"
-                      >
-                        <User className="size-5" />
-                        <span>{t("profile.view_public") || (isEs ? "Ver mi perfil" : "View Profile")}</span>
-                      </Link>
                       {isAdminOrEditor && (
                         <Link
                           href={"/dashboard"}

@@ -29,6 +29,7 @@ import { useLoginRequired } from "@/components/shared/login-required-modal";
 import { useAppSelector } from "@/redux/hook";
 import { selectAccessToken } from "@/redux/features/auth/authSlice";
 import RouteDetailViewModal from "@/components/Common/route-planner/route-detail-view-modal";
+import { CountryFilter, useCountryFilter } from "@/components/shared/country-filter";
 
 export default function SavedRoutes() {
   const { t, language } = useLanguage();
@@ -39,10 +40,11 @@ export default function SavedRoutes() {
   const accessToken = useAppSelector(selectAccessToken);
   const [search, setSearch] = useState("");
   const [viewingRoute, setViewingRoute] = useState<any | null>(null);
+  const countryFilter = useCountryFilter();
 
-  const { data: myRoutesRes, isLoading } = useGetMyRoutePlansQuery(
-    { limit: 100 },
-    { skip: !accessToken }
+  const { currentData: myRoutesRes, isFetching: isLoading } = useGetMyRoutePlansQuery(
+    { limit: 100, country: countryFilter.country || undefined },
+    { skip: !accessToken || !countryFilter.ready }
   );
   const { currentData: directRouteRes } = useGetRoutePlanByIdQuery(viewRouteIdParam as string, {
     skip: !viewRouteIdParam || !accessToken,
@@ -225,6 +227,7 @@ export default function SavedRoutes() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+          <CountryFilter filter={countryFilter} />
           {/* Search with Clear Button */}
           <div className="relative flex items-center border border-gray-200 dark:border-slate-800 rounded-xl px-3 py-2 bg-white dark:bg-[#131b2e] w-full sm:w-64 shadow-sm">
             <Search className="text-gray-400 dark:text-slate-500 w-4 h-4 mr-2 shrink-0" />
