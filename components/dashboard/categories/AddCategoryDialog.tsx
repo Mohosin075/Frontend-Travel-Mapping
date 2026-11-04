@@ -36,7 +36,7 @@
 //   "#8b1d5a",
 //   "#d81b60",
 //   "#e53935",
-//   "#fb8c00",
+//   "#fabf13",
 //   "#fdd835",
 //   "#7cb342",
 //   "#2e7d32",
@@ -46,7 +46,7 @@
 //   "#6a1b9a",
 //   "#5d4037",
 //   "#ec407a",
-//   "#ff7043",
+//   "#fabf13",
 //   "#ffca28",
 //   "#ffeb3b",
 //   "#9ccc65",
@@ -296,11 +296,11 @@ interface FormData {
   iconType: "iconify" | "custom"; // track which kind is active
 }
 
-const colorPalette = [
+const colorPalette = Array.from(new Set([
   "#8b1d5a",
   "#d81b60",
   "#e53935",
-  "#fb8c00",
+  "#fabf13",
   "#fdd835",
   "#7cb342",
   "#2e7d32",
@@ -310,7 +310,7 @@ const colorPalette = [
   "#6a1b9a",
   "#5d4037",
   "#ec407a",
-  "#ff7043",
+  "#fabf13",
   "#ffca28",
   "#ffeb3b",
   "#9ccc65",
@@ -324,7 +324,7 @@ const colorPalette = [
   "#9e9e9e",
   "#616161",
   "#000000",
-];
+]));
 
 const POPULAR_ICONS = [
   "mdi:home",

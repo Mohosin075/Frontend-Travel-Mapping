@@ -15,6 +15,7 @@ interface CategoryMarkerProps {
   isLocked?: boolean;
   isMobile?: boolean;
   status?: string;
+  statusAccent?: string;
   isVisited?: boolean;
   size?: "sm" | "md" | "lg";
   onClick?: (e: React.MouseEvent) => void;
@@ -29,6 +30,7 @@ export const CategoryMarker = React.memo(function CategoryMarker({
   isLocked = false,
   isMobile = false,
   status,
+  statusAccent = "#F59E0B",
   isVisited = false,
   size = "md",
   onClick,
@@ -120,13 +122,13 @@ export const CategoryMarker = React.memo(function CategoryMarker({
             fontSize: isSmall ? (isSelected ? "11px" : "10px") : (isSelected ? "12px" : "11px"),
             fontWeight: isSelected ? "800" : "700",
             boxShadow: "0 8px 20px rgba(0, 0, 0, 0.45)",
-            border: isSelected ? "1.5px solid #FFC107" : isLocked ? "1.5px solid #F59E0B" : status === "Draft" ? "1.5px solid #F59E0B" : "1px solid rgba(255, 255, 255, 0.2)",
+            border: isSelected ? "1.5px solid #FFC107" : isLocked || status === "Draft" ? `1.5px solid ${statusAccent}` : "1px solid rgba(255, 255, 255, 0.2)",
           }}
         >
           {status === "Draft" && (
             <span
               style={{
-                backgroundColor: "#F59E0B",
+                backgroundColor: statusAccent,
                 color: "#FFFFFF",
                 fontSize: "9px",
                 fontWeight: "900",
@@ -191,7 +193,7 @@ export const CategoryMarker = React.memo(function CategoryMarker({
           <path
             d="M20 1C9.5 1 1 9.5 1 20C1 28.5 10.5 38.2 15.3 42.6C16.8 43.9 18.4 44.5 20 44.5C21.6 44.5 23.2 43.9 24.7 42.6C29.5 38.2 39 28.5 39 20C39 9.5 30.5 1 20 1Z"
             fill={status === "Draft" ? "#FFFBEB" : "#FFFFFF"}
-            stroke={isVisited ? "#FFC107" : status === "Draft" ? "#D97706" : "rgba(0,0,0,0.08)"}
+            stroke={isVisited ? "#FFC107" : status === "Draft" ? (statusAccent === "#F59E0B" ? "#D97706" : statusAccent) : "rgba(0,0,0,0.08)"}
             strokeWidth={isVisited ? "2.5" : status === "Draft" ? (isSmall ? "2" : "2.5") : "1"}
             strokeDasharray={status === "Draft" ? "4 2" : "none"}
           />
@@ -231,7 +233,7 @@ export const CategoryMarker = React.memo(function CategoryMarker({
                 width: 8,
                 height: 8,
                 borderRadius: "50%",
-                backgroundColor: "#F59E0B",
+                backgroundColor: statusAccent,
                 border: "1.5px solid #FFFFFF",
                 boxShadow: "0 1px 3px rgba(245, 158, 11, 0.45)",
                 zIndex: 10,
@@ -243,7 +245,7 @@ export const CategoryMarker = React.memo(function CategoryMarker({
                 position: "absolute",
                 top: -6,
                 right: -10,
-                background: "#F59E0B",
+                background: statusAccent,
                 color: "#FFFFFF",
                 borderRadius: "5px",
                 padding: "1px 4.5px",

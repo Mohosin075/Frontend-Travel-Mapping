@@ -25,9 +25,9 @@ export function UpdatePlaceModal({
   onOpenChange,
 }: UpdatePlaceModalProps) {
   const { t } = useLanguage();
-  const { data: placeRes, isLoading: isLoadingPlace } = useGetPlaceDetailsQuery(
+  const { currentData: placeRes, isFetching: isLoadingPlace } = useGetPlaceDetailsQuery(
     placeId as string,
-    { skip: !placeId },
+    { skip: !placeId || !open, refetchOnMountOrArgChange: true },
   );
 
   const { data: categoriesRes } = useGetCategoriesQuery({ limit: 100 });
@@ -145,6 +145,7 @@ export function UpdatePlaceModal({
         ) : place ? (
           <div className="w-full flex-1 flex flex-col overflow-hidden">
             <PlaceFormContent
+              key={placeId}
               categories={categories}
               isSaving={isUpdating}
               onClose={() => onOpenChange(false)}

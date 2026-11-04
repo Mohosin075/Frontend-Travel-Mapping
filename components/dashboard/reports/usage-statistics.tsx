@@ -381,6 +381,7 @@ export function UsageStatistics({
 
       {/* Modal to view interacting users */}
       <EntityUsersModal
+        key={`${selectedEntity?.type}:${selectedEntity?.id}:${isModalOpen}`}
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         entity={selectedEntity}

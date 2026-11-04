@@ -30,7 +30,6 @@ import {
 } from "@/redux/features/place/placeApi";
 import { useGetPublicPlacesBusinessQuery } from "@/redux/features/public/publicApi";
 import {
-  AdvancedMarker,
   APIProvider,
   InfoWindow,
   Map,
@@ -42,6 +41,7 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from "react"
 import { toast } from "sonner";
 import { appAlert } from "@/lib/app-alert";
 import { PlaceInfoWindow } from "./PlaceInfoWindow";
+import { MarkerDragProvider, HoldToDragMarker } from "./hold-to-drag-marker";
 import { PlaceFormContent } from "./PlaceFormContent";
 import {
   asId,
@@ -56,8 +56,8 @@ import {
 const CATEGORY_COLORS: Record<string, string> = {
   restaurant: "#EF4444",
   food: "#EF4444",
-  cafe: "#F97316",
-  coffee: "#F97316",
+  cafe: "#fabf13",
+  coffee: "#fabf13",
   hotel: "#8B5CF6",
   accommodation: "#8B5CF6",
   beach: "#06B6D4",
@@ -65,8 +65,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   park: "#10B981",
   hiking: "#059669",
   shopping: "#EC4899",
-  bars: "#F59E0B",
-  nightlife: "#F59E0B",
+  bars: "#fabf13",
+  nightlife: "#fabf13",
 };
 
 function resolveCategoryColor(category?: any): string {
@@ -542,8 +542,8 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
       const coords =
         place?.location?.mapLocation?.coordinates ||
         place?.location?.coordinates;
-      const lat = coords?.[1] || place?.latitude;
-      const lng = coords?.[0] || place?.longitude;
+      const lat = coords?.[1] ?? place?.latitude;
+      const lng = coords?.[0] ?? place?.longitude;
       if (lat == null || lng == null) continue;
 
       if (bounds.contains({ lat, lng })) {
@@ -568,11 +568,11 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
           place?.location?.mapLocation?.coordinates ||
           place?.location?.coordinates;
         const position = {
-          lat: coords?.[1] || place?.latitude,
-          lng: coords?.[0] || place?.longitude,
+          lat: coords?.[1] ?? place?.latitude,
+          lng: coords?.[0] ?? place?.longitude,
         };
 
-        if (!position.lat || !position.lng) return null;
+        if (!Number.isFinite(position.lat) || !Number.isFinite(position.lng)) return null;
 
         const cat =
           typeof place.category === "object"
@@ -590,22 +590,13 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
         const markerPosition = draggedPositions?.[placeId] || position;
 
         return (
-          <AdvancedMarker
+          <HoldToDragMarker
             key={placeId}
             position={markerPosition}
             zIndex={isSelected ? 9999 : 10}
-            onClick={handleMarkerClick}
-            
-            draggable={true}
-            onDragEnd={(e: any) => {
-              if (e.latLng) {
-                const newPos = {
-                  lat: typeof e.latLng.lat === 'function' ? e.latLng.lat() : Number(e.latLng.lat),
-                  lng: typeof e.latLng.lng === 'function' ? e.latLng.lng() : Number(e.latLng.lng),
-                };
-                onMarkerDragEnd?.(placeId, newPos);
-              }
-            }}
+            onClick={() => handleSelectPlace(place)}
+            onDragStart={() => { if ((selectedPlace?._id || selectedPlace?.id) !== placeId) handleSelectPlace(place); }}
+            onDragEnd={newPos => onMarkerDragEnd?.(placeId, newPos)}
           >
             <CategoryMarker
               icon={cat?.icon || "📍"}
@@ -613,10 +604,11 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
               name={place.name}
               isSelected={isSelected}
               status={place.status}
+              statusAccent="#fabf13"
               size="md"
               onClick={handleMarkerClick}
             />
-          </AdvancedMarker>
+          </HoldToDragMarker>
         );
       })}
     </>
@@ -769,28 +761,33 @@ export default function AddPlacePage() {
     lng: number;
   } | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<any | null>(null);
+  const placeDetailsRequest = useRef(0);
+  useEffect(() => { if (!(selectedPlace?._id || selectedPlace?.id)) placeDetailsRequest.current++; }, [selectedPlace?._id, selectedPlace?.id]);
   const [activePoi, setActivePoi] = useState<any | null>(null);
   const [draggedPositions, setDraggedPositions] = useState<
     Record<string, { lat: number; lng: number }>
   >({});
   const [formData, setFormData] = useState({ name: "", description: "" });
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
+  const addressLookupRequest = useRef(0);
 
   const updateAddressFromCoords = async (lat: number, lng: number) => {
+    const request = ++addressLookupRequest.current;
     setIsFetchingAddress(true);
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY}`
       );
       const data = await response.json();
+      if (request !== addressLookupRequest.current) return;
       if (data.status === "OK" && data.results.length > 0) {
         const address = data.results[0].formatted_address;
-        setSelectedPlace((prev: any) => (prev ? { ...prev, address } : null));
+        setSelectedPlace((prev: any) => prev?.position?.lat === lat && prev?.position?.lng === lng ? { ...prev, address } : prev);
       }
     } catch (error) {
       console.error("Error fetching address:", error);
     } finally {
-      setIsFetchingAddress(false);
+      if (request === addressLookupRequest.current) setIsFetchingAddress(false);
     }
   };
 
@@ -901,7 +898,7 @@ export default function AddPlacePage() {
       }));
       const match = displayPlaces.find((p: any) => (p._id || p.id) === placeId);
       setSelectedPlace((prev: any) => ({
-        ...(match || prev || {}),
+        ...((prev?._id || prev?.id) === placeId ? prev : match || {}),
         position: pos,
       }));
       updateAddressFromCoords(pos.lat, pos.lng);
@@ -915,12 +912,13 @@ export default function AddPlacePage() {
   );
 
   const handleSelectPlace = async (place: any) => {
+    const request = ++placeDetailsRequest.current;
     setActivePoi(null);
     const placeId = place._id || place.id;
     setDraggedPositions((prev) => (prev[placeId] ? { [placeId]: prev[placeId] } : {}));
     const serverPosition = {
-      lat: place?.location?.coordinates?.[1] || place?.latitude || 0,
-      lng: place?.location?.coordinates?.[0] || place?.longitude || 0,
+      lat: place?.location?.mapLocation?.coordinates?.[1] ?? place?.location?.coordinates?.[1] ?? place?.latitude ?? 0,
+      lng: place?.location?.mapLocation?.coordinates?.[0] ?? place?.location?.coordinates?.[0] ?? place?.longitude ?? 0,
     };
 
     // Sync marker from discovery list first (slim payload — no description)
@@ -948,6 +946,7 @@ export default function AddPlacePage() {
     if (!placeId) return;
     try {
       const res = await fetchPlaceDetails(String(placeId)).unwrap();
+      if (request !== placeDetailsRequest.current) return;
       const full = res?.data || res;
       if (!full) return;
       const fullCatId =
@@ -1508,6 +1507,7 @@ export default function AddPlacePage() {
               />
 
               {/* ── Saved markers with Viewport & Idle Optimization (60fps zoom) ── */}
+              <MarkerDragProvider>
               <SavedMarkersLayer
                 places={displayPlaces}
                 selectedPlaceId={selectedPlace?._id}
@@ -1520,24 +1520,13 @@ export default function AddPlacePage() {
 
               {/* ── Temporary marker (not yet saved) ── */}
               {tempMarker && (
-                <AdvancedMarker
+                <HoldToDragMarker
                   position={tempMarker}
                   zIndex={99999}
-                  
-                  draggable={true}
-                  onDragEnd={(e: any) => {
-                    if (e.latLng) {
-                      const newPos = {
-                        lat: typeof e.latLng.lat === 'function' ? e.latLng.lat() : Number(e.latLng.lat),
-                        lng: typeof e.latLng.lng === 'function' ? e.latLng.lng() : Number(e.latLng.lng),
-                      };
-                      setTempMarker(newPos);
-                      setSelectedPlace((prev: any) => ({
-                        ...prev,
-                        position: newPos,
-                      }));
-                      updateAddressFromCoords(newPos.lat, newPos.lng);
-                    }
+                  onDragEnd={newPos => {
+                    setTempMarker(newPos);
+                    setSelectedPlace((prev: any) => ({ ...prev, position: newPos }));
+                    updateAddressFromCoords(newPos.lat, newPos.lng);
                   }}
                   onClick={() =>
                     setSelectedPlace({
@@ -1553,6 +1542,7 @@ export default function AddPlacePage() {
                     isTemp={true}
                     isSelected={true}
                     status="Draft"
+                    statusAccent="#fabf13"
                     size="md"
                     onClick={(e) => {
                       e?.stopPropagation();
@@ -1563,8 +1553,10 @@ export default function AddPlacePage() {
                       });
                     }}
                   />
-                </AdvancedMarker>
+                </HoldToDragMarker>
               )}
+
+              </MarkerDragProvider>
 
               {/* ── Google POI Preview InfoWindow with Photos & Details ── */}
               {activePoi && (
@@ -1632,7 +1624,7 @@ export default function AddPlacePage() {
               <PlaceFormContent
                 key={
                   selectedPlace._id ||
-                  `new-${selectedPlace.position?.lat}-${selectedPlace.position?.lng}-${selectedPlace.name || ""}`
+                  selectedPlace.id || "new-place"
                 }
                 categories={categories}
                 onSave={handleSavePlace}

@@ -52,23 +52,8 @@ import { motion } from "motion/react";
 import { formatFileSize, optimizeMediaFiles } from "@/lib/image-compress";
 import { asMediaUrls, isPlaceKind, normalizePlaceType, normalizeDifficulty, normalizeService } from "./place-payload";
 
-export const isAlwaysOpenSchedule = (s?: string | null): boolean => {
-  if (!s) return false;
-  const lower = s.trim().toLowerCase();
-  return (
-    lower === "always open" ||
-    lower === "always-open" ||
-    lower === "siempre abierto" ||
-    lower === "siempre-abierto" ||
-    lower === "abierto 24/7" ||
-    lower === "always open (24/7)" ||
-    lower === "24/7" ||
-    lower === "open 24/7" ||
-    lower.includes("always open") ||
-    lower.includes("siempre abierto") ||
-    lower.includes("24/7")
-  );
-};
+import { isAlwaysOpenSchedule, normalizePlaceSchedule } from "@/lib/place-schedule";
+export { isAlwaysOpenSchedule } from "@/lib/place-schedule";
 
 interface PlaceFormContentProps {
   categories: any[];
@@ -134,6 +119,8 @@ export const PlaceFormContent = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuFileInputRef = useRef<HTMLInputElement>(null);
   const typeTouchedRef = useRef(false);
+  const scheduleTouchedRef = useRef(false);
+  const previousInitialData = useRef(initialData);
   const imagesTouchedRef = useRef(false);
   const menuImagesTouchedRef = useRef(false);
   const placeKey = (initialData as any)?._id || (initialData as any)?.id || initialData?.name;
@@ -142,6 +129,7 @@ export const PlaceFormContent = ({
   useEffect(() => {
     if (placeKey && placeKey !== prevPlaceKeyRef.current) {
       prevPlaceKeyRef.current = placeKey;
+      scheduleTouchedRef.current = false;
       imagesTouchedRef.current = false;
       menuImagesTouchedRef.current = false;
     }
@@ -212,7 +200,7 @@ export const PlaceFormContent = ({
     },
     tips: initialData?.tips || "",
     services: (initialData?.services || []).map(normalizeService),
-    schedules: isAlwaysOpenSchedule(initialData?.schedules) ? "Always open" : (initialData?.schedules || ""),
+    schedules: normalizePlaceSchedule(initialData?.schedules),
     entryCost: initialData?.entryCost !== undefined && initialData?.entryCost !== null ? String(initialData.entryCost) : "",
     hikeTime: initialData?.hikeTime !== undefined && initialData?.hikeTime !== null ? String(initialData.hikeTime) : "",
     atmosphere: initialData?.atmosphere || "",
@@ -235,6 +223,9 @@ export const PlaceFormContent = ({
 
   useEffect(() => {
     if (!initialData) return;
+    const previous = previousInitialData.current;
+    previousInitialData.current = initialData;
+    const incomingChanged = (key: keyof typeof initialData) => JSON.stringify(previous?.[key]) !== JSON.stringify(initialData[key]);
     setFormData((prev) => {
       const resolvedAccessibility = initialData.accessibility
         ? {
@@ -248,34 +239,34 @@ export const PlaceFormContent = ({
 
       return {
         ...prev,
-        name: initialData.name || prev.name || "",
-        description: initialData.description || prev.description || "",
-        address: initialData.address || prev.address || "",
-        category: initialData.category || prev.category || "",
+        name: incomingChanged("name") ? initialData.name || prev.name || "" : prev.name,
+        description: incomingChanged("description") ? initialData.description || prev.description || "" : prev.description,
+        address: incomingChanged("address") ? initialData.address || prev.address || "" : prev.address,
+        category: incomingChanged("category") ? initialData.category || prev.category || "" : prev.category,
         type: typeTouchedRef.current
           ? prev.type
           : normalizePlaceType(initialData),
-        accessDescription: initialData.accessDescription || prev.accessDescription || "",
-        tips: initialData.tips || prev.tips || "",
-        phone: initialData.phone || prev.phone || "",
-        website: initialData.website || prev.website || "",
-        instagram: initialData.instagram || prev.instagram || "",
-        schedules: isAlwaysOpenSchedule(initialData.schedules) ? "Always open" : (initialData.schedules ?? prev.schedules ?? ""),
+        accessDescription: incomingChanged("accessDescription") ? initialData.accessDescription || prev.accessDescription || "" : prev.accessDescription,
+        tips: incomingChanged("tips") ? initialData.tips || prev.tips || "" : prev.tips,
+        phone: incomingChanged("phone") ? initialData.phone || prev.phone || "" : prev.phone,
+        website: incomingChanged("website") ? initialData.website || prev.website || "" : prev.website,
+        instagram: incomingChanged("instagram") ? initialData.instagram || prev.instagram || "" : prev.instagram,
+        schedules: scheduleTouchedRef.current ? prev.schedules : normalizePlaceSchedule(initialData.schedules),
         entryCost:
-          initialData.entryCost !== undefined && initialData.entryCost !== null
+          incomingChanged("entryCost") && initialData.entryCost !== undefined && initialData.entryCost !== null
             ? String(initialData.entryCost)
             : prev.entryCost,
         hikeTime:
-          initialData.hikeTime !== undefined && initialData.hikeTime !== null
+          incomingChanged("hikeTime") && initialData.hikeTime !== undefined && initialData.hikeTime !== null
             ? String(initialData.hikeTime)
             : prev.hikeTime,
-        atmosphere: initialData.atmosphere || prev.atmosphere || "",
-        difficulty: initialData.difficulty ? normalizeDifficulty(initialData.difficulty) : prev.difficulty,
-        operatingHours: initialData.operatingHours || prev.operatingHours,
-        services: (initialData.services && initialData.services.length > 0)
+        atmosphere: incomingChanged("atmosphere") ? initialData.atmosphere || prev.atmosphere || "" : prev.atmosphere,
+        difficulty: incomingChanged("difficulty") && initialData.difficulty ? normalizeDifficulty(initialData.difficulty) : prev.difficulty,
+        operatingHours: incomingChanged("operatingHours") ? initialData.operatingHours || prev.operatingHours : prev.operatingHours,
+        services: (incomingChanged("services") && initialData.services && initialData.services.length > 0)
           ? initialData.services.map(normalizeService)
           : prev.services,
-        accessibility: resolvedAccessibility,
+        accessibility: incomingChanged("accessibility") ? resolvedAccessibility : prev.accessibility,
       };
     });
     if (!imagesTouchedRef.current) {
@@ -1281,12 +1272,13 @@ export const PlaceFormContent = ({
                     <Checkbox
                       id="always-open"
                       checked={isAlwaysOpenSchedule(formData.schedules)}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={(checked) => {
+                        scheduleTouchedRef.current = true;
                         setFormData({
                           ...formData,
-                          schedules: checked ? "Always open" : "",
-                        })
-                      }
+                          schedules: checked === true ? "Always open" : "",
+                        });
+                      }}
                     />
                     <Label
                       htmlFor="always-open"
@@ -1298,9 +1290,10 @@ export const PlaceFormContent = ({
                   {!isAlwaysOpenSchedule(formData.schedules) && (
                     <TimeRangePicker
                       value={formData.schedules}
-                      onChange={(val) =>
-                        setFormData({ ...formData, schedules: val })
-                      }
+                      onChange={(val) => {
+                        scheduleTouchedRef.current = true;
+                        setFormData({ ...formData, schedules: val });
+                      }}
                     />
                   )}
                 </div>

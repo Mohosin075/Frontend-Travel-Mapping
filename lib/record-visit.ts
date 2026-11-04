@@ -1,6 +1,7 @@
 "use client";
 
 import { emitWhenReady } from "@/lib/socket";
+import store from "@/redux/store";
 
 const recentVisits = new Map<string, number>();
 
@@ -52,6 +53,8 @@ export function getVisitorId() {
 }
 
 function getAccessToken() {
+  const token = store.getState().auth.accessToken;
+  if (token) return token;
   if (typeof document === "undefined") return "";
   const raw = document.cookie
     .split("; ")
@@ -91,13 +94,14 @@ export function trackUsage(type: UsageType | string, id?: string) {
   const entityId = typeof id === "string" ? id.trim() : "";
   if (!entityId) return;
   if (alreadyTrackedThisTab(entityType, entityId)) return;
-  if (!shouldRecordVisit(`${entityType}:${entityId}`)) return;
+  const userScope = store.getState().auth.user?.id || getAccessToken() || getVisitorId();
+  if (!shouldRecordVisit(`${userScope}:${entityType}:${entityId}`)) return;
 
   emitWhenReady("track-usage", {
     type: entityType,
     id: entityId,
     visitorId: getVisitorId(),
-    token: getAccessToken() || undefined,
+    token: getAccessToken() || "",
   });
 
   // For businesses, also ensure the REST view/visit increment is called for guaranteed database persistence

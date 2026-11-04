@@ -14,6 +14,8 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getProfileImageUrl } from "@/lib/utils";
 import { Loader2, Users, MapPin, Ticket, Map, ExternalLink, Calendar } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
 
 interface EntityUsersModalProps {
   timeFilter?: string;
@@ -34,6 +36,7 @@ export function EntityUsersModal({
   timeFilter,
 }: EntityUsersModalProps) {
   const { t, language } = useLanguage();
+  const [search, setSearch] = useState("");
 
   const { currentData: response, isFetching, isError, refetch } = useGetEntityUsersQuery(
     { type: entity?.type || "place", id: entity?.id || "", timeFilter },
@@ -43,6 +46,8 @@ export function EntityUsersModal({
   const payload = response?.data || {};
   const users: any[] = payload.users || [];
   const guestCount: number = payload.guestCount || 0;
+  const unavailableCount: number = payload.unavailableCount || 0;
+  const visibleUsers = users.filter(user => `${user.name || ""} ${user.email || ""}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
 
   const getEntityIcon = () => {
     switch (entity?.type) {
@@ -85,9 +90,9 @@ export function EntityUsersModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl w-full max-h-[85vh] flex flex-col bg-white dark:bg-[#131b2e] border-gray-200 dark:border-slate-800 rounded-2xl shadow-xl p-0 overflow-hidden">
+      <DialogContent className="max-w-xl w-full h-[min(85dvh,44rem)] max-h-[85dvh] min-h-0 flex flex-col bg-white dark:bg-[#131b2e] border-gray-200 dark:border-slate-800 rounded-2xl shadow-xl p-0 overflow-hidden">
         {/* Header with yellow accent border */}
-        <div className="p-6 border-b border-gray-100 dark:border-slate-800/80 bg-gray-50/50 dark:bg-slate-900/40">
+        <div className="p-6 shrink-0 border-b border-gray-100 dark:border-slate-800/80 bg-gray-50/50 dark:bg-slate-900/40">
           <DialogHeader>
             <div className="flex items-center gap-2 mb-1">
               <div className="w-8 h-8 rounded-lg bg-yellow-100 dark:bg-yellow-950/60 flex items-center justify-center border border-yellow-300 dark:border-yellow-700/50 shrink-0">
@@ -111,10 +116,15 @@ export function EntityUsersModal({
                 : "Identified users from available records are shown. Repeat, anonymous or historical views can make the total differ."}
             </p>
           </DialogHeader>
+          <Input value={search} onChange={event => setSearch(event.target.value)}
+            aria-label={language === "es" ? "Buscar usuarios" : "Search users"}
+            placeholder={language === "es" ? "Buscar por nombre o correo" : "Search by name or email"}
+            className="mt-3" />
+          {unavailableCount > 0 && <p className="mt-2 text-xs text-gray-500">{unavailableCount} {language === "es" ? "cuentas no disponibles" : "unavailable accounts"}</p>}
         </div>
 
         {/* User list */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-3 max-h-[50vh]">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 space-y-3">
           {isFetching ? (
             <div className="py-12 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-slate-500">
               <Loader2 className="w-8 h-8 animate-spin text-[#fabf13]" />
@@ -139,7 +149,8 @@ export function EntityUsersModal({
             </div>
           ) : (
             <>
-              {users.map((u: any, idx: number) => {
+              {visibleUsers.length === 0 && <p className="text-sm text-gray-500">{language === "es" ? "Sin resultados" : "No matching users"}</p>}
+              {visibleUsers.map((u: any, idx: number) => {
                 const avatar = getProfileImageUrl(u.profile);
                 return (
                   <div
