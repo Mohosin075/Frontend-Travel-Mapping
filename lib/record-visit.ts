@@ -106,26 +106,5 @@ export function trackUsage(type: UsageType | string, id?: string) {
     token: getAccessToken() || "",
   });
 
-  // For businesses, also ensure the REST view/visit increment is called for guaranteed database persistence
-  if (entityType === "business" && typeof window !== "undefined") {
-    try {
-      const rawBase = (process.env.NEXT_PUBLIC_BASEURL || "").replace(/\/$/, "");
-      if (rawBase) {
-        const apiBase = rawBase.endsWith("/api/v1") ? rawBase : `${rawBase}/api/v1`;
-        const token = getAccessToken();
-        fetch(`${apiBase}/business/${entityId}/view`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: "omit",
-        }).catch(() => {
-          // Non-blocking background call
-        });
-      }
-    } catch {
-      // Non-blocking
-    }
-  }
+  // The socket handler persists and deduplicates all entity types.
 }
