@@ -40,7 +40,7 @@ export function EntityUsersModal({
 
   const { currentData: response, isFetching, isError, refetch } = useGetEntityUsersQuery(
     { type: entity?.type || "place", id: entity?.id || "", timeFilter },
-    { skip: !open || !entity?.id, refetchOnMountOrArgChange: true }
+    { skip: !open || !entity?.id, refetchOnMountOrArgChange: true, pollingInterval: 30000, skipPollingIfUnfocused: true, refetchOnFocus: true }
   );
 
   const payload = response?.data || {};

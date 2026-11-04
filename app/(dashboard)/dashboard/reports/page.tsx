@@ -113,7 +113,7 @@ export default function ReportsPage() {
         ? { entityType: selectedEntity.type, entityId: selectedEntity.id }
         : {}),
     },
-    { refetchOnMountOrArgChange: true }
+    { refetchOnMountOrArgChange: true, refetchOnFocus: true, refetchOnReconnect: true, pollingInterval: 30000, skipPollingIfUnfocused: true }
   );
 
   const reportData = response?.data;

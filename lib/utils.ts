@@ -574,18 +574,22 @@ export function composeEntryCost(amount: string, type: string): string {
 }
 
 export function parseHikeTime(val?: unknown): { value: string; unit: "mins" | "hours" } {
+  if (val && typeof val === "object") {
+    const translated = val as { en?: unknown; es?: unknown };
+    return parseHikeTime(translated.en || translated.es);
+  }
   if (val == null) return { value: "", unit: "mins" };
   const str = String(val).trim();
   if (!str) return { value: "", unit: "mins" };
 
   const lower = str.toLowerCase();
   let unit: "mins" | "hours" = "mins";
-  if (lower.includes("hour") || lower.includes("hr")) {
+  if (lower.includes("hour") || lower.includes("hr") || lower.includes("hora") || /\d\s*h\b/.test(lower)) {
     unit = "hours";
   }
 
-  const match = str.match(/\d+(?:\.\d+)?/);
-  const value = match ? match[0] : "";
+  const match = str.match(/\d+(?:[.,]\d+)?/);
+  const value = match ? match[0].replace(",", ".") : "";
   return { value, unit };
 }
 

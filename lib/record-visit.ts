@@ -80,7 +80,9 @@ function alreadyTrackedThisTab(type: UsageType, id: string) {
     const token = getAccessToken();
     const userScope = token ? token.slice(-12) : getVisitorId();
     const key = `${userScope}:${type}:${id}`;
-    if (seen[key]) return true;
+    // Suppress rapid remounts, but let later visits refresh server-side presence.
+    // The server separately enforces the 24-hour view-count window.
+    if (seen[key] && Date.now() - seen[key] < 30000) return true;
     seen[key] = Date.now();
     window.sessionStorage.setItem(SESSION_TRACK_KEY, JSON.stringify(seen));
     return false;

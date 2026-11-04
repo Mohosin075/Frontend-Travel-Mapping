@@ -36,11 +36,23 @@ export function normalizePlaceType(source: unknown): PlaceKind {
   return "Regular";
 }
 
+export function editablePlaceText(value: unknown): string {
+  if (value && typeof value === "object") {
+    const translated = value as { en?: unknown; es?: unknown };
+    return editablePlaceText(translated.en ?? translated.es);
+  }
+  return typeof value === "string" || typeof value === "number" ? String(value) : "";
+}
+
 export function normalizeDifficulty(val?: unknown): string {
+  if (val && typeof val === "object") {
+    const translated = val as { en?: unknown; es?: unknown };
+    return normalizeDifficulty(translated.en || translated.es);
+  }
   if (!val || typeof val !== "string") return "";
-  const lower = val.toLowerCase().trim();
+  const lower = val.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   if (lower === "easy" || lower === "fácil" || lower === "facil") return "Easy";
-  if (lower === "moderate" || lower === "moderado" || lower === "medium") return "Moderate";
+  if (["moderate", "moderado", "moderada", "medium", "medio", "media", "intermediate", "intermedio"].includes(lower)) return "Moderate";
   if (lower === "hard" || lower === "difícil" || lower === "dificil") return "Hard";
   return val;
 }

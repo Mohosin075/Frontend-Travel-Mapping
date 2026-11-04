@@ -123,7 +123,7 @@ export function PlacesTable() {
     limit,
     searchTerm: debouncedSearch,
     status: status || undefined,
-    excludeStatus: status ? undefined : "Pending",
+    excludeStatus: status || debouncedSearch ? undefined : "Pending",
     category,
     country,
     type,
@@ -211,9 +211,7 @@ export function PlacesTable() {
     }
   };
 
-  const places: Place[] = (response?.data || []).filter(
-    (place: any) => place.status !== "Pending"
-  );
+  const places: Place[] = response?.data || [];
   const meta = response?.meta;
 
   const displayedPlaces =

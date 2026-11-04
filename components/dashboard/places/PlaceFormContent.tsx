@@ -50,7 +50,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
 import { formatFileSize, optimizeMediaFiles } from "@/lib/image-compress";
-import { asMediaUrls, isPlaceKind, normalizePlaceType, normalizeDifficulty, normalizeService } from "./place-payload";
+import { asMediaUrls, editablePlaceText, isPlaceKind, normalizePlaceType, normalizeDifficulty, normalizeService } from "./place-payload";
 
 import { isAlwaysOpenSchedule, normalizePlaceSchedule } from "@/lib/place-schedule";
 export { isAlwaysOpenSchedule } from "@/lib/place-schedule";
@@ -201,9 +201,9 @@ export const PlaceFormContent = ({
     tips: initialData?.tips || "",
     services: (initialData?.services || []).map(normalizeService),
     schedules: normalizePlaceSchedule(initialData?.schedules),
-    entryCost: initialData?.entryCost !== undefined && initialData?.entryCost !== null ? String(initialData.entryCost) : "",
-    hikeTime: initialData?.hikeTime !== undefined && initialData?.hikeTime !== null ? String(initialData.hikeTime) : "",
-    atmosphere: initialData?.atmosphere || "",
+    entryCost: editablePlaceText(initialData?.entryCost),
+    hikeTime: initialData?.hikeTime !== undefined && initialData?.hikeTime !== null ? composeHikeTime(parseHikeTime(initialData.hikeTime).value, parseHikeTime(initialData.hikeTime).unit) : "",
+    atmosphere: editablePlaceText(initialData?.atmosphere),
     difficulty: normalizeDifficulty(initialData?.difficulty),
     phone: initialData?.phone || "",
     website: initialData?.website || "",
@@ -254,13 +254,13 @@ export const PlaceFormContent = ({
         schedules: scheduleTouchedRef.current ? prev.schedules : normalizePlaceSchedule(initialData.schedules),
         entryCost:
           incomingChanged("entryCost") && initialData.entryCost !== undefined && initialData.entryCost !== null
-            ? String(initialData.entryCost)
+            ? editablePlaceText(initialData.entryCost)
             : prev.entryCost,
         hikeTime:
           incomingChanged("hikeTime") && initialData.hikeTime !== undefined && initialData.hikeTime !== null
-            ? String(initialData.hikeTime)
+            ? composeHikeTime(parseHikeTime(initialData.hikeTime).value, parseHikeTime(initialData.hikeTime).unit)
             : prev.hikeTime,
-        atmosphere: incomingChanged("atmosphere") ? initialData.atmosphere || prev.atmosphere || "" : prev.atmosphere,
+        atmosphere: incomingChanged("atmosphere") ? editablePlaceText(initialData.atmosphere) : prev.atmosphere,
         difficulty: incomingChanged("difficulty") && initialData.difficulty ? normalizeDifficulty(initialData.difficulty) : prev.difficulty,
         operatingHours: incomingChanged("operatingHours") ? initialData.operatingHours || prev.operatingHours : prev.operatingHours,
         services: (incomingChanged("services") && initialData.services && initialData.services.length > 0)

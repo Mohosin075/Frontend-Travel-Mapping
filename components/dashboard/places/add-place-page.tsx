@@ -644,7 +644,8 @@ export default function AddPlacePage() {
   const { data: placesRes } = useGetPublicPlacesBusinessQuery(
     {
       limit: 1000,
-      map: selectedMapId || ""
+      map: selectedMapId || "",
+      searchTerm: searchQuery,
     },
     { skip: !selectedMapId }
   );
@@ -1676,11 +1677,11 @@ export default function AddPlacePage() {
                   schedules: selectedPlace.schedules || "",
                   entryCost:
                     selectedPlace.entryCost !== undefined && selectedPlace.entryCost !== null
-                      ? String(selectedPlace.entryCost)
+                      ? selectedPlace.entryCost
                       : "",
                   hikeTime:
                     selectedPlace.hikeTime !== undefined && selectedPlace.hikeTime !== null
-                      ? String(selectedPlace.hikeTime)
+                      ? selectedPlace.hikeTime
                       : "",
                   atmosphere: selectedPlace.atmosphere || "",
                   difficulty: selectedPlace.difficulty || "",
