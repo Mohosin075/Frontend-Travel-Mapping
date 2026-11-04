@@ -256,7 +256,7 @@ export function PlacesTable() {
       case "Published":
         return "bg-green-100 text-green-800 dark:bg-emerald-500/10 dark:text-emerald-400";
       case "Pending":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400 font-semibold border border-amber-300 dark:border-amber-700/50";
+        return "bg-yellow-100 text-yellow-800 dark:bg-[#fabf13]/15 dark:text-yellow-400 font-semibold border border-yellow-300 dark:border-yellow-700/50";
       case "Rejected":
         return "bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-400 font-semibold border border-rose-300 dark:border-rose-700/50";
       case "Draft":
@@ -315,17 +315,17 @@ export function PlacesTable() {
           {pendingCount > 0 && (
             <Link
               href="/dashboard/reviews-verification"
-              className="inline-flex items-center gap-2 px-3.5 h-10 rounded-lg text-xs font-bold transition-all border cursor-pointer bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700/60 shadow-xs"
+              className="inline-flex items-center gap-2 px-3.5 h-10 rounded-lg text-xs font-bold transition-all border cursor-pointer bg-[#fabf13]/10 hover:bg-[#fabf13]/20 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700/60 shadow-xs"
               title={t("places_admin.pending_moderation_title") || "Go to Moderation to review pending tourist spots"}
             >
-              <ShieldCheck size={15} className="text-amber-500" />
+              <ShieldCheck size={15} className="text-yellow-500" />
               <span>
                 {t("places_admin.pending_moderation") || "Pending Moderation:"}
               </span>
-              <span className="px-1.5 py-0.5 rounded-full text-[11px] font-black bg-amber-500 text-black">
+              <span className="px-1.5 py-0.5 rounded-full text-[11px] font-black bg-[#fabf13] text-black">
                 {pendingCount}
               </span>
-              <ArrowRight size={13} className="text-amber-600 dark:text-amber-400" />
+              <ArrowRight size={13} className="text-yellow-600 dark:text-yellow-400" />
             </Link>
           )}
 
@@ -421,7 +421,7 @@ export function PlacesTable() {
                         <span>{getSafeString(place.name, language)}</span>
                         {(place.discoveredByName || place.discoveredBy) && (
                           <span
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30"
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#fabf13]/15 text-yellow-800 dark:text-yellow-300 border border-yellow-500/30"
                             title={`Discovered by: ${
                               place.discoveredByName ||
                               (typeof place.discoveredBy === "object"
@@ -429,7 +429,7 @@ export function PlacesTable() {
                                 : place.discoveredBy)
                             }`}
                           >
-                            <Sparkles size={10} className="text-amber-500" />
+                            <Sparkles size={10} className="text-yellow-500" />
                             {place.discoveredByName ||
                               (typeof place.discoveredBy === "object"
                                 ? place.discoveredBy?.name
@@ -501,7 +501,7 @@ export function PlacesTable() {
                         className={`${
                           place.status === "Published"
                             ? "text-green-500 hover:text-green-700"
-                            : "text-amber-500 hover:text-amber-700"
+                            : "text-yellow-500 hover:text-yellow-700"
                         } transition-colors`}
                         title={
                           place.status === "Published"
@@ -610,7 +610,7 @@ export function PlacesTable() {
               onChange={(e) => setRejectFeedback(e.target.value)}
               rows={3}
               placeholder={t("places_admin.reject_feedback_placeholder") || "E.g., Photos are blurry or location coordinates are incorrect..."}
-              className="w-full rounded-xl border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none"
+              className="w-full rounded-xl border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 resize-none"
             />
           </div>
           <DialogFooter className="flex gap-2 justify-end">

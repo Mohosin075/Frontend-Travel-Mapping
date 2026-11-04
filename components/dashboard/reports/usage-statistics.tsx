@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { EntityUsersModal } from "./entity-users-modal";
 
 interface StatItem {
+  entityType?: "map" | "place" | "offer" | "business";
   id?: string;
   name: string;
   count: number;
@@ -59,7 +60,7 @@ function StatColumn({
     const localized = getLocalized(item.name, language);
     const query = encodeURIComponent(localized);
 
-    switch (type) {
+    switch (item.entityType || type) {
       case "map":
         return item.id ? `/catalog/${item.id}` : `/dashboard/maps?search=${query}`;
       case "place":
@@ -224,7 +225,7 @@ function StatColumn({
                     e.stopPropagation();
                     if (onSelectEntityUsers && targetId) {
                       onSelectEntityUsers({
-                        type,
+                        type: item.entityType || type,
                         id: targetId,
                         name: localizedName,
                         count: item.count,
@@ -285,10 +286,12 @@ interface UsageData {
 export function UsageStatistics({
   data,
   timeFilterActive,
+  timeFilter,
   placeColumnTitle = "Most Opened Places",
 }: {
   data?: UsageData;
   timeFilterActive?: boolean;
+  timeFilter?: string;
   placeColumnTitle?: string;
 }) {
   const { t } = useLanguage();
@@ -381,6 +384,7 @@ export function UsageStatistics({
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         entity={selectedEntity}
+        timeFilter={timeFilter}
       />
     </div>
   );

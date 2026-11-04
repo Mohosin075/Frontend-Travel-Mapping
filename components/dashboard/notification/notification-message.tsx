@@ -48,7 +48,7 @@ export default function NotificationMessage() {
       case "APPROVED_REVIEW":
         return <Star size={18} className="text-yellow-500 fill-yellow-500" />;
       case "UNLOCKED_LEVEL":
-        return <Trophy size={18} className="text-amber-500" />;
+        return <Trophy size={18} className="text-yellow-500" />;
       case "EARNED_REWARD":
         return <Award size={18} className="text-emerald-500" />;
       case "NEW_MESSAGE":

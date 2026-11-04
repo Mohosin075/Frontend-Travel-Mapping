@@ -676,7 +676,7 @@ export const PlaceFormContent = ({
                   }}
                   className={`relative flex items-center gap-1.5 px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all duration-200 select-none whitespace-nowrap z-10 ${
                     isSelected
-                      ? "text-blue-600 dark:text-amber-400 font-bold"
+                      ? "text-blue-600 dark:text-yellow-400 font-bold"
                       : "text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200"
                   }`}
                 >
@@ -1036,7 +1036,7 @@ export const PlaceFormContent = ({
 
                           {/* Cover badge for 1st image */}
                           {isFirst && (
-                            <span className="absolute top-1 left-1 bg-amber-500 text-white text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded shadow-xs z-10">
+                            <span className="absolute top-1 left-1 bg-[#fabf13] text-white text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded shadow-xs z-10">
                               Cover
                             </span>
                           )}
@@ -1160,7 +1160,7 @@ export const PlaceFormContent = ({
                           )}
 
                           {isFirst && (
-                            <span className="absolute top-1 left-1 bg-amber-500 text-white text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded shadow-xs z-10">
+                            <span className="absolute top-1 left-1 bg-[#fabf13] text-white text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded shadow-xs z-10">
                               Cover
                             </span>
                           )}
@@ -1905,7 +1905,7 @@ export const PlaceFormContent = ({
               variant="outline"
               onClick={() => handleSave(false)}
               disabled={isSaving || isOptimizingMedia}
-              className="px-5 h-10 border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 hover:border-amber-400 font-bold text-xs uppercase tracking-widest rounded-xl transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-60"
+              className="px-5 h-10 border-yellow-300 dark:border-yellow-700/60 bg-yellow-50 dark:bg-yellow-950/40 text-yellow-900 dark:text-yellow-300 hover:bg-yellow-100 dark:hover:bg-yellow-900/60 hover:border-yellow-400 font-bold text-xs uppercase tracking-widest rounded-xl transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-60"
             >
               {isSaving && <Loader2 size={14} className="animate-spin" />}
               {isSaving

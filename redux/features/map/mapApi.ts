@@ -17,6 +17,11 @@ const mapApi = baseApi.injectEndpoints({
       invalidatesTags: ["Map"],
     }),
 
+    getManagedMaps: builder.query<any, GetMapsArgs>({
+      query: (params = {}) => ({ url: '/map/manage', method: 'GET', params }),
+      providesTags: ['Map'],
+    }),
+
     getMaps: builder.query<any, GetMapsArgs>({
       query: ({ page = 1, limit = 10, searchTerm = "" } = {}) => ({
         url: `/map?page=${page}&limit=${limit}&searchTerm=${searchTerm}`,
@@ -83,6 +88,7 @@ const mapApi = baseApi.injectEndpoints({
 export const {
   useCreateMapMutation,
   useGetMapsQuery,
+  useGetManagedMapsQuery,
   useGetMapByIdQuery,
   useGetPurchasedMapsQuery,
   useUpdateMapMutation,

@@ -318,7 +318,7 @@ export default function ReviewsVerificationPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2.5">
-            <ShieldCheck className="w-8 h-8 text-amber-500" />
+            <ShieldCheck className="w-8 h-8 text-yellow-500" />
             <span>
               {isEs ? "Verificación y Moderación" : "Verification & Moderation"}
             </span>
@@ -355,7 +355,7 @@ export default function ReviewsVerificationPage() {
           onClick={() => setActiveTab("spots")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
             activeTab === "spots"
-              ? "bg-amber-400 text-black shadow-xs font-black"
+              ? "bg-yellow-400 text-black shadow-xs font-black"
               : "text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800"
           }`}
         >
@@ -496,7 +496,7 @@ export default function ReviewsVerificationPage() {
                 return (
                   <Card
                     key={spot._id}
-                    className="rounded-2xl shadow-sm bg-white dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 overflow-hidden flex flex-col justify-between hover:border-amber-400/50 dark:hover:border-amber-500/40 hover:shadow-md transition-all p-0"
+                    className="rounded-2xl shadow-sm bg-white dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 overflow-hidden flex flex-col justify-between hover:border-yellow-400/50 dark:hover:border-yellow-500/40 hover:shadow-md transition-all p-0"
                   >
                     {/* Top Image Banner - Clickable to open full details & map */}
                     <div
@@ -520,7 +520,7 @@ export default function ReviewsVerificationPage() {
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-amber-400 bg-slate-800">
+                        <div className="w-full h-full flex flex-col items-center justify-center text-yellow-400 bg-slate-800">
                           <Compass size={36} className="opacity-70 mb-1" />
                           <span className="text-[11px] text-gray-400">
                             {isEs ? "Sin foto" : "No photo"}
@@ -538,7 +538,7 @@ export default function ReviewsVerificationPage() {
                         ) : <div />}
 
                         {spot.category?.name && (
-                          <span className="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-400 text-black shadow-xs">
+                          <span className="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-yellow-400 text-black shadow-xs">
                             {getSafeString(spot.category.name, language)}
                           </span>
                         )}
@@ -546,7 +546,7 @@ export default function ReviewsVerificationPage() {
 
                       {/* Hover Overlay Hint */}
                       <div className="absolute top-12 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                        <span className="px-3 py-1 rounded-full bg-amber-400 text-black text-xs font-black shadow-lg flex items-center gap-1.5">
+                        <span className="px-3 py-1 rounded-full bg-yellow-400 text-black text-xs font-black shadow-lg flex items-center gap-1.5">
                           <Eye size={13} />
                           {isEs ? "Inspeccionar Lugar y Mapa" : "Inspect Spot & Map"}
                         </span>
@@ -554,14 +554,14 @@ export default function ReviewsVerificationPage() {
 
                       {/* Spot Title inside banner */}
                       <div className="absolute bottom-3 left-3 right-3 text-white pointer-events-none">
-                        <h3 className="text-base font-black truncate drop-shadow-md group-hover:text-amber-300 transition-colors flex items-center justify-between">
+                        <h3 className="text-base font-black truncate drop-shadow-md group-hover:text-yellow-300 transition-colors flex items-center justify-between">
                           <span>{getSafeString(spot.name, language)}</span>
                           <span className="text-[10px] bg-black/60 px-2 py-0.5 rounded-full border border-white/20 text-white/90">
                             {isEs ? "Ver detalles ↗" : "View details ↗"}
                           </span>
                         </h3>
                         <p className="text-xs text-white/80 truncate flex items-center gap-1.5 mt-0.5">
-                          <MapPin size={12} className="text-amber-400 shrink-0" />
+                          <MapPin size={12} className="text-yellow-400 shrink-0" />
                           <span>{spot.address || (isEs ? "Sin dirección" : "No address")}</span>
                         </p>
                       </div>
@@ -572,15 +572,15 @@ export default function ReviewsVerificationPage() {
                       <div className="space-y-3">
                         {/* Contributor Pill */}
                         <div className="flex items-center justify-between text-xs">
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/20 font-semibold">
-                            <Sparkles size={11} className="text-amber-500" />
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#fabf13]/10 text-yellow-800 dark:text-yellow-300 border border-yellow-500/20 font-semibold">
+                            <Sparkles size={11} className="text-yellow-500" />
                             <span>
                               {isEs ? "Descubierto por:" : "Discovered by:"}{" "}
                               {contributorId ? (
                                 <Link
                                   href={`/explorer/${contributorId}`}
                                   target="_blank"
-                                  className="underline font-bold hover:text-amber-600 transition-colors"
+                                  className="underline font-bold hover:text-yellow-600 transition-colors"
                                 >
                                   {contributor}
                                 </Link>
@@ -589,7 +589,7 @@ export default function ReviewsVerificationPage() {
                               )}
                             </span>
                             {userLevel !== null && (
-                              <span className="px-1.5 py-0.2 rounded bg-amber-400 text-black font-extrabold text-[10px]">
+                              <span className="px-1.5 py-0.2 rounded bg-yellow-400 text-black font-extrabold text-[10px]">
                                 Lv {userLevel}
                               </span>
                             )}
@@ -604,7 +604,7 @@ export default function ReviewsVerificationPage() {
                           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-gray-200 dark:border-slate-800 space-y-2.5">
                             <div className="flex items-center justify-between text-[11px] font-mono text-gray-700 dark:text-slate-300">
                               <span className="flex items-center gap-1 font-semibold">
-                                <MapPin size={12} className="text-amber-500" />
+                                <MapPin size={12} className="text-yellow-500" />
                                 Lat: {Number(lat).toFixed(4)}, Lng: {Number(lng).toFixed(4)}
                               </span>
                               <button
@@ -613,7 +613,7 @@ export default function ReviewsVerificationPage() {
                                   e.stopPropagation();
                                   handleCopyCoords(lat, lng, spot._id);
                                 }}
-                                className="text-gray-500 hover:text-amber-500 cursor-pointer p-0.5"
+                                className="text-gray-500 hover:text-yellow-500 cursor-pointer p-0.5"
                                 title={isEs ? "Copiar coordenadas" : "Copy coordinates"}
                               >
                                 {copiedId === spot._id ? (
@@ -632,10 +632,10 @@ export default function ReviewsVerificationPage() {
                                   setModalPlaceId(spot._id);
                                   setIsPlaceModalOpen(true);
                                 }}
-                                className="inline-flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:text-amber-300 text-[11px] font-bold border border-amber-500/30 transition-all cursor-pointer"
+                                className="inline-flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-[#fabf13]/15 hover:bg-[#fabf13]/25 text-yellow-800 dark:text-yellow-300 text-[11px] font-bold border border-yellow-500/30 transition-all cursor-pointer"
                                 title={isEs ? "Abrir mapa y vista satelital" : "Open map and satellite view"}
                               >
-                                <Compass size={13} className="text-amber-500" />
+                                <Compass size={13} className="text-yellow-500" />
                                 <span>{isEs ? "Ver Mapa y Datos" : "View Map & Info"}</span>
                               </button>
                               <a
@@ -658,15 +658,15 @@ export default function ReviewsVerificationPage() {
                               setModalPlaceId(spot._id);
                               setIsPlaceModalOpen(true);
                             }}
-                            className="p-2.5 rounded-xl bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/15 cursor-pointer transition-colors group/desc"
+                            className="p-2.5 rounded-xl bg-[#fabf13]/5 hover:bg-[#fabf13]/10 border border-yellow-500/15 cursor-pointer transition-colors group/desc"
                             title={isEs ? "Haz clic para ver descripción completa" : "Click to view full description"}
                           >
-                            <div className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400 mb-0.5 flex items-center justify-between">
+                            <div className="text-[10px] uppercase font-bold text-yellow-700 dark:text-yellow-400 mb-0.5 flex items-center justify-between">
                               <span className="flex items-center gap-1">
                                 <MessageSquare size={11} />
                                 {isEs ? "Nota del Viajero" : "Traveler Note"}
                               </span>
-                              <span className="text-[10px] text-gray-400 group-hover/desc:text-amber-500">
+                              <span className="text-[10px] text-gray-400 group-hover/desc:text-yellow-500">
                                 ↗
                               </span>
                             </div>
@@ -728,9 +728,9 @@ export default function ReviewsVerificationPage() {
                             setModalPlaceId(spot._id);
                             setIsPlaceModalOpen(true);
                           }}
-                          className="h-9 px-3 rounded-xl border-amber-300 dark:border-amber-700/60 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-xs font-bold gap-1.5 cursor-pointer shadow-2xs"
+                          className="h-9 px-3 rounded-xl border-yellow-300 dark:border-yellow-700/60 text-yellow-800 dark:text-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-950/40 text-xs font-bold gap-1.5 cursor-pointer shadow-2xs"
                         >
-                          <Eye size={15} className="text-amber-500" />
+                          <Eye size={15} className="text-yellow-500" />
                           <span>{isEs ? "Ver Mapa y Datos" : "View Map & Info"}</span>
                         </Button>
 
@@ -821,7 +821,7 @@ export default function ReviewsVerificationPage() {
                               className="flex items-center gap-3 cursor-pointer group"
                               title={isEs ? "Haz clic para ver detalles y mapa" : "Click to view details and map"}
                             >
-                              <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-gray-200 dark:border-slate-800 group-hover:border-amber-400 transition-colors">
+                              <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-gray-200 dark:border-slate-800 group-hover:border-yellow-400 transition-colors">
                                 {thumbnail ? (
                                   <img
                                     src={getImageUrl(thumbnail)}
@@ -829,15 +829,15 @@ export default function ReviewsVerificationPage() {
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                                   />
                                 ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-amber-500 bg-slate-800">
+                                  <div className="w-full h-full flex items-center justify-center text-yellow-500 bg-slate-800">
                                     <Compass size={18} />
                                   </div>
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <h4 className="text-sm font-bold text-gray-900 dark:text-slate-100 group-hover:text-amber-500 transition-colors truncate max-w-xs flex items-center gap-1">
+                                <h4 className="text-sm font-bold text-gray-900 dark:text-slate-100 group-hover:text-yellow-500 transition-colors truncate max-w-xs flex items-center gap-1">
                                   <span>{getSafeString(spot.name, language)}</span>
-                                  <span className="text-[10px] text-gray-400 group-hover:text-amber-500">↗</span>
+                                  <span className="text-[10px] text-gray-400 group-hover:text-yellow-500">↗</span>
                                 </h4>
                                 <p className="text-xs text-gray-500 dark:text-slate-400 truncate max-w-xs">
                                   {spot.address || "N/A"}
@@ -856,7 +856,7 @@ export default function ReviewsVerificationPage() {
                               <Link
                                 href={`/explorer/${contributorId}`}
                                 target="_blank"
-                                className="font-bold underline hover:text-amber-600 transition-colors"
+                                className="font-bold underline hover:text-yellow-600 transition-colors"
                               >
                                 {contributor}
                               </Link>
@@ -893,7 +893,7 @@ export default function ReviewsVerificationPage() {
                                   setModalPlaceId(spot._id);
                                   setIsPlaceModalOpen(true);
                                 }}
-                                className="h-8 px-2.5 text-xs font-bold gap-1 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/30 cursor-pointer"
+                                className="h-8 px-2.5 text-xs font-bold gap-1 text-yellow-700 dark:text-yellow-400 border-yellow-300 dark:border-yellow-800 hover:bg-yellow-50 dark:hover:bg-yellow-950/30 cursor-pointer"
                                 title={isEs ? "Ver Mapa y Detalles" : "View Map & Details"}
                               >
                                 <Eye size={14} />
@@ -1029,7 +1029,7 @@ export default function ReviewsVerificationPage() {
                             ) : isBusiness ? (
                               <Building2 size={22} className="text-purple-500 opacity-80" />
                             ) : (
-                              <MapPin size={22} className="text-amber-500 opacity-80" />
+                              <MapPin size={22} className="text-yellow-500 opacity-80" />
                             )}
                           </div>
 
@@ -1046,7 +1046,7 @@ export default function ReviewsVerificationPage() {
                                 {targetType}
                               </span>
                               {targetMapName && (
-                                <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 px-2 py-0.5 rounded-md truncate max-w-44">
+                                <span className="text-[10px] font-bold text-yellow-800 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-950/40 border border-yellow-200 dark:border-yellow-800/40 px-2 py-0.5 rounded-md truncate max-w-44">
                                   🗺️ {targetMapName}
                                 </span>
                               )}
@@ -1070,8 +1070,8 @@ export default function ReviewsVerificationPage() {
 
                         {/* Rating & Points Pill */}
                         <div className="flex flex-col items-end gap-1.5 shrink-0">
-                          <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40 px-3 py-1 rounded-full text-xs font-black shadow-2xs">
-                            <Star className="w-3.5 h-3.5 fill-amber-400 stroke-amber-400" />
+                          <div className="flex items-center gap-1 bg-yellow-50 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-900/40 px-3 py-1 rounded-full text-xs font-black shadow-2xs">
+                            <Star className="w-3.5 h-3.5 fill-yellow-400 stroke-yellow-400" />
                             <span>{review.rating || 0}.0</span>
                           </div>
 
@@ -1176,9 +1176,9 @@ export default function ReviewsVerificationPage() {
                               setModalPlaceId(review.placeId?._id || review.placeId);
                               setIsPlaceModalOpen(true);
                             }}
-                            className="h-9 px-3 rounded-xl border-amber-300 dark:border-amber-700/60 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-xs font-bold gap-1.5 cursor-pointer shadow-2xs"
+                            className="h-9 px-3 rounded-xl border-yellow-300 dark:border-yellow-700/60 text-yellow-800 dark:text-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-950/40 text-xs font-bold gap-1.5 cursor-pointer shadow-2xs"
                           >
-                            <Eye size={14} className="text-amber-500" />
+                            <Eye size={14} className="text-yellow-500" />
                             <span>{isEs ? "Ver Lugar" : "View Spot"}</span>
                           </Button>
                         ) : (
@@ -1260,7 +1260,7 @@ export default function ReviewsVerificationPage() {
                     key={qIdx}
                     type="button"
                     onClick={() => setRejectFeedback(qr.text)}
-                    className="text-xs px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-950/40 text-gray-700 dark:text-slate-300 font-medium transition-colors text-left cursor-pointer border border-gray-200 dark:border-slate-700"
+                    className="text-xs px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-yellow-100 dark:hover:bg-yellow-950/40 text-gray-700 dark:text-slate-300 font-medium transition-colors text-left cursor-pointer border border-gray-200 dark:border-slate-700"
                   >
                     {qr.label}
                   </button>
@@ -1277,7 +1277,7 @@ export default function ReviewsVerificationPage() {
                   ? "Escribe el motivo detallado de rechazo..."
                   : "Write detailed rejection feedback for the user..."
               }
-              className="w-full rounded-2xl border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 p-3 text-xs sm:text-sm text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none"
+              className="w-full rounded-2xl border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 p-3 text-xs sm:text-sm text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 resize-none"
             />
           </div>
 

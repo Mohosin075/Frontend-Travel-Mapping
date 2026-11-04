@@ -16,6 +16,7 @@ import { Loader2, Users, MapPin, Ticket, Map, ExternalLink, Calendar } from "luc
 import Link from "next/link";
 
 interface EntityUsersModalProps {
+  timeFilter?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entity: {
@@ -30,18 +31,18 @@ export function EntityUsersModal({
   open,
   onOpenChange,
   entity,
+  timeFilter,
 }: EntityUsersModalProps) {
   const { t, language } = useLanguage();
 
-  const { data: response, isLoading } = useGetEntityUsersQuery(
-    { type: entity?.type || "place", id: entity?.id || "" },
-    { skip: !open || !entity?.id }
+  const { currentData: response, isFetching, isError, refetch } = useGetEntityUsersQuery(
+    { type: entity?.type || "place", id: entity?.id || "", timeFilter },
+    { skip: !open || !entity?.id, refetchOnMountOrArgChange: true }
   );
 
   const payload = response?.data || {};
   const users: any[] = payload.users || [];
   const guestCount: number = payload.guestCount || 0;
-  const totalCount: number = payload.totalCount ?? entity?.count ?? 0;
 
   const getEntityIcon = () => {
     switch (entity?.type) {
@@ -60,10 +61,10 @@ export function EntityUsersModal({
   const getModalTitle = () => {
     switch (entity?.type) {
       case "map":
-        return t("reports_admin.users_who_used_map") || "Users Who Used / Purchased This Map";
+        return t("reports_admin.users_who_used_map") || "Users Who Viewed This Map";
       case "place":
       case "business":
-        return t("reports_admin.users_who_viewed_place") || "Users Who Viewed / Visited This Place";
+        return t("reports_admin.users_who_viewed_place") || "Users Who Viewed This Place";
       case "offer":
         return t("reports_admin.users_who_redeemed_offer") || "Users Who Redeemed This Offer";
       default:
@@ -101,18 +102,28 @@ export function EntityUsersModal({
                 {entity?.name}
               </span>
               <span className="shrink-0 bg-yellow-100 text-yellow-900 dark:bg-yellow-950/60 dark:text-yellow-300 font-bold px-2 py-0.5 rounded-full border border-yellow-300 dark:border-yellow-700/50 text-[11px]">
-                {totalCount} {totalCount === 1 ? (t("common.user") || "user") : (t("common.users") || "users")}
+                {users.length} {language === "es" ? "usuarios identificados" : "identified users"}
               </span>
             </DialogDescription>
+            <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
+              {language === "es"
+                ? "Se muestran usuarios identificados en los registros disponibles. Las vistas repetidas, anónimas o históricas pueden hacer que el total sea diferente."
+                : "Identified users from available records are shown. Repeat, anonymous or historical views can make the total differ."}
+            </p>
           </DialogHeader>
         </div>
 
         {/* User list */}
         <div className="flex-1 overflow-y-auto p-6 space-y-3 max-h-[50vh]">
-          {isLoading ? (
+          {isFetching ? (
             <div className="py-12 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-slate-500">
               <Loader2 className="w-8 h-8 animate-spin text-[#fabf13]" />
               <p className="text-xs font-medium">{t("common.loading") || "Loading users..."}</p>
+            </div>
+          ) : isError ? (
+            <div role="alert" className="py-8 text-center text-sm">
+              <p>{language === 'es' ? 'No se pudieron cargar los usuarios.' : 'Unable to load users.'}</p>
+              <button type="button" onClick={() => refetch()} className="mt-3 underline">{language === 'es' ? 'Reintentar' : 'Retry'}</button>
             </div>
           ) : users.length === 0 ? (
             <div className="py-12 text-center text-gray-400 dark:text-slate-500 space-y-2">
@@ -145,7 +156,7 @@ export function EntityUsersModal({
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar className="w-9 h-9 border border-gray-200 dark:border-slate-700 shrink-0">
                         <AvatarImage src={avatar || undefined} alt={u.name} />
-                        <AvatarFallback />
+                        <AvatarFallback>{initials}</AvatarFallback>
                       </Avatar>
 
                       <div className="min-w-0">

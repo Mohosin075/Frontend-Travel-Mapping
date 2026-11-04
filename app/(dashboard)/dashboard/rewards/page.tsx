@@ -381,7 +381,7 @@ export default function RewardsAdminPage() {
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-900/60">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-yellow-50 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-300 border border-yellow-200/60 dark:border-yellow-900/60">
         <Award size={12} />
         {rewardType}
       </span>
@@ -580,7 +580,7 @@ export default function RewardsAdminPage() {
 
                         {/* Points target */}
                         <td className="px-6 py-4">
-                          <div className="text-sm font-extrabold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-lg border border-amber-200/50 dark:border-amber-900/50 inline-block">
+                          <div className="text-sm font-extrabold text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-950/40 px-2.5 py-1 rounded-lg border border-yellow-200/50 dark:border-yellow-900/50 inline-block">
                             {reward.target?.toLocaleString()} XP
                           </div>
                           {reward.discountPercentage !== undefined && (
@@ -732,7 +732,7 @@ export default function RewardsAdminPage() {
                             <div className="font-extrabold text-gray-900 dark:text-slate-100 text-sm flex items-center gap-2">
                               <span>{tierDisplayName}</span>
                               {lvl.level >= 10 && (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-yellow-100 dark:bg-yellow-950/50 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-900/40">
                                   Elite
                                 </span>
                               )}
@@ -746,7 +746,7 @@ export default function RewardsAdminPage() {
 
                           {/* Points / XP */}
                           <td className="px-6 py-4">
-                            <span className="font-bold text-xs text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-lg border border-amber-200/60 dark:border-amber-900/50">
+                            <span className="font-bold text-xs text-yellow-800 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-950/40 px-2.5 py-1 rounded-lg border border-yellow-200/60 dark:border-yellow-900/50">
                               {xpRequired.toLocaleString()} XP
                             </span>
                           </td>
@@ -996,7 +996,7 @@ export default function RewardsAdminPage() {
                             Requirement: {(Number(matchedTier.points ?? matchedTier.xp) || 0).toLocaleString()} XP
                           </span>
                         ) : (
-                          <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                          <span className="text-[11px] font-semibold text-yellow-600 dark:text-yellow-400">
                             Custom XP Requirement
                           </span>
                         )}
@@ -1032,7 +1032,7 @@ export default function RewardsAdminPage() {
                     {!matchedTier && (
                       <div className="space-y-1 animate-in fade-in duration-200">
                         {/* Custom Target XP threshold */}
-                        <Label className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-yellow-700 dark:text-yellow-300">
                           {t("rewards_admin.points_target") || "Custom XP Points Required"}
                         </Label>
                         <Input
@@ -1040,7 +1040,7 @@ export default function RewardsAdminPage() {
                           placeholder="e.g. 500"
                           value={target}
                           onChange={(e) => setTarget(e.target.value)}
-                          className="rounded-xl h-11 font-bold text-amber-900 dark:text-amber-200 bg-white dark:bg-slate-900 border-amber-200 dark:border-amber-900/50"
+                          className="rounded-xl h-11 font-bold text-yellow-900 dark:text-yellow-200 bg-white dark:bg-slate-900 border-yellow-200 dark:border-yellow-900/50"
                           required
                         />
                       </div>
@@ -1254,7 +1254,7 @@ export default function RewardsAdminPage() {
                 placeholder="e.g. 5000"
                 value={tierPoints}
                 onChange={(e) => setTierPoints(Number(e.target.value))}
-                className="rounded-xl h-11 font-bold text-amber-800 dark:text-amber-200 bg-amber-50/30 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50"
+                className="rounded-xl h-11 font-bold text-yellow-800 dark:text-yellow-200 bg-yellow-50/30 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-900/50"
                 required
               />
             </div>

@@ -8,7 +8,7 @@ import {
   useGetProfileQuery,
   useInviteUserMutation,
 } from "@/redux/features/user/userApi";
-import { useGetMapsQuery } from "@/redux/features/map/mapApi";
+import { useGetManagedMapsQuery } from "@/redux/features/map/mapApi";
 import {
   normalizeId,
   toggleMapAssignment,
@@ -46,7 +46,7 @@ export function InviteUserForm(): React.ReactElement {
 
   const [inviteUser, { isLoading }] = useInviteUserMutation();
   const { data: currentUser } = useGetProfileQuery({});
-  const { data: mapsRes, isLoading: isLoadingMaps } = useGetMapsQuery({
+  const { data: mapsRes, isLoading: isLoadingMaps } = useGetManagedMapsQuery({
     limit: 100,
   });
 
@@ -193,7 +193,7 @@ export function InviteUserForm(): React.ReactElement {
 
         {isEditor && (
           <div className="col-span-1 md:col-span-2 space-y-3">
-            <p className="text-sm text-gray-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900/40 rounded-lg px-3 py-2">
+            <p className="text-sm text-gray-600 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-950/40 border border-yellow-100 dark:border-yellow-900/40 rounded-lg px-3 py-2">
               {t("users_admin.assign_map")}. {t("users_admin.scoped_access")}
             </p>
 

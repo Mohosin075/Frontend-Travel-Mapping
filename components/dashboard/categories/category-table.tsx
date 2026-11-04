@@ -130,7 +130,7 @@ export function CategoryTable({ onEdit, onView }: CategoryTableProps) {
                             style={{
                               backgroundColor: isCustomImage
                                 ? "transparent"
-                                : category.color || "#FA7B17",
+                                : category.color || "#fabf13",
                             }}
                           >
                             <CategoryIcon

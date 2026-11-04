@@ -88,7 +88,7 @@ export default function CreateMapModal({
       recommendations: { tips: data.tips || "" },
       status: status,
       isActive: status === "Published",
-      isPaid: true,
+      isPaid: isEditing ? initialData.isPaid : true,
       rating: initialData?.rating ?? 0,
       totalReview: initialData?.totalReview ?? 0,
     };
@@ -193,7 +193,7 @@ export default function CreateMapModal({
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as "Draft" | "Published")}
-              className="w-full h-12 px-4 bg-gray-100/80 dark:bg-slate-900/60 border border-gray-200 dark:border-slate-800 rounded-xl text-sm font-semibold text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
+              className="w-full h-12 px-4 bg-gray-100/80 dark:bg-slate-900/60 border border-gray-200 dark:border-slate-800 rounded-xl text-sm font-semibold text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-yellow-400 cursor-pointer"
             >
               <option value="Draft">{t("places_admin.draft") || "Draft"}</option>
               <option value="Published">{t("places_admin.published") || "Published"}</option>
@@ -273,7 +273,7 @@ export default function CreateMapModal({
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-[#FFC107] hover:bg-[#FFB300] text-black font-bold h-12"
+            className="w-full bg-[#fabf13] hover:bg-[#fabf13] text-black font-bold h-12"
           >
             {isLoading ? "Saving..." : (isEditing ? "Update Map" : "Create Map")}
           </Button>

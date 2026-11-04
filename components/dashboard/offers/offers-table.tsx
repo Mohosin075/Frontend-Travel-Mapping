@@ -106,7 +106,7 @@ export function OffersTable({ onEdit }: { onEdit?: (offer: any) => void }) {
       case "Active":
         return "bg-green-100 dark:bg-emerald-950/40 text-green-800 dark:text-emerald-300 border border-transparent dark:border-emerald-800/60";
       case "Paused":
-        return "bg-yellow-100 dark:bg-amber-950/40 text-yellow-800 dark:text-amber-300 border border-transparent dark:border-amber-800/60";
+        return "bg-yellow-100 dark:bg-yellow-950/40 text-yellow-800 dark:text-yellow-300 border border-transparent dark:border-yellow-800/60";
       case "Expired":
         return "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-300 border border-transparent dark:border-slate-700";
       default:

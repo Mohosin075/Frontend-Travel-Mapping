@@ -10,7 +10,7 @@ import {
   useGetProfileQuery,
   useAssignEditorAccessMutation,
 } from "@/redux/features/user/userApi";
-import { useGetMapsQuery } from "@/redux/features/map/mapApi";
+import { useGetManagedMapsQuery } from "@/redux/features/map/mapApi";
 import { useState } from "react";
 import { appAlert } from "@/lib/app-alert";
 import { toast } from "sonner";
@@ -82,7 +82,7 @@ export function UsersTable(): React.ReactElement {
   const [modalMapSearch, setModalMapSearch] = useState("");
 
   const { data: currentUser } = useGetProfileQuery({});
-  const { data: mapsRes } = useGetMapsQuery({ limit: 100 });
+  const { data: mapsRes } = useGetManagedMapsQuery({ limit: 100 });
   const [assignEditorAccess] = useAssignEditorAccessMutation();
 
   const maps = mapsRes?.data || [];
@@ -386,7 +386,7 @@ export function UsersTable(): React.ReactElement {
                         className={`px-2 py-0.5 rounded-full text-[10px] font-semibold inline-block ${user.status === "active"
                             ? "bg-green-100 dark:bg-emerald-950/40 text-green-700 dark:text-emerald-300 border border-transparent dark:border-emerald-800/60"
                             : user.status === "inactive"
-                              ? "bg-yellow-100 dark:bg-amber-950/40 text-yellow-700 dark:text-amber-300 border border-transparent dark:border-amber-800/60"
+                              ? "bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-300 border border-transparent dark:border-yellow-800/60"
                               : "bg-red-100 dark:bg-rose-950/40 text-red-700 dark:text-rose-300 border border-transparent dark:border-rose-800/60"
                           }`}
                       >
@@ -563,7 +563,7 @@ export function UsersTable(): React.ReactElement {
           </DialogHeader>
 
           <div className="space-y-4 my-2">
-              <p className="text-sm text-gray-600 dark:text-slate-300 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-800/60 rounded-lg px-3 py-2">
+              <p className="text-sm text-gray-600 dark:text-slate-300 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-100 dark:border-yellow-800/60 rounded-lg px-3 py-2">
                 {t("users_admin.assign_at_least_one")} <strong>{t("maps_admin.map_name").toLowerCase()}</strong>. {t("users_admin.scoped_access")}
               </p>
 

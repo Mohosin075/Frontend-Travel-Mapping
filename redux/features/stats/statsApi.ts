@@ -24,9 +24,10 @@ const statsApi = baseApi.injectEndpoints({
         params: { searchTerm },
       }),
     }),
-    getEntityUsers: builder.query<any, { type: string; id: string }>({
-      query: ({ type, id }) => ({
-        url: `/stats/entity-users?type=${type}&id=${id}`,
+    getEntityUsers: builder.query<any, { type: string; id: string; timeFilter?: string }>({
+      query: ({ type, id, timeFilter }) => ({
+        url: "/stats/entity-users",
+        params: { type, id, timeFilter },
         method: "GET",
       }),
       providesTags: ["Stats"],

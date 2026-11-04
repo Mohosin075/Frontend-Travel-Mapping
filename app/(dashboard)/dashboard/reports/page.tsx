@@ -387,7 +387,7 @@ export default function ReportsPage() {
           </button>
           <button
             onClick={handleExportPDF}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-[#fabf13] hover:bg-yellow-500 text-black font-bold text-xs font-semibold rounded-lg shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-[#fabf13] hover:bg-[#fabf13] text-black font-bold text-xs font-semibold rounded-lg shadow-sm transition-all cursor-pointer"
           >
             <Download size={14} />
             {t("reports_admin.export_pdf") || "Export PDF"}
@@ -480,7 +480,7 @@ export default function ReportsPage() {
                             onClick={() => handleSelectEntity(item)}
                             className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-yellow-50 dark:hover:bg-slate-800/60"
                           >
-                            <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[#fabf13] dark:text-amber-400" />
+                            <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[#fabf13] dark:text-yellow-400" />
                             <span className="min-w-0">
                               <span className="block truncate text-sm font-semibold text-gray-900 dark:text-slate-100">
                                 {item.name}
@@ -556,7 +556,7 @@ export default function ReportsPage() {
 
       {/* Selected Entity Banner */}
       {selectedEntity && (
-        <div className="mb-8 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30 px-4 py-3">
+        <div className="mb-8 rounded-xl border border-yellow-200 dark:border-yellow-800/60 bg-yellow-50 dark:bg-yellow-950/30 px-4 py-3">
           <p className="text-xs font-bold uppercase tracking-wide text-yellow-800 dark:text-yellow-300">
             {t("reports_admin.filtering_by") || "Showing reports for"}
           </p>
@@ -578,6 +578,7 @@ export default function ReportsPage() {
         <UsageStatistics
           data={reportData?.usage}
           timeFilterActive={!!timeFilter}
+          timeFilter={timeFilter}
           placeColumnTitle={
             selectedEntity?.type === "business"
               ? "Business visits"

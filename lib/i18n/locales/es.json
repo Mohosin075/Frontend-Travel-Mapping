@@ -51,6 +51,8 @@
     "favorites": "Favoritos"
   },
   "common": {
+    "see_more": "Ver más",
+    "see_less": "Ver menos",
     "language": "Idioma",
     "spanish": "Español",
     "english": "English",
@@ -1179,6 +1181,11 @@
     "existing_photos": "Fotos y Videos Subidos"
   },
   "reports_admin": {
+    "more": "más",
+    "users_who_used_map": "Usuarios que vieron este mapa",
+    "users_who_viewed_place": "Usuarios que vieron este lugar",
+    "users_who_redeemed_offer": "Usuarios que canjearon esta oferta",
+    "no_registered_users": "No hay registros de usuarios identificados para este elemento.",
     "title": "Reportes y Estadísticas",
     "subtitle": "Vista integral de estadísticas de la plataforma: visitas a lugares, ofertas canjeadas y uso de mapas.",
     "export_csv": "Exportar CSV",
@@ -1536,6 +1543,8 @@
     "view_more_btn": "+ Ver más (Mostrar 100)"
   },
   "rewards_admin": {
+    "unlocked_badges_rewards": "Insignias y premios desbloqueados",
+    "no_badges_unlocked": "Aún no hay premios ni insignias desbloqueados.",
     "pts_placeholder": "ej. 15",
     "title_placeholder": "ej. Itinerario de viaje en PDF",
     "reward_desc_placeholder": "Describe lo que obtiene el usuario al desbloquear esta recompensa...",

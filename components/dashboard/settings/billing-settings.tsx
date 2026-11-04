@@ -131,7 +131,7 @@ export function BillingSettings() {
               {t("settings_admin.no_subs_desc")}
             </p>
             <Link href="/profile/my-business">
-              <Button size="sm" className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold">
+              <Button size="sm" className="bg-yellow-400 hover:bg-[#fabf13] text-black font-bold">
                 {t("settings_admin.go_to_my_businesses")}
               </Button>
             </Link>

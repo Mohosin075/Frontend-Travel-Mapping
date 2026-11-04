@@ -607,7 +607,7 @@ export function AddCategoryDialog({
         disabled={isView}
         onClick={() => handleSelectIconifyIcon(iconName)}
         className={`w-10 h-10 rounded-full flex items-center justify-center transition-all
-          ${isSelected ? "ring-2 ring-offset-1 ring-amber-500 scale-110" : "hover:scale-110"}
+          ${isSelected ? "ring-2 ring-offset-1 ring-yellow-500 scale-110" : "hover:scale-110"}
           ${isView ? "cursor-not-allowed opacity-70" : "cursor-pointer"}
         `}
         style={{ backgroundColor: isSelected ? selectedColor : "#4b5563" }}

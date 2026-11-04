@@ -16,7 +16,7 @@ type Props = {
 export function SubscriptionCard({ plan, onEdit, onDelete, isLoading }: Props) {
   const { language } = useLanguage();
   return (
-    <div className="bg-white dark:bg-[#131b2e] rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-xl dark:hover:border-amber-400/30 transition-all p-8 flex flex-col relative overflow-hidden group">
+    <div className="bg-white dark:bg-[#131b2e] rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-xl dark:hover:border-yellow-400/30 transition-all p-8 flex flex-col relative overflow-hidden group">
       {plan.isPopular && (
         <div className="absolute top-0 right-0 bg-primary text-black text-[10px] font-black uppercase px-4 py-1 rounded-bl-xl tracking-widest shadow-xs">
           Popular

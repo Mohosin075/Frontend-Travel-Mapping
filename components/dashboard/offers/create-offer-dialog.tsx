@@ -579,7 +579,7 @@ export function CreateOfferDialog({
                 </p>
               )}
               {watch("redemptionFrequency") === "once" && (
-                <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400 font-medium">
+                <p className="mt-1.5 text-xs text-yellow-600 dark:text-yellow-400 font-medium">
                   Each customer can only redeem this offer once
                 </p>
               )}
@@ -587,7 +587,7 @@ export function CreateOfferDialog({
           </div>
 
           {/* Countdown Timer Duration for Verification */}
-          <div className="rounded-2xl border border-amber-200/80 dark:border-amber-800/60 bg-amber-50/50 dark:bg-amber-950/20 p-4">
+          <div className="rounded-2xl border border-yellow-200/80 dark:border-yellow-800/60 bg-yellow-50/50 dark:bg-yellow-950/20 p-4">
             <div className="flex items-center justify-between mb-1.5">
               <Label
                 htmlFor="redemptionDuration"
@@ -596,7 +596,7 @@ export function CreateOfferDialog({
                 <span>⏱️</span>
                 <span>{t("offers_admin.countdown_timer_label") || "Countdown Timer Duration (Minutes)"}</span>
               </Label>
-              <span className="text-xs font-black text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-md">
+              <span className="text-xs font-black text-yellow-700 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/60 px-2 py-0.5 rounded-md">
                 {watch("redemptionDuration") || 15} {t("offers_admin.minutes") || "mins"}
               </span>
             </div>
@@ -614,7 +614,7 @@ export function CreateOfferDialog({
                   onClick={() => setValue("redemptionDuration", mins.toString())}
                   className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     Number(watch("redemptionDuration")) === mins
-                      ? "bg-amber-500 text-white shadow-xs"
+                      ? "bg-[#fabf13] text-white shadow-xs"
                       : "bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800"
                   }`}
                 >
@@ -728,7 +728,7 @@ export function CreateOfferDialog({
           </div>
 
           {discountType === "BOGO" && (
-            <div className="space-y-3 rounded-lg border border-yellow-200 dark:border-amber-500/20 bg-yellow-50/70 dark:bg-amber-500/10 p-4">
+            <div className="space-y-3 rounded-lg border border-yellow-200 dark:border-yellow-500/20 bg-yellow-50/70 dark:bg-[#fabf13]/10 p-4">
               <div>
                 <Label
                   htmlFor="bogoSecondType"

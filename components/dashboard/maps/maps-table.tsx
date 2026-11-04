@@ -3,11 +3,10 @@
 import { Input } from "@/components/ui/input";
 import {
   useDeleteMapMutation,
-  useGetMapsQuery,
+  useGetManagedMapsQuery,
   useUpdateMapStatusMutation,
 } from "@/redux/features/map/mapApi";
 import { useGetProfileQuery } from "@/redux/features/user/userApi";
-import { editorCanAccessMap } from "@/lib/editor-access";
 import { Edit, Eye, EyeOff, Search, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
@@ -55,7 +54,7 @@ export function MapsTable({ onEditMap }: { onEditMap?: (map: Map) => void }) {
 
   const { data: user } = useGetProfileQuery({});
 
-  const { data: response, isLoading } = useGetMapsQuery({
+  const { data: response, isLoading } = useGetManagedMapsQuery({
     page,
     limit,
     searchTerm,
@@ -68,16 +67,7 @@ export function MapsTable({ onEditMap }: { onEditMap?: (map: Map) => void }) {
   const mapsData: Map[] = response?.data || [];
   const meta = response?.meta;
 
-  const displayedMaps =
-    user?.role === "map_editor"
-      ? mapsData.filter((map: any) => {
-          const mapName =
-            typeof map.name === "object"
-              ? map.name?.es || map.name?.en
-              : map.name;
-          return editorCanAccessMap(user, map._id, map.country || mapName);
-        })
-      : mapsData;
+  const displayedMaps = mapsData;
 
   const handleDelete = async (id: string) => {
     appAlert.fire({
@@ -123,7 +113,7 @@ export function MapsTable({ onEditMap }: { onEditMap?: (map: Map) => void }) {
   const getStatusColor = (status: string) => {
     return status === "Published"
       ? "bg-emerald-100 text-emerald-800 border-emerald-300/60 hover:bg-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
-      : "bg-amber-100 text-amber-800 border-amber-300/60 hover:bg-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20";
+      : "bg-yellow-100 text-yellow-800 border-yellow-300/60 hover:bg-yellow-200 dark:bg-[#fabf13]/10 dark:text-yellow-400 dark:border-yellow-500/20";
   };
 
   const tableHeaders = [

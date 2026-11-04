@@ -148,7 +148,7 @@ export function BusinessTable() {
       case "Approved":
         return "bg-green-100 dark:bg-emerald-950/40 text-green-700 dark:text-emerald-300 border border-transparent dark:border-emerald-800/60";
       case "Pending":
-        return "bg-yellow-100 dark:bg-amber-950/40 text-yellow-700 dark:text-amber-300 border border-transparent dark:border-amber-800/60";
+        return "bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-300 border border-transparent dark:border-yellow-800/60";
       case "Rejected":
         return "bg-red-100 dark:bg-rose-950/40 text-red-700 dark:text-rose-300 border border-transparent dark:border-rose-800/60";
       default:

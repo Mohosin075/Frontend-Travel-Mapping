@@ -170,7 +170,7 @@ export function AddSubscriptionModal({
                   onClick={() => setFormData(prev => ({ ...prev, interval: "month" }))}
                   className={`flex-1 rounded-xl font-bold h-12 transition-all ${
                     formData.interval === "month" 
-                      ? "bg-yellow-400 text-black hover:bg-yellow-500 border-none shadow-md" 
+                      ? "bg-yellow-400 text-black hover:bg-[#fabf13] border-none shadow-md" 
                       : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 dark:bg-slate-900/40 dark:hover:bg-slate-800"
                   }`}
                 >
@@ -182,7 +182,7 @@ export function AddSubscriptionModal({
                   onClick={() => setFormData(prev => ({ ...prev, interval: "year" }))}
                   className={`flex-1 rounded-xl font-bold h-12 transition-all ${
                     formData.interval === "year" 
-                      ? "bg-yellow-400 text-black hover:bg-yellow-500 border-none shadow-md" 
+                      ? "bg-yellow-400 text-black hover:bg-[#fabf13] border-none shadow-md" 
                       : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 dark:bg-slate-900/40 dark:hover:bg-slate-800"
                   }`}
                 >

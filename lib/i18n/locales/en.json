@@ -51,6 +51,8 @@
     "favorites": "Favorites"
   },
   "common": {
+    "see_more": "See more",
+    "see_less": "See less",
     "language": "Language",
     "spanish": "Español",
     "english": "English",
@@ -1179,6 +1181,11 @@
     "existing_photos": "Uploaded Photos & Videos"
   },
   "reports_admin": {
+    "more": "more",
+    "users_who_used_map": "Users Who Viewed This Map",
+    "users_who_viewed_place": "Users Who Viewed This Place",
+    "users_who_redeemed_offer": "Users Who Redeemed This Offer",
+    "no_registered_users": "No identified user records found for this item.",
     "title": "Reports & Insights",
     "subtitle": "Comprehensive view of platform statistics: location visits, redeemed offers, and map usage.",
     "export_csv": "Export CSV",
@@ -1536,6 +1543,8 @@
     "view_more_btn": "+ View more (Show 100)"
   },
   "rewards_admin": {
+    "unlocked_badges_rewards": "Unlocked Badges & Rewards",
+    "no_badges_unlocked": "No prizes or badges unlocked yet.",
     "pts_placeholder": "e.g. 15",
     "title_placeholder": "e.g. PDF Travel Itinerary",
     "reward_desc_placeholder": "Describe what the user gets when unlocking this reward...",

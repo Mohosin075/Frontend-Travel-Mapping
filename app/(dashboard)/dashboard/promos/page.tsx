@@ -772,7 +772,7 @@ export default function PromosPage() {
                   disabled={isDisabled}
                   className={`text-xs px-4 py-2 rounded-xl flex items-center gap-2 h-9 self-end md:self-auto font-bold transition-all ${
                     !isDisabled
-                      ? "bg-amber-400 hover:bg-amber-500 text-black shadow-sm"
+                      ? "bg-yellow-400 hover:bg-[#fabf13] text-black shadow-sm"
                       : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500 border border-gray-200 dark:border-slate-700 cursor-not-allowed opacity-60"
                   }`}
                   title={
@@ -885,7 +885,7 @@ export default function PromosPage() {
                         key={promo._id}
                         className={`transition-colors ${
                           isPendingEmail
-                            ? "bg-amber-50/30 dark:bg-amber-950/20 hover:bg-amber-50/50 dark:hover:bg-amber-950/30"
+                            ? "bg-yellow-50/30 dark:bg-yellow-950/20 hover:bg-yellow-50/50 dark:hover:bg-yellow-950/30"
                             : isEmailSent
                             ? "bg-blue-50/10 dark:bg-blue-950/20 hover:bg-blue-50/30 dark:hover:bg-blue-950/30"
                             : "hover:bg-gray-50/30 dark:hover:bg-slate-800/30"
@@ -943,7 +943,7 @@ export default function PromosPage() {
                               {promo.recipientEmail || (t("promos_admin.generic_no_email") || "Generic (No email)")}
                             </span>
                             {isPendingEmail && (
-                              <span className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100/90 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800/60">
+                              <span className="inline-flex items-center gap-1 text-[9px] font-bold text-yellow-800 dark:text-yellow-300 bg-yellow-100/90 dark:bg-yellow-950/40 px-2 py-0.5 rounded-full border border-yellow-200 dark:border-yellow-800/60">
                                 <Send size={9} /> {t("promos_admin.pending_email_send") || "Pending Email Send"}
                               </span>
                             )}
@@ -969,8 +969,8 @@ export default function PromosPage() {
                               <XCircle size={10} /> {t("promos_admin.expired") || "Expired"}
                             </span>
                           ) : isPendingEmail ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-amber-100/80 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800/60">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> {t("promos_admin.pending_send") || "Pending Send"}
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-yellow-100/80 dark:bg-yellow-950/40 text-yellow-800 dark:text-yellow-300 border border-yellow-300 dark:border-yellow-800/60">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#fabf13] animate-pulse"></span> {t("promos_admin.pending_send") || "Pending Send"}
                             </span>
                           ) : isEmailSent ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
@@ -989,7 +989,7 @@ export default function PromosPage() {
                                 onClick={() => handleSendEmail(promo._id)}
                                 className={`p-1.5 transition-colors rounded-lg ${
                                   isPendingEmail
-                                    ? "text-amber-600 dark:text-amber-400 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-950/50"
+                                    ? "text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-950/50"
                                     : "text-gray-400 dark:text-slate-400 hover:text-primary hover:bg-gray-100 dark:hover:bg-slate-800"
                                 }`}
                                 title={isEmailSent ? (t("promos_admin.resend_email_invite") || "Resend Email Invitation") : (t("promos_admin.send_email_invite") || "Send Email Invitation")}
@@ -1032,7 +1032,7 @@ export default function PromosPage() {
                     setLimit(Number(e.target.value));
                     setPage(1);
                   }}
-                  className="h-8 px-2 text-xs font-bold rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="h-8 px-2 text-xs font-bold rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -1050,7 +1050,7 @@ export default function PromosPage() {
                     setLimit(100);
                     setPage(1);
                   }}
-                  className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 underline cursor-pointer"
+                  className="text-[11px] font-bold text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 underline cursor-pointer"
                 >
                   {t("promos_admin.view_more_btn") || "+ View more (Show 100)"}
                 </button>
@@ -1083,7 +1083,7 @@ export default function PromosPage() {
                         onClick={() => setPage(p)}
                         className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                           page === p
-                            ? "bg-amber-500 text-white shadow-xs"
+                            ? "bg-[#fabf13] text-white shadow-xs"
                             : "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800"
                         }`}
                       >

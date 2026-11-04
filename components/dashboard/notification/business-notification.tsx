@@ -60,7 +60,7 @@ export default function BusinessNotification() {
       case "IMPORTANT_UPDATE":
       case "SYSTEM_ALERT":
       default:
-        return { icon: AlertCircle, bgColor: "bg-amber-500" };
+        return { icon: AlertCircle, bgColor: "bg-[#fabf13]" };
     }
   };
 

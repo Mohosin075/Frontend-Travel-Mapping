@@ -137,7 +137,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
       value: data?.activeUsersToday?.toLocaleString() || "0",
       subtext: t("reports_admin.active_today_sub") || "Active users in last 24h",
       icon: <Users size={20} />,
-      iconBgColor: "bg-amber-500",
+      iconBgColor: "bg-[#fabf13]",
       clickable: true,
     },
     {
@@ -146,7 +146,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
       value: data?.activeUsersThisWeek?.toLocaleString() || "0",
       subtext: t("reports_admin.active_week_sub") || "Active users in last 7 days",
       icon: <TrendingUp size={20} />,
-      iconBgColor: "bg-amber-600",
+      iconBgColor: "bg-yellow-600",
       clickable: true,
     },
     {
@@ -155,7 +155,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
       value: data?.activeUsersThisMonth?.toLocaleString() || "0",
       subtext: t("reports_admin.active_month_sub") || "Active users in last 30 days",
       icon: <Calendar size={20} />,
-      iconBgColor: "bg-amber-700",
+      iconBgColor: "bg-yellow-700",
       clickable: true,
     },
     {
@@ -189,7 +189,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
         <button
           type="button"
           onClick={() => handleOpenModalWithFilter("today")}
-          className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 rounded-lg border border-amber-500/20 transition-all inline-flex items-center gap-1.5 cursor-pointer"
+          className="text-xs font-bold text-yellow-700 dark:text-yellow-400 bg-[#fabf13]/10 hover:bg-[#fabf13]/20 px-3 py-1.5 rounded-lg border border-yellow-500/20 transition-all inline-flex items-center gap-1.5 cursor-pointer"
         >
           <UserCheck size={13} />
           <span>{t("reports_admin.view_active_profiles") || "View Active Users & Profiles"}</span>
@@ -204,14 +204,14 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
             onClick={() => stat.clickable && handleOpenModalWithFilter(stat.timeframe)}
             className={`bg-white dark:bg-[#131b2e] p-5 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm transition-all ${
               stat.clickable
-                ? "cursor-pointer hover:border-amber-400/80 hover:shadow-md hover:-translate-y-0.5 group"
+                ? "cursor-pointer hover:border-yellow-400/80 hover:shadow-md hover:-translate-y-0.5 group"
                 : ""
             }`}
             title={stat.clickable ? (t("reports_admin.click_to_view_users") || "Click to view relevant users") : undefined}
           >
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-gray-500 dark:text-slate-400 text-xs font-semibold mb-1 truncate group-hover:text-[#fabf13] dark:group-hover:text-amber-400 transition-colors">
+                <p className="text-gray-500 dark:text-slate-400 text-xs font-semibold mb-1 truncate group-hover:text-[#fabf13] dark:group-hover:text-yellow-400 transition-colors">
                   {stat.label}
                 </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">
@@ -238,7 +238,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
           <DialogHeader className="p-5 pb-3 border-b border-gray-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-yellow-700 dark:text-[#fabf13] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-[#fabf13]/10 text-yellow-700 dark:text-[#fabf13] flex items-center justify-center">
                   <Users size={20} />
                 </div>
                 <div>
@@ -266,7 +266,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                 <span>{t("reports_admin.tab_today") || "Today"}</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
                   activeTimeframe === "today"
-                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                    ? "bg-[#fabf13]/15 text-yellow-700 dark:text-yellow-300"
                     : "bg-gray-200 dark:bg-slate-800 text-gray-600 dark:text-slate-400"
                 }`}>
                   {data?.activeUsersToday ?? (data?.activeTodayList?.length || 0)}
@@ -285,7 +285,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                 <span>{t("reports_admin.tab_week") || "7 Days"}</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
                   activeTimeframe === "week"
-                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                    ? "bg-[#fabf13]/15 text-yellow-700 dark:text-yellow-300"
                     : "bg-gray-200 dark:bg-slate-800 text-gray-600 dark:text-slate-400"
                 }`}>
                   {data?.activeUsersThisWeek ?? (data?.activeWeekList?.length || 0)}
@@ -304,7 +304,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                 <span>{t("reports_admin.tab_month") || "30 Days"}</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
                   activeTimeframe === "month"
-                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                    ? "bg-[#fabf13]/15 text-yellow-700 dark:text-yellow-300"
                     : "bg-gray-200 dark:bg-slate-800 text-gray-600 dark:text-slate-400"
                 }`}>
                   {data?.activeUsersThisMonth ?? (data?.activeMonthList?.length || 0)}
@@ -323,7 +323,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                 <span>{t("reports_admin.tab_all") || "All Users"}</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
                   activeTimeframe === "all"
-                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                    ? "bg-[#fabf13]/15 text-yellow-700 dark:text-yellow-300"
                     : "bg-gray-200 dark:bg-slate-800 text-gray-600 dark:text-slate-400"
                 }`}>
                   {data?.totalRegisteredUsers ?? (data?.allUsersList?.length || 0)}
@@ -339,7 +339,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                 value={searchUserTerm}
                 onChange={(e) => setSearchUserTerm(e.target.value)}
                 placeholder={t("reports_admin.search_users_placeholder") || "Search by name, email, or role..."}
-                className="w-full pl-9 pr-3 py-2 text-xs font-medium rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                className="w-full pl-9 pr-3 py-2 text-xs font-medium rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
               />
             </div>
           </DialogHeader>
@@ -391,7 +391,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                             {t("reports_admin.active_today_tag") || "Active Today"}
                           </span>
                         ) : user.isActiveWeek ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-yellow-700 dark:text-[#fabf13] border border-amber-500/20">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#fabf13]/10 text-yellow-700 dark:text-[#fabf13] border border-yellow-500/20">
                             {t("reports_admin.active_week_tag") || "Active This Week"}
                           </span>
                         ) : user.isActiveMonth ? (
@@ -409,7 +409,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                   <button
                     type="button"
                     onClick={() => handleOpenUserProfile(user._id)}
-                    className="px-3 py-1.5 rounded-xl bg-[#FFC107] hover:bg-[#e6ad06] text-gray-950 font-black text-xs shadow-xs transition-all active:scale-95 shrink-0 inline-flex items-center gap-1 cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-[#fabf13] hover:bg-[#fabf13] text-gray-950 font-black text-xs shadow-xs transition-all active:scale-95 shrink-0 inline-flex items-center gap-1 cursor-pointer"
                   >
                     <UserCheck size={12} />
                     <span>{t("reports_admin.view_profile") || "View Profile"}</span>
@@ -425,7 +425,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
       {/* Engagement Quick Strip */}
       <div className="bg-white dark:bg-[#131b2e] rounded-xl border border-gray-200 dark:border-slate-800 p-4 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-yellow-700 dark:text-[#fabf13] flex items-center justify-center shrink-0 border border-amber-200/50 dark:border-amber-800/40">
+          <div className="w-10 h-10 rounded-lg bg-yellow-50 dark:bg-yellow-950/40 text-yellow-700 dark:text-[#fabf13] flex items-center justify-center shrink-0 border border-yellow-200/50 dark:border-yellow-800/40">
             <MapPin size={18} />
           </div>
           <div>
@@ -439,7 +439,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
         </div>
 
         <div className="flex items-center gap-3 sm:border-l border-gray-100 dark:border-slate-800 sm:pl-4">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-yellow-700 dark:text-[#fabf13] flex items-center justify-center shrink-0 border border-amber-200/50 dark:border-amber-800/40">
+          <div className="w-10 h-10 rounded-lg bg-yellow-50 dark:bg-yellow-950/40 text-yellow-700 dark:text-[#fabf13] flex items-center justify-center shrink-0 border border-yellow-200/50 dark:border-yellow-800/40">
             <Ticket size={18} />
           </div>
           <div>
@@ -453,7 +453,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
         </div>
 
         <div className="flex items-center gap-3 sm:border-l border-gray-100 dark:border-slate-800 sm:pl-4">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-yellow-700 dark:text-[#fabf13] flex items-center justify-center shrink-0 border border-amber-200/50 dark:border-amber-800/40">
+          <div className="w-10 h-10 rounded-lg bg-yellow-50 dark:bg-yellow-950/40 text-yellow-700 dark:text-[#fabf13] flex items-center justify-center shrink-0 border border-yellow-200/50 dark:border-yellow-800/40">
             <Star size={18} />
           </div>
           <div>
@@ -581,7 +581,7 @@ export function RecentUserActivityLog({
 
         <Link
           href="/dashboard/users-roles"
-          className="text-xs font-semibold text-yellow-700 dark:text-[#fabf13] hover:text-yellow-700 dark:hover:text-amber-300 inline-flex items-center gap-1 hover:underline"
+          className="text-xs font-semibold text-yellow-700 dark:text-[#fabf13] hover:text-yellow-700 dark:hover:text-yellow-300 inline-flex items-center gap-1 hover:underline"
         >
           <span>{t("reports_admin.view_all_users") || "Manage Users"}</span>
           <ArrowRight size={13} />

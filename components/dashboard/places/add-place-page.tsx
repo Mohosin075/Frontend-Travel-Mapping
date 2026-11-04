@@ -18,9 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { mapStyles, removeAccents } from "@/lib/utils";
-import { editorCanAccessMap } from "@/lib/editor-access";
 import { useGetCategoriesQuery } from "@/redux/features/category/categoryApi";
-import { useGetMapsQuery } from "@/redux/features/map/mapApi";
+import { useGetManagedMapsQuery } from "@/redux/features/map/mapApi";
 import { useGetProfileQuery } from "@/redux/features/user/userApi";
 import {
   useCreatePlaceMutation,
@@ -292,11 +291,11 @@ function GooglePoiPreviewCard({
       {(poi.rating || poi.category) && (
         <div className="flex flex-wrap items-center gap-1.5 mt-2">
           {poi.rating && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-500/20 px-2 py-0.5 rounded-md">
-              <Star size={11} className="fill-amber-500 text-amber-500" />
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-yellow-800 dark:text-yellow-400 bg-yellow-50 dark:bg-[#fabf13]/10 border border-yellow-200/80 dark:border-yellow-500/20 px-2 py-0.5 rounded-md">
+              <Star size={11} className="fill-yellow-500 text-yellow-500" />
               <span>{poi.rating}</span>
               {poi.userRatingsTotal && (
-                <span className="text-amber-600/80 dark:text-amber-400/80 font-medium">({poi.userRatingsTotal})</span>
+                <span className="text-yellow-600/80 dark:text-yellow-400/80 font-medium">({poi.userRatingsTotal})</span>
               )}
             </span>
           )}
@@ -648,7 +647,7 @@ export default function AddPlacePage() {
 
   // --- API Fetches ---
   const { data: user } = useGetProfileQuery({});
-  const { data: mapsRes } = useGetMapsQuery({ limit: 100 });
+  const { data: mapsRes } = useGetManagedMapsQuery({ limit: 100 });
   const { data: categoriesRes } = useGetCategoriesQuery({ limit: 100 });
   const { data: placesRes } = useGetPublicPlacesBusinessQuery(
     {
@@ -660,12 +659,7 @@ export default function AddPlacePage() {
   const [deletePlace] = useDeletePlaceMutation();
 
   const rawMaps = mapsRes?.data || [];
-  const maps =
-    user?.role === "map_editor"
-      ? rawMaps.filter((map: any) =>
-        editorCanAccessMap(user, map._id, map.country),
-      )
-      : rawMaps;
+  const maps = rawMaps;
   const categories = categoriesRes?.data || [];
   const fetchedPlaces = Array.isArray(placesRes)
     ? placesRes
@@ -1210,7 +1204,7 @@ export default function AddPlacePage() {
                           type="button"
                           onClick={handleExtractLocation}
                           disabled={isExtracting}
-                          className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-3 py-1 h-9 text-xs rounded-lg shadow-sm cursor-pointer"
+                          className="bg-yellow-400 hover:bg-[#fabf13] text-black font-bold px-3 py-1 h-9 text-xs rounded-lg shadow-sm cursor-pointer"
                         >
                           {isExtracting ? "..." : t("places_admin.add_place")}
                         </Button>
@@ -1223,7 +1217,7 @@ export default function AddPlacePage() {
                 onClick={() => setIsDialogOpen(true)}
                 className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 hover:border-gray-300 dark:hover:border-slate-600 transition-all shadow-xs cursor-pointer"
               >
-                <Plus size={16} className="text-amber-600 dark:text-amber-400" />
+                <Plus size={16} className="text-yellow-600 dark:text-yellow-400" />
                 <span>{t("places_admin.add_category")}</span>
               </button>
             </div>
@@ -1281,11 +1275,11 @@ export default function AddPlacePage() {
                 onClick={() => setStatusFilter("Draft")}
                 className={`flex-1 py-1 rounded-md transition-all text-[11px] flex items-center justify-center gap-1 ${
                   statusFilter === "Draft"
-                    ? "bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-400 shadow-sm font-bold"
+                    ? "bg-white dark:bg-slate-800 text-yellow-700 dark:text-yellow-400 shadow-sm font-bold"
                     : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
                 }`}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#fabf13]" />
                 {t("places_admin.draft") || "Draft"}
               </button>
             </div>
@@ -1407,8 +1401,8 @@ export default function AddPlacePage() {
                                         <span
                                           className={`text-[8.5px] font-black px-1.5 py-0.2 rounded uppercase tracking-wider flex-shrink-0 ${
                                             selectedPlace?._id === place._id
-                                              ? "bg-amber-300 text-amber-950"
-                                              : "bg-amber-100 dark:bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-300 dark:border-amber-500/20"
+                                              ? "bg-yellow-300 text-yellow-950"
+                                              : "bg-yellow-100 dark:bg-[#fabf13]/10 text-yellow-800 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-500/20"
                                           }`}
                                         >
                                           {t("places_admin.draft") || "Draft"}
@@ -1474,7 +1468,7 @@ export default function AddPlacePage() {
             </div>
             <div className="h-3 w-px bg-gray-200 dark:bg-slate-700" />
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#fabf13] shadow-sm" />
               <span className="text-gray-700 dark:text-slate-200 font-bold text-[11px] uppercase tracking-wider">{t("places_admin.draft") || "Draft"}</span>
             </div>
           </div>
@@ -1607,7 +1601,7 @@ export default function AddPlacePage() {
                   <span
                     className={`text-xs font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
                       selectedPlace.isNew || selectedPlace.status === "Draft"
-                        ? "bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-400 border-amber-300 dark:border-amber-500/20"
+                        ? "bg-yellow-50 dark:bg-[#fabf13]/10 text-yellow-800 dark:text-yellow-400 border-yellow-300 dark:border-yellow-500/20"
                         : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/20"
                     }`}
                   >
