@@ -11,6 +11,7 @@ import { useGetProfileQuery } from "@/redux/features/user/userApi";
 import { useGetFavouritesQuery } from "@/redux/features/favourite/favouriteApi";
 import { useGetOffersQuery } from "@/redux/features/offer/offerApi";
 import { useGetMapsQuery } from "@/redux/features/map/mapApi";
+import { resolveOfferMap, offerMatchesCountry } from "@/lib/offer-country";
 import { getLocalized } from "@/lib/utils";
 import { useAppSelector } from "@/redux/hook";
 import Link from "next/link";
@@ -30,14 +31,13 @@ export default function OfferSection() {
 
 
 
-  const [selectedCountry, setSelectedCountry] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("selectedCountryFilter") || "";
-    }
-    return "";
-  });
-
-  const { data: mapsResponse } = useGetMapsQuery({ limit: 100 });
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedMapId, setSelectedMapId] = useState("");
+  const [selectionRestored, setSelectionRestored] = useState(false);
+  const [showAllCountries, setShowAllCountries] = useState(false);
+  const { data: mapsResponse, isLoading: isLoadingMaps } = useGetMapsQuery({ limit: 100 });
+  const maps = mapsResponse?.data || [];
+  const selectedMap = showAllCountries ? null : resolveOfferMap(maps, selectedMapId, selectedCountry);
 
   const getMapName = (m: any) => {
     if (!m) return "";
@@ -45,18 +45,27 @@ export default function OfferSection() {
   };
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = localStorage.getItem("selectedCountryFilter");
-    if (saved && !selectedCountry) {
-      setSelectedCountry(saved);
+    try {
+      setSelectedCountry(localStorage.getItem("selectedCountryFilter") || "");
+      setSelectedMapId(localStorage.getItem("selectedMapId") || "");
+    } catch {
+      // Storage may be unavailable; the first available map remains the default.
+    } finally {
+      setSelectionRestored(true);
     }
   }, []);
 
-  const { data: offersRes, isLoading } = useGetOffersQuery({
-    country: selectedCountry || undefined,
+  const scopeReady = selectionRestored && !isLoadingMaps;
+  const { currentData: offersRes, isFetching } = useGetOffersQuery({
+    map: selectedMap?._id || selectedMap?.id || (!showAllCountries ? selectedMapId || undefined : undefined),
+    country: !selectedMap && !showAllCountries ? selectedCountry || undefined : undefined,
     limit: 100,
-  });
-  const offersData = offersRes?.data || [];
+  }, { skip: !scopeReady });
+  const offersData = (offersRes?.data || []).filter((offer: any) =>
+    // When metadata is absent, the server still scopes results by the saved map ID.
+    (!showAllCountries && !selectedMap && Boolean(selectedMapId)) ||
+    offerMatchesCountry(offer, selectedMap, showAllCountries ? "" : selectedMap ? "" : selectedCountry),
+  );
 
   // Fetch the user's full favourites list — persists across reloads
   const { data: favouritesRes } = useGetFavouritesQuery();
@@ -92,27 +101,11 @@ export default function OfferSection() {
           offer.business?.location?.city?.toLowerCase().includes(term) ||
           offer.business?.location?.country?.toLowerCase().includes(term)));
 
-    const matchesCountry =
-      !selectedCountry ||
-      (typeof offer.place === "object" && (
-        offer.place?.country?.toLowerCase() === selectedCountry.toLowerCase() ||
-        offer.place?.map?.name?.toLowerCase?.() === selectedCountry.toLowerCase() ||
-        offer.place?.map?.country?.toLowerCase?.() === selectedCountry.toLowerCase() ||
-        getMapName(offer.place?.map)?.toLowerCase() === selectedCountry.toLowerCase()
-      )) ||
-      (typeof offer.business === "object" && (
-        offer.business?.location?.country?.toLowerCase() === selectedCountry.toLowerCase() ||
-        offer.business?.country?.toLowerCase() === selectedCountry.toLowerCase() ||
-        offer.business?.map?.name?.toLowerCase?.() === selectedCountry.toLowerCase() ||
-        offer.business?.map?.country?.toLowerCase?.() === selectedCountry.toLowerCase() ||
-        getMapName(offer.business?.map)?.toLowerCase() === selectedCountry.toLowerCase()
-      ));
-
     const matchesFilter =
       activeFilter === "All" ||
       (activeFilter === "Favorites" && isOfferFavourited(offer._id));
 
-    return matchesSearch && matchesFilter && matchesCountry;
+    return matchesSearch && matchesFilter;
   });
 
   const offerSuggestions = offersData
@@ -147,7 +140,7 @@ export default function OfferSection() {
     })
     .slice(0, 6);
 
-  if (isLoading) {
+  if (!scopeReady || isFetching) {
     return (
       <section className="bg-gray-50 dark:bg-[#0b0f19] min-h-screen pt-4 pb-12 sm:pt-6 sm:pb-14 md:py-12">
         <div className="max-w-360 mx-auto px-4 md:px-6">
@@ -234,13 +227,19 @@ export default function OfferSection() {
         <div className="flex items-center gap-2.5 mb-4 sm:mb-6 md:mb-8 overflow-x-auto pt-1 pb-2.5 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap no-scrollbar">
           {/* Country Filter Selector */}
           <select
-            value={selectedCountry}
+            value={showAllCountries ? "" : String(selectedMap?._id || selectedMap?.id || "")}
             onChange={(e) => {
-              const val = e.target.value;
-              setSelectedCountry(val);
-              if (val) {
-                localStorage.setItem("selectedCountryFilter", val);
+              const map = maps.find((item: any) => String(item._id || item.id) === e.target.value);
+              const mapId = map ? String(map._id || map.id) : "";
+              const country = map ? getMapName(map) : "";
+              setSelectedMapId(mapId);
+              setSelectedCountry(country);
+              setShowAllCountries(!map);
+              if (map) {
+                localStorage.setItem("selectedMapId", mapId);
+                localStorage.setItem("selectedCountryFilter", country);
               } else {
+                localStorage.removeItem("selectedMapId");
                 localStorage.removeItem("selectedCountryFilter");
               }
             }}
@@ -253,7 +252,7 @@ export default function OfferSection() {
             {mapsResponse?.data?.map((map: any) => {
               const nameStr = getMapName(map);
               return (
-                <option key={map._id} value={nameStr}>
+                <option key={map._id} value={String(map._id || map.id)}>
                   {nameStr}
                 </option>
               );

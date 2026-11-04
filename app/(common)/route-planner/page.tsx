@@ -27,6 +27,7 @@ import {
   useCreateRoutePlanMutation,
   useGetMyRoutePlansQuery,
   useUpdateRoutePlanMutation,
+  useGetRoutePlanByIdQuery,
 } from "@/redux/features/route-plan/routePlanApi";
 import AddStopModal from "@/components/Common/route-planner/add-stop-modal";
 import SavedRoutesModal from "@/components/Common/route-planner/saved-routes-modal";
@@ -91,6 +92,8 @@ export function RoutePlannerInner() {
 
   // Guards against race conditions and unintended overwrites
   const hasInitializedRef = useRef(false);
+  const initializedContextRef = useRef<string | null>(null);
+  const savedSuccessfullyRef = useRef(false);
 
   const { data: myRoutesRes, isLoading: isLoadingRoutes } = useGetMyRoutePlansQuery(
     { limit: 100 },
@@ -98,9 +101,20 @@ export function RoutePlannerInner() {
   );
   const [createRoutePlan, { isLoading: isSaving }] = useCreateRoutePlanMutation();
   const [updateRoutePlan, { isLoading: isUpdating }] = useUpdateRoutePlanMutation();
+  const { currentData: editingRouteRes, isError: isEditingRouteError, isFetching: isFetchingEditingRoute } = useGetRoutePlanByIdQuery(routeIdParam || "", {
+    skip: !accessToken || !routeIdParam,
+    refetchOnMountOrArgChange: true,
+  });
 
   // 1. Initial Load: Check modeParam/create, routeIdParam, localStorage
   useEffect(() => {
+    const context = routeIdParam || modeParam || "draft";
+    if (hasInitializedRef.current && initializedContextRef.current === context) return;
+    if (initializedContextRef.current !== context) {
+      hasInitializedRef.current = false;
+      savedSuccessfullyRef.current = false;
+      initializedContextRef.current = context;
+    }
     if (modeParam === "create" || modeParam === "new") {
       setSelectedRouteId(null);
       setRouteName(language === "es" ? "Nueva Ruta de Roadtrip" : "New Roadtrip Route");
@@ -112,8 +126,9 @@ export function RoutePlannerInner() {
     const savedRoutes = myRoutesRes?.data?.data || myRoutesRes?.data || [];
 
     // If specific routeId is passed in URL query parameter, load that route immediately
-    if (routeIdParam && savedRoutes.length > 0) {
-      const targetRoute = savedRoutes.find((r: any) => (r._id || r.id) === routeIdParam);
+    if (routeIdParam) {
+      if (isFetchingEditingRoute || isEditingRouteError) return;
+      const targetRoute = editingRouteRes?.data;
       if (targetRoute) {
         setSelectedRouteId(targetRoute._id || targetRoute.id);
         setRouteName(targetRoute.name || "Mi Roadtrip");
@@ -137,6 +152,7 @@ export function RoutePlannerInner() {
         hasInitializedRef.current = true;
         return;
       }
+      return; // Never fall back to a different route while the requested one loads.
     }
 
     if (hasInitializedRef.current) return;
@@ -188,11 +204,11 @@ export function RoutePlannerInner() {
     if (!isLoadingRoutes) {
       hasInitializedRef.current = true;
     }
-  }, [myRoutesRes, isLoadingRoutes, routeIdParam]);
+  }, [myRoutesRes, isLoadingRoutes, routeIdParam, modeParam, editingRouteRes, isFetchingEditingRoute, isEditingRouteError, language]);
 
   // 2. Persist to LocalStorage whenever routeName or stops change (only AFTER initialization!)
   useEffect(() => {
-    if (!hasInitializedRef.current) return;
+    if (!hasInitializedRef.current || savedSuccessfullyRef.current) return;
 
     try {
       if (stops.length > 0) {
@@ -443,6 +459,7 @@ export function RoutePlannerInner() {
 
   // Save or Update Route
   const handleSaveRoute = async () => {
+    if (isSaving || isUpdating || (routeIdParam && selectedRouteId !== routeIdParam)) return;
     if (!accessToken) {
       openLoginRequired("/route-planner", t("route_planner.save_route") || "Guardar ruta");
       return;
@@ -478,13 +495,14 @@ export function RoutePlannerInner() {
         if (createdId) setSelectedRouteId(createdId);
         toast.success(t("route_planner.saved_success") || "¡Ruta guardada con éxito!");
       }
+      savedSuccessfullyRef.current = true;
       try {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
       } catch {}
       if (finalRouteId) {
-        router.push(`/saved-routes?viewRouteId=${finalRouteId}`);
+        router.replace(`/saved-routes?viewRouteId=${encodeURIComponent(finalRouteId)}`, { scroll: true });
       } else {
-        router.push("/saved-routes");
+        router.replace("/saved-routes", { scroll: true });
       }
     } catch (err: any) {
       toast.error(
@@ -503,12 +521,21 @@ export function RoutePlannerInner() {
     return <SavedRoutes />;
   }
 
+  if (routeIdParam && selectedRouteId !== routeIdParam) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+        {isEditingRouteError ? <p>{t("route_planner.load_error", language === "es" ? "No se pudo cargar la ruta." : "Unable to load the route.")}</p> : <Loader2 className="w-8 h-8 animate-spin text-[#fabf13]" />}
+        <Link href="/saved-routes" className="underline">{t("common.close", "Close")}</Link>
+      </div>
+    );
+  }
+
   return (
     <APIProvider apiKey={apiKey}>
       <div className="min-h-screen bg-slate-50/70 dark:bg-[#0b0f19] text-gray-900 dark:text-slate-100 pt-20 sm:pt-24 pb-28 sm:pb-20 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
           {/* Page Title & Actions Bar */}
-          <div className="flex items-center justify-between gap-4 pb-5 border-b border-gray-200/70 dark:border-slate-800/80 mb-6">
+          <div className="sticky top-[calc(var(--site-header-height,96px)+0.5rem)] z-40 flex items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-[#0b0f19] border-b border-gray-200/70 dark:border-slate-800/80 mb-6">
             <div>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span className="px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-extrabold text-[11px] uppercase tracking-wider">

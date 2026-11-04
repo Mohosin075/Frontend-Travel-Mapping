@@ -1,5 +1,7 @@
 "use client";
 
+import RouteModalLayer from "./route-modal-layer";
+
 import { useMemo, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -176,13 +178,10 @@ export default function RouteDetailViewModal({
   };
 
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-[110] flex items-center justify-center p-2.5 sm:p-5 md:p-6 pt-16 sm:pt-20 md:pt-24 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
-    >
+    <RouteModalLayer onDismiss={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-3xl bg-white dark:bg-[#131b2e] rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden"
+        className="relative w-full max-w-3xl bg-white dark:bg-[#131b2e] rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 flex flex-col max-h-[calc(100dvh-2.5rem)] overflow-hidden"
       >
         {/* Header */}
         <div className="px-4 sm:px-7 py-3.5 sm:py-4 border-b border-gray-100 dark:border-slate-800 flex items-start justify-between bg-white dark:bg-[#131b2e] shrink-0 gap-3">
@@ -375,6 +374,6 @@ export default function RouteDetailViewModal({
           </button>
         </div>
       </div>
-    </div>
+    </RouteModalLayer>
   );
 }

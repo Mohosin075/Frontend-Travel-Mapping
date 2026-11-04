@@ -44,8 +44,9 @@ export default function SavedRoutes() {
     { limit: 100 },
     { skip: !accessToken }
   );
-  const { data: directRouteRes } = useGetRoutePlanByIdQuery(viewRouteIdParam as string, {
-    skip: !viewRouteIdParam,
+  const { currentData: directRouteRes } = useGetRoutePlanByIdQuery(viewRouteIdParam as string, {
+    skip: !viewRouteIdParam || !accessToken,
+    refetchOnMountOrArgChange: true,
   });
   const [deleteRoutePlan] = useDeleteRoutePlanMutation();
 
@@ -59,10 +60,12 @@ export default function SavedRoutes() {
       const match = allRoutes.find(
         (r) => (r._id || r.id) === viewRouteIdParam
       );
-      if (match) {
-        setViewingRoute(match);
-      } else if (directRouteRes?.data) {
+      if (directRouteRes?.data) {
         setViewingRoute(directRouteRes.data);
+      } else if (match) {
+        setViewingRoute(match);
+      } else {
+        setViewingRoute(null);
       }
     } else if (!viewRouteIdParam && viewingRoute) {
       setViewingRoute(null);

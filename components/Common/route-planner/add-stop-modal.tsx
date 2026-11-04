@@ -1,5 +1,7 @@
 "use client";
 
+import RouteModalLayer from "./route-modal-layer";
+
 import { canRevealPlace } from "@/lib/place-access";
 
 import { HIDE_GOOGLE_POI_STYLES } from "@/components/Common/maps/map";
@@ -174,8 +176,8 @@ export default function AddStopModal({
   const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAP_ID || "2b83d15fbb74673e997cfde8";
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-2 sm:p-4 pt-16 sm:pt-20 bg-black/75 backdrop-blur-md transition-opacity animate-in fade-in duration-200">
-      <div className="relative w-full max-w-4xl bg-white dark:bg-[#131b2e] rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 flex flex-col h-[94vh] sm:h-[88vh] overflow-hidden">
+    <RouteModalLayer>
+      <div className="relative w-full max-w-4xl bg-white dark:bg-[#131b2e] rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 flex flex-col h-[calc(100dvh-2.5rem)] sm:h-[88dvh] max-h-[calc(100dvh-2.5rem)] overflow-hidden">
         {/* Header */}
         <div className="px-4 sm:px-6 py-3 sm:py-3.5 border-b border-gray-100 dark:border-slate-800/80 flex items-center justify-between flex-shrink-0 bg-white/95 dark:bg-[#131b2e]/95 backdrop-blur-md">
           <div className="flex items-center gap-2.5 sm:gap-3">
@@ -226,6 +228,8 @@ export default function AddStopModal({
 
             {/* Close Button */}
             <button
+              type="button"
+              aria-label={t("common.close", "Close")}
               onClick={onClose}
               className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
             >
@@ -734,6 +738,6 @@ export default function AddStopModal({
           )}
         </div>
       </div>
-    </div>
+    </RouteModalLayer>
   );
 }
