@@ -1,5 +1,5 @@
 import { useMap } from "@vis.gl/react-google-maps";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 // ─── Geolocation on load ──────────────────────────────────────────────────────
 export function GeolocationOnLoad({
@@ -10,33 +10,37 @@ export function GeolocationOnLoad({
   shouldPan?: boolean;
 }) {
   const map = useMap();
+  const latest = useRef({ onLocation, shouldPan });
+  latest.current = { onLocation, shouldPan };
 
   useEffect(() => {
     if (!map) return;
+    let cancelled = false;
+    const controller = new AbortController();
 
     const handleSuccess = (pos: GeolocationPosition) => {
+      if (cancelled) return;
       const location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      if (shouldPan) {
+      if (latest.current.shouldPan) {
         map.panTo(location);
       }
-      onLocation(location);
+      latest.current.onLocation(location);
     };
 
     const handleFallback = async () => {
       try {
-        const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 2500);
         const response = await fetch("https://ipapi.co/json/", {
           signal: controller.signal,
         });
         clearTimeout(timer);
         const data = await response.json();
-        if (data.latitude && data.longitude) {
+        if (!cancelled && Number.isFinite(data.latitude) && Number.isFinite(data.longitude)) {
           const location = { lat: data.latitude, lng: data.longitude };
-          if (shouldPan) {
+          if (latest.current.shouldPan) {
             map.panTo(location);
           }
-          onLocation(location);
+          latest.current.onLocation(location);
         }
       } catch (error) {
         // Silently catch abort or network failures
@@ -58,6 +62,7 @@ export function GeolocationOnLoad({
     } else {
       handleFallback();
     }
+    return () => { cancelled = true; controller.abort(); };
   }, [map]);
 
   return null;

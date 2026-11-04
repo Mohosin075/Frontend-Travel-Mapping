@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { getImageUrl, getLocalized } from "@/lib/utils";
+import { getProfileImageUrl, getLocalized } from "@/lib/utils";
 
 import {
   Dialog,
@@ -361,15 +361,11 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                       onClick={() => handleOpenUserProfile(user._id)}
                       className="w-10 h-10 rounded-full bg-[#fabf13] text-black font-bold flex items-center justify-center shrink-0 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                     >
-                      {user.profile ? (
                         <img
-                          src={getImageUrl(user.profile)}
+                          src={getProfileImageUrl(user.profile)}
                           alt={user.name}
                           className="w-full h-full object-cover"
                         />
-                      ) : (
-                        <span>{user.name.slice(0, 2).toUpperCase()}</span>
-                      )}
                     </div>
 
                     <div className="min-w-0">
@@ -614,7 +610,7 @@ export function RecentUserActivityLog({
                   >
                     {act.userProfile ? (
                       <img
-                        src={getImageUrl(act.userProfile)}
+                        src={getProfileImageUrl(act.userProfile)}
                         alt={act.userName}
                         className="w-full h-full object-cover"
                       />

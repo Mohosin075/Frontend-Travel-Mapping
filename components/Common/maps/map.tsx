@@ -28,6 +28,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { MapFilters, SelectedMapFilter } from "./MapFilters";
 import LocationDialog from "./location-dialog";
 import { editorCanAccessMap } from "@/lib/editor-access";
+import { canRevealPlace } from "@/lib/place-access";
 import { getUsableMediaUrl } from "@/lib/utils";
 import { X } from "lucide-react";
 
@@ -546,11 +547,11 @@ function CountryPanner({
 
     const norm = normalizeAccents(selectedCountry).trim().toLowerCase();
     if (lastPannedCountryRef.current === norm) return;
-    lastPannedCountryRef.current = norm;
 
     // 1. Preset coordinate lookup
     const preset = COUNTRY_COORDINATES[norm];
     if (preset) {
+      lastPannedCountryRef.current = norm;
       map.panTo({ lat: preset.lat, lng: preset.lng });
       map.setZoom(preset.zoom);
       return;
@@ -563,6 +564,7 @@ function CountryPanner({
         .filter((c): c is { lat: number; lng: number } => !!c);
 
       if (validCoords.length > 0) {
+        lastPannedCountryRef.current = norm;
         if (validCoords.length === 1) {
           map.panTo(validCoords[0]);
           map.setZoom(11);
@@ -579,11 +581,13 @@ function CountryPanner({
 
     // 3. Google Geocoder fallback
     if (!geocodingLib) return;
+    let cancelled = false;
     const geocoder = new geocodingLib.Geocoder();
     geocoder.geocode(
       { address: selectedCountry },
       (results: any[] | null, status: string) => {
-        if (status === "OK" && results?.[0]) {
+        if (!cancelled && status === "OK" && results?.[0]) {
+          lastPannedCountryRef.current = norm;
           if (results[0].geometry.viewport) {
             map.fitBounds(results[0].geometry.viewport);
           } else {
@@ -593,6 +597,7 @@ function CountryPanner({
         }
       },
     );
+    return () => { cancelled = true; };
   }, [selectedCountry, places, map, geocodingLib, disabled]);
 
   return null;
@@ -699,13 +704,14 @@ function SearchPanner({
   const lastSearchRef = useRef("");
 
   useEffect(() => {
-    if (!map || !searchQuery || lastSearchRef.current === searchQuery) return;
-    lastSearchRef.current = searchQuery;
+    if (!searchQuery) { lastSearchRef.current = ""; return; }
+    if (!map || lastSearchRef.current === searchQuery) return;
 
     if (places && places.length > 0) {
       if (places.length === 1) {
         const coords = getPlaceLatLng(places[0]);
         if (coords) {
+          lastSearchRef.current = searchQuery;
           map.panTo(coords);
           const curr = map.getZoom();
           if (curr == null || curr < 12) map.setZoom(13);
@@ -721,6 +727,7 @@ function SearchPanner({
           }
         }
         if (count > 0) {
+          lastSearchRef.current = searchQuery;
           map.fitBounds(bounds, { top: 80, bottom: 90, left: 40, right: 40 });
         }
       }
@@ -733,6 +740,7 @@ function SearchPanner({
 export default function MapPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const searchQuery = (searchParams.get("q") || searchParams.get("search") || "").trim();
 
   // Puerto Rico center as natural default coordinates
   const defaultPosition = { lat: 18.2208, lng: -66.5901 };
@@ -847,7 +855,7 @@ export default function MapPage() {
         setInitialMapState(JSON.parse(savedCamera));
       }
       const savedLoc = sessionStorage.getItem("mapSelectedLocation");
-      if (savedLoc) {
+      if (savedLoc && !savedCountry && !localStorage.getItem("selectedMapId")) {
         setSelectedLocation(JSON.parse(savedLoc));
       }
     } catch (e) { }
@@ -961,7 +969,7 @@ export default function MapPage() {
   }, [mapIdFilter]);
 
   const {
-    data: placesRes,
+    currentData: placesRes,
     isLoading: isLoadingPlaces,
     isFetching: isFetchingPlaces,
     isSuccess: isPlacesSuccess,
@@ -970,6 +978,7 @@ export default function MapPage() {
     {
       limit: 1000,
       map: mapIdFilter,
+      searchTerm: searchQuery,
     },
     { skip: !canFetchPlaces },
   );
@@ -1272,8 +1281,6 @@ export default function MapPage() {
     return () => clearTimeout(timer);
   }, [pendingFocus, focusReady, isPlacesSettledForMap]);
 
-  const searchQuery = (searchParams.get("q") || searchParams.get("search") || "").trim();
-
   const purchasedMaps = Array.isArray(userProfile?.purchasedMaps) ? userProfile.purchasedMaps : [];
   const isSuperOrAdmin = ["super_admin", "admin"].includes(userProfile?.role || "");
   const isEditorForThisMap = userProfile?.role === "map_editor" && editorCanAccessMap(
@@ -1283,10 +1290,10 @@ export default function MapPage() {
   );
   const isFreeMap = selectedMapObj && selectedMapObj.isPaid === false;
 
-  const isCurrentMapPurchased = isSuperOrAdmin || isEditorForThisMap || isFreeMap || (selectedMapObj && purchasedMaps.some((m: any) => {
+  const isCurrentMapPurchased = isSuperOrAdmin || (userProfile?.role === "map_editor" ? isEditorForThisMap : isFreeMap || (selectedMapObj && purchasedMaps.some((m: any) => {
     const mid = typeof m === "object" ? (m._id || m.id) : m;
     return String(mid) === String(selectedMapObj._id);
-  }));
+  })));
 
   const isNewlyAddedLocation = (place: any) => {
     if (place.isNewlyAdded || place.isNew) return true;
@@ -1301,13 +1308,15 @@ export default function MapPage() {
 
   const processPlaceForUser = (place: any) => {
     const isBusiness = isBusinessLocation(place);
-    const categoryId = getCategoryId(place);
-    const isInherentlyBusiness = categoryId && inherentlyBusinessCatIds.has(categoryId);
 
     // Requirement 1: Non-business places on unpurchased maps appear as locked pins with padlock icon
     const isLocked = Boolean(
       place.isLocked ||
-      (isUserResolved && !isCurrentMapPurchased && !isBusiness && !isInherentlyBusiness)
+      (!isBusiness && (!isUserResolved || !canRevealPlace({
+        ...place,
+        map: selectedMapObj && String(place.map?._id || place.map) === String(selectedMapObj._id)
+          ? selectedMapObj : place.map,
+      }, userProfile)))
     );
 
     let name = place.name;
@@ -1403,13 +1412,14 @@ export default function MapPage() {
               shouldPan={false}
             />
             <SearchPanner
+              key={mapIdFilter}
               searchQuery={searchQuery}
               places={displayPlaces}
             />
             <CountryPanner
-              selectedCountry={selectedCountry}
+              selectedCountry={selectedMapObj?.country || selectedCountry}
               places={displayPlaces}
-              disabled={!!pendingFocus}
+              disabled={!!pendingFocus || (!!searchQuery && displayPlaces.length > 0)}
             />
             <FocusSetup
               lat={pendingFocus?.lat ?? 0}
@@ -1524,8 +1534,7 @@ export default function MapPage() {
           <LocationDialog
             id={selectedLocation}
             initialData={
-              selectedLocation?.data ||
-              fetchedPlaces?.find(
+              displayPlaces?.find(
                 (p: any) => String(p._id) === String(selectedLocation.id)
               ) || null
             }

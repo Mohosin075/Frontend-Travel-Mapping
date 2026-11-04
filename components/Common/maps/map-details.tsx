@@ -194,10 +194,10 @@ export default function MapDetails() {
     placeMapId,
     rawData?.country || (typeof rawData?.map === "object" ? (rawData.map?.country || rawData.map?.name) : null)
   );
-  const isMapPurchased = isSuperOrAdmin || isEditorForThisMap || (placeMapId && purchasedMaps.some((m: any) => {
+  const isMapPurchased = isSuperOrAdmin || (userProfile?.role === "map_editor" ? isEditorForThisMap : rawData?.map?.isPaid === false || (placeMapId && purchasedMaps.some((m: any) => {
     const mid = typeof m === "object" ? (m._id || m.id) : m;
     return String(mid) === String(placeMapId);
-  }));
+  })));
   // A standard (non-business) place requires map purchase to view details.
   // Wait for profile to resolve so we don't flash the lock screen mid-load.
   const isProfileResolved = !accessToken || !isProfileLoading;

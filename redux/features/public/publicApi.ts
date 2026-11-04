@@ -12,7 +12,8 @@ export const publicApi = baseApi.injectEndpoints({
         sort = "",
         country = "",
       }) => ({
-        url: `/map/discovery?page=${page}&limit=${limit}&searchTerm=${searchTerm}&status=${status}&map=${map}&sort=${sort}&country=${country}`,
+        url: "/map/discovery",
+        params: { page, limit, searchTerm, status, map, sort, country },
         method: "GET",
       }),
       providesTags: ["Place"],

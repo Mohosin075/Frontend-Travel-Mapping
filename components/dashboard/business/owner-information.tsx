@@ -1,7 +1,6 @@
 "use client";
 
-import { NoImage } from "@/lib/others/others";
-import { getImageUrl } from "@/lib/utils";
+import { DEFAULT_AVATAR, getProfileImageUrl } from "@/lib/utils";
 import { Mail, CheckCircle, X } from "lucide-react";
 import Image from "next/image";
 
@@ -36,18 +35,15 @@ export default function OwnerInformation({
 
       <div className="flex items-center gap-4 mb-6">
         <div className="w-12 h-12 rounded-full overflow-hidden">
-          {user?.profile ? (
             <Image
-              src={getImageUrl(user.profile)}
+              src={getProfileImageUrl(user?.profile)}
               alt={user?.name || "Owner"}
               width={48}
               height={48}
+              onError={(event) => { event.currentTarget.src = DEFAULT_AVATAR; }}
               unoptimized
               className="rounded-full w-12 h-12 object-cover"
             />
-          ) : (
-            <NoImage />
-          )}
         </div>
 
         <div>

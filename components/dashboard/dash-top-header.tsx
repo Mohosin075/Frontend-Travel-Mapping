@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Avatar } from "@/components/ui/avatar";
-import { getImageUrl } from "@/lib/utils";
+import { DEFAULT_AVATAR, getProfileImageUrl } from "@/lib/utils";
 import { useLogoutMutation } from "@/redux/features/auth/authApi";
 import { useGetProfileQuery } from "@/redux/features/user/userApi";
 import { useGetUnreadCountQuery } from "@/redux/features/notification/notificationApi";
@@ -97,10 +97,11 @@ export default function DashTopHeader() {
             <DropdownMenuTrigger className="outline-none">
               <Avatar className="w-10 h-10 cursor-pointer">
                 <Image
-                  src={getImageUrl(user?.profile)}
+                  src={getProfileImageUrl(user?.profile)}
                   alt="Profile"
                   width={40}
                   height={40}
+                  onError={(event) => { event.currentTarget.src = DEFAULT_AVATAR; }}
                   unoptimized
                   className="object-cover"
                 />

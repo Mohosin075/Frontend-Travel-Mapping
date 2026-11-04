@@ -50,24 +50,24 @@ export default function LocationDialog({ id, onClose, mapId, initialData }: Prop
 
   // Fetch based on activeType
   const {
-    data: businessRes,
+    currentData: businessRes,
     isLoading: isBusinessLoading,
     isFetching: isBusinessFetching,
     status: businessStatus,
     isError: isBusinessError,
   } = useGetSingleBusinessQuery(placeId, {
-    skip: activeType !== "business",
+    skip: activeType !== "business" || Boolean(initialData?.isLocked),
   });
 
   const {
-    data: placeRes,
+    currentData: placeRes,
     isLoading: isPlaceLoading,
     isFetching: isPlaceFetching,
     status: placeStatus,
     isError: isPlaceError,
     error: placeError,
   } = useGetPlaceDetailsQuery(placeId, {
-    skip: activeType !== "place",
+    skip: activeType !== "place" || Boolean(initialData?.isLocked),
   });
 
   // Automatic fallback if initial type query fails/returns empty
@@ -134,7 +134,7 @@ export default function LocationDialog({ id, onClose, mapId, initialData }: Prop
     setIsAddToRouteModalOpen(true);
   };
 
-  const isLocked = (placeError as any)?.status === 403 || location?.isLocked;
+  const isLocked = Boolean(initialData?.isLocked || (placeError as any)?.status === 403 || location?.isLocked);
 
   if (isLocked) {
     const message = (placeError as any)?.data?.message || t("maps.unlock_map_message", "This information and these benefits can be unlocked by purchasing your favorite map.");

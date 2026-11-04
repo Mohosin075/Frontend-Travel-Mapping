@@ -2,7 +2,7 @@
   <defs>
     <linearGradient id="rtAvatarBg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FABF13" />
-      <stop offset="100%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#FFE490" />
     </linearGradient>
     <linearGradient id="rtAvatarSilhouette" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#FFFFFF" />

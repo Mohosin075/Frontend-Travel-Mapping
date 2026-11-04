@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useGetEntityUsersQuery } from "@/redux/features/stats/statsApi";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { getImageUrl } from "@/lib/utils";
+import { getProfileImageUrl } from "@/lib/utils";
 import { Loader2, Users, MapPin, Ticket, Map, ExternalLink, Calendar } from "lucide-react";
 import Link from "next/link";
 
@@ -140,14 +140,7 @@ export function EntityUsersModal({
           ) : (
             <>
               {users.map((u: any, idx: number) => {
-                const avatar = u.profile ? getImageUrl(u.profile) : null;
-                const initials = (u.name || "U")
-                  .split(" ")
-                  .map((n: string) => n[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase();
-
+                const avatar = getProfileImageUrl(u.profile);
                 return (
                   <div
                     key={u._id || idx}
@@ -156,7 +149,7 @@ export function EntityUsersModal({
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar className="w-9 h-9 border border-gray-200 dark:border-slate-700 shrink-0">
                         <AvatarImage src={avatar || undefined} alt={u.name} />
-                        <AvatarFallback>{initials}</AvatarFallback>
+                        <AvatarFallback />
                       </Avatar>
 
                       <div className="min-w-0">
