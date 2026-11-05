@@ -30,7 +30,7 @@ export default function VisitedPlaces() {
   const [search, setSearch] = useState("");
   const [activeType, setActiveType] = useState("all");
   const [page, setPage] = useState(1);
-  const countryFilter = useCountryFilter();
+  const countryFilter = useCountryFilter({ allowAll: false });
 
   const TYPE_FILTERS = [
     { label: t("common.all") || "All", value: "all" },
@@ -41,7 +41,7 @@ export default function VisitedPlaces() {
   const { currentData: visitedRes, isFetching: isLoading } = useGetMyVisitedPlacesQuery({
     limit: 5000,
     country: countryFilter.country || undefined,
-  }, { skip: !countryFilter.ready });
+  }, { skip: !countryFilter.ready || !countryFilter.country });
   const [toggleVisited, { isLoading: isToggling }] = useToggleVisitedMutation();
 
   const handleTypeChange = (value: string) => {

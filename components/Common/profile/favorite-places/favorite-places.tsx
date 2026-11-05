@@ -21,6 +21,8 @@ import { toast } from "sonner";
 
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
+import { CountryFilter, useCountryFilter } from "@/components/shared/country-filter";
+
 const PAGE_SIZE = 9;
 
 export default function FavoritePlaces() {
@@ -29,6 +31,8 @@ export default function FavoritePlaces() {
   const [activeType, setActiveType] = useState("all");
   const [page, setPage] = useState(1);
 
+  const countryFilter = useCountryFilter({ allowAll: false });
+
   // Removed "Map" filter button as requested
   const TYPE_FILTERS = [
     { label: t("common.all"), value: "all" },
@@ -36,7 +40,11 @@ export default function FavoritePlaces() {
     { label: t("dashboard.sidebar.business"), value: "Business", icon: Building2 },
   ];
 
-  const { data: favouritesRes, isLoading } = useGetFavouritesQuery();
+  const { currentData: favouritesRes, isFetching, isError, refetch } = useGetFavouritesQuery(
+    { country: countryFilter.country || undefined },
+    { skip: !countryFilter.ready || !countryFilter.country },
+  );
+  const isLoading = !countryFilter.ready || isFetching;
   const [addToFavourite] = useAddToFavouriteMutation();
   const [removeFavourite, { isLoading: isRemoving }] = useRemoveFavouriteMutation();
 
@@ -140,7 +148,8 @@ export default function FavoritePlaces() {
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   return (
     <section className="max-w-7xl mx-auto px-6 py-10 font-public-sans">
@@ -161,6 +170,8 @@ export default function FavoritePlaces() {
           />
         </div>
       </div>
+
+      <div className="mb-4"><CountryFilter filter={countryFilter} onChange={() => setPage(1)} /></div>
 
       {/* Type Filter Tabs */}
       <div className="flex gap-2 mb-7 flex-wrap">
@@ -190,8 +201,13 @@ export default function FavoritePlaces() {
         </div>
       )}
 
+      {isError && <div role="alert" className="py-8 text-center text-sm">
+        <p>{language === 'es' ? 'No se pudieron cargar los favoritos.' : 'Unable to load favorites.'}</p>
+        <button type="button" className="mt-2 underline" onClick={() => refetch()}>{language === 'es' ? 'Reintentar' : 'Retry'}</button>
+      </div>}
+
       {/* Empty state */}
-      {!isLoading && paginated.length === 0 && (
+      {!isLoading && !isError && paginated.length === 0 && (
         <div className="text-center py-16 text-gray-400 dark:text-slate-500 text-sm">
           {search
             ? t("common.no_results") || "No results found."
@@ -319,8 +335,8 @@ export default function FavoritePlaces() {
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-10">
           <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
+            onClick={() => setPage(Math.max(1, safePage - 1))}
+            disabled={safePage === 1}
             className="p-2 rounded-lg border border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -331,7 +347,7 @@ export default function FavoritePlaces() {
               key={p}
               onClick={() => setPage(p)}
               className={`w-9 h-9 rounded-lg text-sm font-medium border transition-colors ${
-                page === p
+                safePage === p
                   ? "bg-yellow-400 border-yellow-400 text-black font-bold"
                   : "bg-white dark:bg-[#131b2e] border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-300 hover:border-yellow-400 dark:hover:border-yellow-500"
               }`}
@@ -341,8 +357,8 @@ export default function FavoritePlaces() {
           ))}
 
           <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
+            onClick={() => setPage(Math.min(totalPages, safePage + 1))}
+            disabled={safePage === totalPages}
             className="p-2 rounded-lg border border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <ChevronRight className="w-4 h-4" />

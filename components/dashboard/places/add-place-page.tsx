@@ -508,6 +508,7 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
   handleSelectPlace,
   draggedPositions,
   onMarkerDragEnd,
+  onMarkerDragStart,
 }: {
   places: any[];
   selectedPlaceId?: string;
@@ -516,6 +517,7 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
   handleSelectPlace: (place: any) => void;
   draggedPositions?: Record<string, { lat: number; lng: number }>;
   onMarkerDragEnd?: (placeId: string, pos: { lat: number; lng: number }) => void;
+  onMarkerDragStart?: () => void;
 }) {
   const map = useMap();
   const [bounds, setBounds] = useState<google.maps.LatLngBounds | null>(null);
@@ -595,7 +597,7 @@ const SavedMarkersLayer = React.memo(function SavedMarkersLayer({
             position={markerPosition}
             zIndex={isSelected ? 9999 : 10}
             onClick={() => handleSelectPlace(place)}
-            onDragStart={() => { if ((selectedPlace?._id || selectedPlace?.id) !== placeId) handleSelectPlace(place); }}
+            onDragStart={onMarkerDragStart}
             onDragEnd={newPos => onMarkerDragEnd?.(placeId, newPos)}
           >
             <CategoryMarker
@@ -762,6 +764,9 @@ export default function AddPlacePage() {
     lng: number;
   } | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<any | null>(null);
+  const [placeDetailsState, setPlaceDetailsState] = useState<{
+    id: string; status: 'loading' | 'ready' | 'error';
+  } | null>(null);
   const placeDetailsRequest = useRef(0);
   useEffect(() => { if (!(selectedPlace?._id || selectedPlace?.id)) placeDetailsRequest.current++; }, [selectedPlace?._id, selectedPlace?.id]);
   const [activePoi, setActivePoi] = useState<any | null>(null);
@@ -891,31 +896,11 @@ export default function AddPlacePage() {
   );
 
 
-  const handleMarkerDragEnd = useCallback(
-    (placeId: string, pos: { lat: number; lng: number }) => {
-      setDraggedPositions((prev) => ({
-        ...prev,
-        [placeId]: pos,
-      }));
-      const match = displayPlaces.find((p: any) => (p._id || p.id) === placeId);
-      setSelectedPlace((prev: any) => ({
-        ...((prev?._id || prev?.id) === placeId ? prev : match || {}),
-        position: pos,
-      }));
-      updateAddressFromCoords(pos.lat, pos.lng);
-      toast.success(
-        language === "es"
-          ? "Ubicación del pin actualizada. Haz clic en Guardar para confirmar."
-          : "Pin location updated. Click Save to confirm."
-      );
-    },
-    [displayPlaces, language, updateAddressFromCoords]
-  );
-
   const handleSelectPlace = async (place: any) => {
     const request = ++placeDetailsRequest.current;
     setActivePoi(null);
     const placeId = place._id || place.id;
+    setPlaceDetailsState({ id: String(placeId || ''), status: 'loading' });
     setDraggedPositions((prev) => (prev[placeId] ? { [placeId]: prev[placeId] } : {}));
     const serverPosition = {
       lat: place?.location?.mapLocation?.coordinates?.[1] ?? place?.location?.coordinates?.[1] ?? place?.latitude ?? 0,
@@ -944,12 +929,17 @@ export default function AddPlacePage() {
     });
 
     // Load full place details (description, etc.) on demand
-    if (!placeId) return;
+    if (!placeId) {
+      setPlaceDetailsState({ id: '', status: 'error' });
+      return;
+    }
     try {
       const res = await fetchPlaceDetails(String(placeId)).unwrap();
       if (request !== placeDetailsRequest.current) return;
       const full = res?.data || res;
-      if (!full) return;
+      if (!full || String(full._id || full.id) !== String(placeId)) {
+        throw new Error('Place details unavailable');
+      }
       const fullCatId =
         typeof full.category === "object"
           ? full.category?._id
@@ -974,14 +964,53 @@ export default function AddPlacePage() {
           isNew: false,
         };
       });
+      setPlaceDetailsState({ id: String(placeId), status: 'ready' });
     } catch {
-      // Keep slim discovery fields if detail fetch fails
+      if (request !== placeDetailsRequest.current) return;
+      // Discovery records omit editable fields. Never let them overwrite a full place.
+      setPlaceDetailsState({ id: String(placeId), status: 'error' });
     }
   };
+
+  const handleMarkerDragEnd = useCallback(
+    async (placeId: string, pos: { lat: number; lng: number }) => {
+      setDraggedPositions((prev) => ({
+        ...prev,
+        [placeId]: pos,
+      }));
+      const match = displayPlaces.find((p: any) => (p._id || p.id) === placeId);
+      setSelectedPlace((prev: any) => ({
+        ...((prev?._id || prev?.id) === placeId ? prev : match || {}),
+        position: pos,
+      }));
+      // The pointer is released now, so loading full details cannot interrupt dragging.
+      // Preserve unsaved coordinates while fetching fields needed for a safe edit.
+      setActivePoi(null);
+      if (match) {
+        const selection = handleSelectPlace(match);
+        const request = placeDetailsRequest.current;
+        await selection;
+        if (request !== placeDetailsRequest.current) return;
+      }
+      updateAddressFromCoords(pos.lat, pos.lng);
+      toast.success(
+        language === "es"
+          ? "Ubicación del pin actualizada. Haz clic en Guardar para confirmar."
+          : "Pin location updated. Click Save to confirm."
+      );
+    },
+    [displayPlaces, language, updateAddressFromCoords, handleSelectPlace]
+  );
 
   const handleSavePlace = async (data?: any) => {
     const finalData = data || formData;
     const placeId = selectedPlace?._id || selectedPlace?.id;
+    if (selectedPlace && !selectedPlace.isNew && (
+      placeDetailsState?.id !== String(placeId) || placeDetailsState.status !== 'ready'
+    )) {
+      toast.error(language === 'es' ? 'Espera a que se carguen los detalles del lugar.' : 'Wait for the place details to load.');
+      return;
+    }
     const saveMarker =
       tempMarker ||
       (placeId && draggedPositions[placeId]) ||
@@ -1516,6 +1545,7 @@ export default function AddPlacePage() {
                 findCategoryById={findCategoryById}
                 handleSelectPlace={handleSelectPlace}
                 draggedPositions={draggedPositions}
+                onMarkerDragStart={() => setActivePoi(null)}
                 onMarkerDragEnd={handleMarkerDragEnd}
               />
 
@@ -1622,6 +1652,7 @@ export default function AddPlacePage() {
               </div>
 
               {/* Place Form Content */}
+              {(selectedPlace.isNew || (placeDetailsState?.id === String(selectedPlace._id || selectedPlace.id) && placeDetailsState.status === 'ready')) ? (
               <PlaceFormContent
                 key={
                   selectedPlace._id ||
@@ -1692,6 +1723,20 @@ export default function AddPlacePage() {
                   isNew: selectedPlace.isNew,
                 }}
               />
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6" role="status">
+                  <p className="text-sm text-gray-600 dark:text-slate-300">
+                    {placeDetailsState?.status === 'error'
+                      ? (language === 'es' ? 'No se pudieron cargar los detalles del lugar.' : 'Unable to load the place details.')
+                      : (language === 'es' ? 'Cargando detalles del lugar…' : 'Loading place details…')}
+                  </p>
+                  {placeDetailsState?.status === 'error' && (
+                    <Button type="button" onClick={() => handleSelectPlace(selectedPlace)}>
+                      {language === 'es' ? 'Reintentar' : 'Retry'}
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

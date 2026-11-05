@@ -1,7 +1,13 @@
 import { baseApi } from "@/redux/api/baseApi";
 
-const statsApi = baseApi.injectEndpoints({
+export const statsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    recordActivity: builder.mutation<any, void>({
+      query: () => ({ url: '/stats/activity', method: 'POST' }),
+    }),
+    recordUsage: builder.mutation<any, { type: string; id: string; visitorId: string }>({
+      query: (body) => ({ url: '/stats/usage', method: 'POST', body }),
+    }),
     getDashboardStats: builder.query<any, void>({
       query: () => ({
         url: "/stats/dashboard",
@@ -36,6 +42,7 @@ const statsApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useRecordActivityMutation,
   useGetDashboardStatsQuery,
   useGetReportsQuery,
   useSearchReportEntitiesQuery,

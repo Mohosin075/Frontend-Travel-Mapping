@@ -1,33 +1,43 @@
 "use client";
 
 import { useEffect } from "react";
-import { getSocket, emitWhenReady } from "@/lib/socket";
+import { getSocket } from "@/lib/socket";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { baseApi } from "@/redux/api/baseApi";
 import { registerServiceWorker, showDesktopNotification } from "@/lib/push-notification";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+
+import { useRecordActivityMutation } from "@/redux/features/stats/statsApi";
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const { language } = useLanguage();
   const accessToken = useAppSelector(state => state.auth.accessToken);
   const role = useAppSelector(state => state.auth.user?.role);
   const dispatch = useAppDispatch();
+  const [recordActivity] = useRecordActivityMutation();
   useEffect(() => {
     if (!accessToken) return;
-    const send = () => { if (!document.hidden) emitWhenReady("track-activity", { token: accessToken }); };
+    let inFlight = false;
+    const send = () => {
+      if (document.hidden || inFlight) return;
+      inFlight = true;
+      const request = recordActivity();
+      void request.unwrap().catch(() => {}).finally(() => { inFlight = false; request.reset(); });
+    };
     const socket = getSocket();
     send();
     const interval = setInterval(send, 30000);
     document.addEventListener("visibilitychange", send);
     socket?.on("connect", send);
     return () => { clearInterval(interval); document.removeEventListener("visibilitychange", send); socket?.off("connect", send); };
-  }, [accessToken]);
+  }, [accessToken, recordActivity]);
   useEffect(() => {
     if (!["admin", "super_admin"].includes(role || "")) return;
     const socket = getSocket();
     const refresh = () => { if (!document.hidden) dispatch(baseApi.util.invalidateTags(["Stats"])); };
     socket?.on("stats-updated", refresh);
-    return () => { socket?.off("stats-updated", refresh); };
+    socket?.on("connect", refresh);
+    return () => { socket?.off("stats-updated", refresh); socket?.off("connect", refresh); };
   }, [role, dispatch]);
 
   useEffect(() => {

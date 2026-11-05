@@ -80,6 +80,7 @@ import { useGetProfileQuery } from "@/redux/features/user/userApi";
 import { useAppSelector } from "@/redux/hook";
 import { selectAccessToken } from "@/redux/features/auth/authSlice";
 import { useLoginRequired } from "@/components/shared/login-required-modal";
+import { ReviewItem } from "../reviews/review-item";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 function LightboxImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
@@ -176,7 +177,7 @@ export default function MapDetails() {
   useEffect(() => {
     if (!id) return;
     trackUsage(isActuallyBusiness ? "business" : "place", id);
-  }, [id, isActuallyBusiness]);
+  }, [id, isActuallyBusiness, accessToken]);
 
   const isLoading = isBusinessEntity
     ? isBusinessLoading || isBusinessFetching || businessStatus === "pending" || businessStatus === "uninitialized"
@@ -1745,155 +1746,21 @@ export default function MapDetails() {
             </div>
           </div>
 
-          {/* User's own review if Pending or Rejected */}
-          {myReview && myReview.status !== "Approved" && (
-            <div
-              className={`p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-2 transition-all ${
-                myReview.status === "Pending"
-                  ? "bg-amber-50/90 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800/60 shadow-sm"
-                  : "bg-red-50/90 dark:bg-red-950/20 border-red-200 dark:border-red-900/40"
-              }`}
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-[11px] sm:text-xs font-black uppercase tracking-wider px-2.5 sm:px-3 py-1 rounded-full flex items-center gap-1.5 ${
-                      myReview.status === "Pending"
-                        ? "bg-amber-200 dark:bg-amber-900/50 text-amber-950 dark:text-amber-200"
-                        : "bg-red-200 dark:bg-red-900/50 text-red-950 dark:text-red-200"
-                    }`}
-                  >
-                    {myReview.status === "Pending" ? (
-                      <>
-                        <Clock size={13} className="animate-spin" />
-                        {t("reviews.under_review")}
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle size={13} />
-                        {t("reviews.needs_revision")}
-                      </>
-                    )}
-                  </span>
-                  <span className="text-[11px] sm:text-xs text-gray-500 dark:text-slate-400 font-medium">
-                    {t("reviews.visible_only_to_you")}
-                  </span>
-                </div>
-
-                <Button
-                  onClick={handleOpenReviewModal}
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl font-bold text-xs border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-950/40 text-amber-900 dark:text-amber-300 flex items-center gap-1.5 h-8 px-3 cursor-pointer"
-                >
-                  <Edit3 size={13} />
-                  {myReview.status === "Pending" ? t("reviews.edit_review") : t("reviews.edit_and_resubmit")}
-                </Button>
+          {/* Own reviews use the same identity and layout as community reviews. */}
+          {myReview && (
+            <ReviewItem review={myReview} fallbackReviewer={userProfile} onEdit={handleOpenReviewModal}>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-semibold">{myReview.status === 'Approved'
+                  ? t('reviews.your_published_review')
+                  : myReview.status === 'Pending' ? t('common.pending') : t('common.rejected')}</span>
+                {myReview.status === 'Approved' && (myReview.pointsEarned || 0) > 0 && (
+                  <span>+{myReview.pointsEarned} {t('reviews.points_earned')}</span>
+                )}
               </div>
-
-              <p className="text-xs text-amber-900 dark:text-amber-300 font-medium mb-3 leading-relaxed">
-                {myReview.status === "Pending"
-                  ? isMapPurchased
-                    ? t("reviews.thank_you_pending")
-                    : t("reviews.thank_you_pending_no_points")
-                  : t("reviews.rejected_desc")}
-              </p>
-
-              {/* Card preview of the user's pending review */}
-              <div className="bg-white/90 dark:bg-[#0e1424] rounded-xl p-3 sm:p-4 border border-amber-200 dark:border-slate-800 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Star
-                        key={i}
-                        size={14}
-                        className={
-                          i <= myReview.rating
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-gray-200 dark:text-slate-700"
-                        }
-                      />
-                    ))}
-                    <span className="text-xs font-bold text-gray-700 dark:text-slate-300 ml-1.5">
-                      {myReview.rating}.0
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-gray-400 dark:text-slate-500">
-                    {t("reviews.submitted_on")}{" "}
-                    {new Date(myReview.createdAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-700 dark:text-slate-300 italic">
-                  "{getLocalized(myReview.review, language) || t("reviews.star_only")}"
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* User's own review if already Approved */}
-          {myReview && myReview.status === "Approved" && (
-            <div className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-green-50/60 dark:bg-green-950/20 border border-green-200/80 dark:border-green-900/40 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/50 text-green-900 dark:text-green-300 flex items-center gap-1.5">
-                    <CheckCircle2 size={13} className="text-green-600 dark:text-green-400" />
-                    {t("reviews.your_published_review")}
-                  </span>
-                  {(myReview.pointsEarned || 0) > 0 ? (
-                    <span className="text-xs font-bold text-green-700 dark:text-green-400">
-                      +{myReview.pointsEarned} {t("reviews.points_earned")}
-                    </span>
-                  ) : (
-                    <span className="text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-950/40 px-2.5 py-0.5 rounded-full">
-                      {t("reviews.unpurchased_map_notice_short")}
-                    </span>
-                  )}
-                </div>
-                <Button
-                  onClick={handleOpenReviewModal}
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl font-bold text-xs border-green-300 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-950/40 text-green-900 dark:text-green-300 flex items-center gap-1.5 h-8 px-3 cursor-pointer"
-                >
-                  <Edit3 size={13} /> {t("common.edit")}
-                </Button>
-              </div>
-
-              <div className="bg-white dark:bg-[#0e1424] rounded-xl p-3 sm:p-4 border border-green-100 dark:border-slate-800 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Star
-                        key={i}
-                        size={14}
-                        className={
-                          i <= myReview.rating
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-gray-200 dark:text-slate-700"
-                        }
-                      />
-                    ))}
-                    <span className="text-xs font-bold text-gray-700 dark:text-slate-300 ml-1.5">
-                      {myReview.rating}.0
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-gray-400 dark:text-slate-500">
-                    {new Date(myReview.createdAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-800 dark:text-slate-200 leading-relaxed">
-                  {getLocalized(myReview.review, language) || <span className="italic text-gray-400 dark:text-slate-500">{t("reviews.rated_stars_only").replace("{rating}", String(myReview.rating))}</span>}
-                </p>
-              </div>
-            </div>
+              {myReview.status === 'Pending' && <p>{isMapPurchased ? t('reviews.thank_you_pending') : t('reviews.thank_you_pending_no_points')}</p>}
+              {myReview.status === 'Rejected' && <p>{t('reviews.rejected_desc')}</p>}
+              {myReview.status === 'Approved' && !(myReview.pointsEarned > 0) && <p>{t('reviews.unpurchased_map_notice_short')}</p>}
+            </ReviewItem>
           )}
 
           {/* Community Reviews List */}
@@ -1914,86 +1781,7 @@ export default function MapDetails() {
           ) : (
             <div className="space-y-3 sm:space-y-4">
               {otherReviews.map((rev: any) => (
-                <div
-                  key={rev._id}
-                  className="bg-gray-50/70 hover:bg-gray-50 dark:bg-[#0e1424] dark:hover:bg-slate-800/60 border border-gray-100 dark:border-slate-800/80 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 transition-all space-y-2.5 sm:space-y-3"
-                >
-                  <div className="flex items-start justify-between gap-3 sm:gap-4">
-                    {rev.reviewer?._id || rev.reviewer?.id ? (
-                      <Link
-                        href={`/explorer/${rev.reviewer._id || rev.reviewer.id}`}
-                        className="flex items-center gap-2.5 sm:gap-3 group/user min-w-0"
-                      >
-                        <Avatar className="w-11 h-11 border-2 border-white dark:border-slate-800 shadow-xs shrink-0 group-hover/user:scale-105 transition-transform">
-                          <AvatarImage
-                            src={getProfileImageUrl(rev.reviewer?.profile)}
-                            alt={rev.reviewer?.name}
-                          />
-                          <AvatarFallback />
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-gray-900 dark:text-slate-100 text-sm group-hover/user:text-amber-600 dark:group-hover/user:text-amber-400 transition-colors">
-                              {rev.reviewer?.name || t("reviews.explorer")}
-                            </span>
-                            <span className="text-[10px] font-black bg-amber-100 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/50 px-2 py-0.5 rounded-full uppercase tracking-tight">
-                              {t("reviews.level")} {rev.reviewer?.level || 0}
-                            </span>
-                          </div>
-                          <span className="text-[11px] text-gray-400 dark:text-slate-500">
-                            {new Date(rev.createdAt).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </span>
-                        </div>
-                      </Link>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-11 h-11 border-2 border-white dark:border-slate-800 shadow-xs shrink-0">
-                          <AvatarImage
-                            src={getProfileImageUrl(rev.reviewer?.profile)}
-                            alt={rev.reviewer?.name}
-                          />
-                          <AvatarFallback />
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-gray-900 dark:text-slate-100 text-sm">
-                              {rev.reviewer?.name || t("reviews.explorer")}
-                            </span>
-                            <span className="text-[10px] font-black bg-amber-100 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/50 px-2 py-0.5 rounded-full uppercase tracking-tight">
-                              {t("reviews.level")} {rev.reviewer?.level || 0}
-                            </span>
-                          </div>
-                          <span className="text-[11px] text-gray-400 dark:text-slate-500">
-                            {new Date(rev.createdAt).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-1.5 bg-white dark:bg-[#131b2e] border border-gray-100 dark:border-slate-700 px-2.5 py-1 rounded-xl shadow-2xs">
-                      <Star size={13} className="fill-yellow-400 text-yellow-400" />
-                      <span className="text-xs font-bold text-gray-900 dark:text-slate-100">
-                        {rev.rating}.0
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="text-sm text-gray-700 dark:text-slate-300 leading-relaxed">
-                    {getLocalized(rev.review, language) || (
-                      <span className="italic text-gray-400 dark:text-slate-500">
-                        {t("reviews.rated_stars_only").replace("{rating}", String(rev.rating))}
-                      </span>
-                    )}
-                  </p>
-                </div>
+                <ReviewItem key={rev._id} review={rev} />
               ))}
             </div>
           )}

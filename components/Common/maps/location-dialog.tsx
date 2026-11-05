@@ -8,6 +8,8 @@ import { NoImage } from "@/lib/others/others";
 import { getUsableMediaUrl, getLocalized } from "@/lib/utils";
 import { useGetSingleBusinessQuery } from "@/redux/features/business/businessApi";
 import { useGetPlaceDetailsQuery } from "@/redux/features/place/placeApi";
+import { useAppSelector } from "@/redux/hook";
+import { selectAccessToken } from "@/redux/features/auth/authSlice";
 import { normalizePinType, trackUsage } from "@/lib/record-visit";
 import { useEffect, useState } from "react";
 import { Star, X, Lock, Sparkles, Compass, CheckCircle2 } from "lucide-react";
@@ -88,11 +90,12 @@ export default function LocationDialog({ id, onClose, mapId, initialData }: Prop
   }, [activeType, isBusinessError, isPlaceError, businessRes, placeRes, placeError, hasFalledBack]);
 
   const type = activeType;
+  const accessToken = useAppSelector(selectAccessToken);
 
   useEffect(() => {
     if (!placeId) return;
     trackUsage(type, placeId);
-  }, [placeId, type]);
+  }, [placeId, type, accessToken]);
 
   const isLoading =
     type === "business"

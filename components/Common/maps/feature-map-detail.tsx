@@ -41,13 +41,14 @@ export default function FeatureMapDetailPage() {
     isLoading,
     isError,
   } = useGetMapByIdQuery(id as string, { skip: !id });
+  const accessToken = useAppSelector(selectAccessToken);
   const mapData = response?.data;
   useEffect(() => {
     if (!id) return;
     trackUsage("map", String(id));
-  }, [id]);
+  }, [id, accessToken]);
 
-  const accessToken = useAppSelector(selectAccessToken);
+
   const { data: userProfile, isLoading: isProfileLoading } = useGetProfileQuery({}, { skip: !accessToken });
   const { data: awardsRes } = useGetAwardsQuery(
     { page: 1, limit: 50 },

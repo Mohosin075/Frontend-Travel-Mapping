@@ -962,7 +962,7 @@ export default function Header() {
                   : "translate-x-full pointer-events-none"
               }`}
             >
-              <div className="p-6 h-full flex flex-col overflow-y-auto">
+              <div className="flex h-[100dvh] min-h-0 flex-col overflow-hidden p-4 sm:p-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 <div className="flex justify-between items-center mb-4 shrink-0">
                   <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">
                     {t("nav.profile") || "Mi Perfil"}
@@ -981,6 +981,7 @@ export default function Header() {
                   </div>
                 </div>
 
+                <div data-profile-menu-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y pr-1">
                 {/* Profile Card Header */}
                 <div className="bg-gradient-to-b from-yellow-50 to-white dark:from-slate-900/90 dark:to-[#131b2e] p-4 rounded-2xl border border-gray-100 dark:border-slate-800/80 mb-4 text-center">
                   {/* Avatar with Achievement Badge */}
@@ -1067,7 +1068,7 @@ export default function Header() {
                 </div>
 
                 {/* Menu items list (Mis Rutas, Lugares Visitados, Contribuciones, etc.) */}
-                <div className="space-y-1 overflow-y-auto">
+                <div className="space-y-1">
                   {isAdminOrEditor && (
                     <Link
                       href="/dashboard"
@@ -1094,8 +1095,10 @@ export default function Header() {
                   })}
                 </div>
 
+                </div>
+
                 {/* Logout Button */}
-                <div className="mt-auto pt-4 border-t border-gray-100 dark:border-slate-800">
+                <div data-profile-menu-footer className="shrink-0 mt-4 pt-4 border-t border-gray-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => handleLogout()}

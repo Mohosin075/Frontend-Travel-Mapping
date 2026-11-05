@@ -774,6 +774,7 @@ export default function MapPage() {
   });
   const [detectedCountry, setDetectedCountry] = useState<string>("");
   const [isManualSelection, setIsManualSelection] = useState(false);
+  const [countrySelectionRevision, setCountrySelectionRevision] = useState(0);
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
   const [pendingFocus, setPendingFocus] = useState<{
     id: string;
@@ -822,10 +823,13 @@ export default function MapPage() {
 
   /** User switching maps must fully release View-on-Map lock */
   const handleSelectCountry = (val: string) => {
+    // Re-selecting the same country must also restore its camera after Locate me.
+    setCountrySelectionRevision(revision => revision + 1);
     focusMapAppliedRef.current = true;
     setPendingFocus(null);
     setFocusReady(true);
     setSelectedLocation(null);
+    if (searchQuery) router.replace("/maps", { scroll: false });
 
     const rawList = Array.isArray(mapsResponse?.data) ? mapsResponse.data : [];
     const matched = rawList.find(
@@ -841,6 +845,8 @@ export default function MapPage() {
       setSelectedCountry(matched.name);
       localStorage.setItem("selectedCountryFilter", matched.name);
     } else {
+      setSelectedMapId("");
+      localStorage.removeItem("selectedMapId");
       setSelectedCountry(val);
       localStorage.setItem("selectedCountryFilter", val);
     }
@@ -966,7 +972,7 @@ export default function MapPage() {
   useEffect(() => {
     if (!mapIdFilter) return;
     trackUsage("map", mapIdFilter);
-  }, [mapIdFilter]);
+  }, [mapIdFilter, accessToken]);
 
   const {
     currentData: placesRes,
@@ -1417,9 +1423,10 @@ export default function MapPage() {
               places={displayPlaces}
             />
             <CountryPanner
-              selectedCountry={selectedMapObj?.country || selectedCountry}
+              key={`${mapIdFilter}:${countrySelectionRevision}`}
+              selectedCountry={selectedCountry || selectedMapObj?.country || ""}
               places={displayPlaces}
-              disabled={!!pendingFocus || (!!searchQuery && displayPlaces.length > 0)}
+              disabled={!!pendingFocus || (!isManualSelection && hasUserLocation) || (!!searchQuery && displayPlaces.length > 0)}
             />
             <FocusSetup
               lat={pendingFocus?.lat ?? 0}
@@ -1451,6 +1458,7 @@ export default function MapPage() {
               <SatelliteToggleButton position={ControlPosition.RIGHT_BOTTOM} />
             )}
             <CustomLocationButton
+              key={`${mapIdFilter}:${countrySelectionRevision}`}
               onLocated={(lat, lng) => {
                 setMarkerPos({ lat, lng });
                 setHasUserLocation(true);

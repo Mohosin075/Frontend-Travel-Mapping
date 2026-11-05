@@ -2,6 +2,7 @@
 
 import { emitWhenReady } from "@/lib/socket";
 import store from "@/redux/store";
+import { statsApi } from "@/redux/features/stats/statsApi";
 
 const recentVisits = new Map<string, number>();
 
@@ -99,12 +100,20 @@ export function trackUsage(type: UsageType | string, id?: string) {
   const userScope = store.getState().auth.user?.id || getAccessToken() || getVisitorId();
   if (!shouldRecordVisit(`${userScope}:${entityType}:${entityId}`)) return;
 
-  emitWhenReady("track-usage", {
-    type: entityType,
-    id: entityId,
-    visitorId: getVisitorId(),
-    token: getAccessToken() || "",
-  });
+  const payload = { type: entityType, id: entityId, visitorId: getVisitorId() };
+  const accountAtStart = store.getState().auth.user?.id || getAccessToken() || '';
+  // HTTP also works behind proxies without WebSocket support, and RTK refreshes
+  // expired tokens. Socket fallback supports temporary HTTP failures.
+  const request = store.dispatch(statsApi.endpoints.recordUsage.initiate(payload));
+  void request.unwrap().catch((error: unknown) => {
+    const status = (error as { status?: number })?.status;
+    if (status === 401 || status === 403) return;
+    // A delayed failure must not attribute the previous account's view to a
+    // newly signed-in account (or turn it into a guest view after logout).
+    const currentAccount = store.getState().auth.user?.id || getAccessToken() || '';
+    if (currentAccount !== accountAtStart) return;
+    emitWhenReady('track-usage', { ...payload, token: getAccessToken() || '' });
+  }).finally(() => request.reset());
 
-  // The socket handler persists and deduplicates all entity types.
+  // Both transports use the same server-side deduplication.
 }

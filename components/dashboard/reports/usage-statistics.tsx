@@ -20,6 +20,8 @@ import { useRouter } from "next/navigation";
 import { EntityUsersModal } from "./entity-users-modal";
 
 interface StatItem {
+  countMetric?: "unique_viewers";
+  totalViews?: number;
   entityType?: "map" | "place" | "offer" | "business";
   id?: string;
   name: string;
@@ -181,6 +183,11 @@ function StatColumn({
 
                   {/* Meta: spots count per map / Country / Business Name */}
                   <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                    {item.totalViews !== undefined && (
+                      <span className="text-[10px] text-gray-500 dark:text-slate-400">
+                        {language === 'es' ? 'Vistas totales' : 'Total views'}: {item.totalViews.toLocaleString()}
+                      </span>
+                    )}
                     {type === "map" && item.placesCount !== undefined && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-yellow-800 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-950/50 border border-yellow-300/50 dark:border-yellow-800/40 px-1.5 py-0.5 rounded">
                         <MapPin size={9} />
@@ -294,7 +301,7 @@ export function UsageStatistics({
   timeFilter?: string;
   placeColumnTitle?: string;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [expandAll, setExpandAll] = useState<boolean | undefined>(undefined);
 
   const [selectedEntity, setSelectedEntity] = useState<{
@@ -351,6 +358,11 @@ export function UsageStatistics({
         )}
       </div>
 
+      <p className="mb-4 text-xs text-gray-500 dark:text-slate-400">
+        {language === 'es'
+          ? 'Mapas y lugares: visitantes únicos registrados (cuentas y visitantes sin sesión). Pulsa la cifra para ver todas las cuentas identificadas. Las ofertas muestran canjes.'
+          : 'Maps and places: recorded unique viewers (accounts and guests). Click a count to see all identified accounts. Offers show redemptions.'}
+      </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
         <StatColumn
           title={t("reports_admin.most_viewed_maps") || "Most Viewed Maps"}

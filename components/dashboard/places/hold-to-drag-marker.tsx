@@ -91,8 +91,8 @@ export function HoldToDragMarker({ position, zIndex, children, onClick, onDragSt
         onMouseDown={event => event.stopPropagation()}
         onTouchStart={event => event.stopPropagation()}
         onContextMenu={event => event.preventDefault()}
-        onClickCapture={event => { event.preventDefault(); event.stopPropagation(); if (!suppressClick.current) onClick?.(); }}
-        onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onClick?.(); } }}>
+        onClickCapture={event => { event.preventDefault(); event.stopPropagation(); if (!suppressClick.current) { onClick?.(); suppressClick.current = true; } }}
+        onKeyDown={event => { if (event.target !== event.currentTarget) return; if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onClick?.(); } }}>
         {children}
       </div>
     </AdvancedMarker>

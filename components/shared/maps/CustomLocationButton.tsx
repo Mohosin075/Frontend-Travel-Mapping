@@ -1,7 +1,7 @@
 "use client";
 
 import { ControlPosition, MapControl, useMap } from "@vis.gl/react-google-maps";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -17,13 +17,22 @@ export const CustomLocationButton = ({
   const displayLabel = label || t("map.use_my_location");
   const map = useMap();
   const [loading, setLoading] = useState(false);
+  const mounted = useRef(true);
+  const requestId = useRef(0);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; requestId.current++; };
+  }, []);
 
   const handleLocationClick = useCallback(() => {
     if (loading) return;
 
     setLoading(true);
+    const request = ++requestId.current;
+    const isCurrent = () => mounted.current && requestId.current === request;
 
     const panAndLocate = (lat: number, lng: number, zoom = 16) => {
+      if (!isCurrent()) return;
       if (map) {
         map.setCenter({ lat, lng });
         map.setZoom(zoom);
@@ -45,7 +54,7 @@ export const CustomLocationButton = ({
     // 1. Fast attempt: low-accuracy, short timeout (usually resolves in <2s on WiFi/laptop)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        if (settled) return;
+        if (!isCurrent() || settled) return;
         settled = true;
         panAndLocate(pos.coords.latitude, pos.coords.longitude, 16);
 
@@ -53,6 +62,7 @@ export const CustomLocationButton = ({
         if (pos.coords.accuracy > 200) {
           navigator.geolocation.getCurrentPosition(
             (pos2) => {
+              if (!isCurrent()) return;
               if (pos2.coords.accuracy < pos.coords.accuracy) {
                 // Better result — update map silently without spinner
                 if (map) {
@@ -68,23 +78,24 @@ export const CustomLocationButton = ({
       },
       () => {
         // Fast attempt failed (permission denied or unavailable)
-        if (settled) return;
+        if (!isCurrent() || settled) return;
 
         // 3. Try once more with high accuracy before giving up
         navigator.geolocation.getCurrentPosition(
           (pos2) => {
-            if (settled) return;
+            if (!isCurrent() || settled) return;
             settled = true;
             panAndLocate(pos2.coords.latitude, pos2.coords.longitude, 16);
           },
           (err) => {
-            if (settled) return;
+            if (!isCurrent() || settled) return;
             settled = true;
             const isBlocked = err.code === err.PERMISSION_DENIED;
             // 4. IP geolocation fallback
             fetch("https://ipwho.is/")
               .then((r) => r.json())
               .then((data) => {
+                if (!isCurrent()) return;
                 if (data?.success && data.latitude && data.longitude) {
                   panAndLocate(data.latitude, data.longitude, 13);
                   toast.warning(
@@ -97,10 +108,12 @@ export const CustomLocationButton = ({
                   throw new Error("ipwho failed");
                 }
               })
-              .catch(() =>
-                fetch("https://ipapi.co/json/")
+              .catch(() => {
+                if (!isCurrent()) return;
+                return fetch("https://ipapi.co/json/")
                   .then((r) => r.json())
                   .then((data) => {
+                    if (!isCurrent()) return;
                     if (data?.latitude && data.longitude) {
                       panAndLocate(data.latitude, data.longitude, 13);
                       toast.warning(
@@ -112,9 +125,10 @@ export const CustomLocationButton = ({
                     } else {
                       throw new Error("ipapi failed");
                     }
-                  })
-              )
+                  });
+              })
               .catch(() => {
+                if (!isCurrent()) return;
                 setLoading(false);
                 toast.error(t("map.unable_to_get_location"));
               });

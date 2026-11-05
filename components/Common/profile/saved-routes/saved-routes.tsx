@@ -40,11 +40,11 @@ export default function SavedRoutes() {
   const accessToken = useAppSelector(selectAccessToken);
   const [search, setSearch] = useState("");
   const [viewingRoute, setViewingRoute] = useState<any | null>(null);
-  const countryFilter = useCountryFilter();
+  const countryFilter = useCountryFilter({ allowAll: false });
 
   const { currentData: myRoutesRes, isFetching: isLoading } = useGetMyRoutePlansQuery(
     { limit: 100, country: countryFilter.country || undefined },
-    { skip: !accessToken || !countryFilter.ready }
+    { skip: !accessToken || !countryFilter.ready || !countryFilter.country }
   );
   const { currentData: directRouteRes } = useGetRoutePlanByIdQuery(viewRouteIdParam as string, {
     skip: !viewRouteIdParam || !accessToken,

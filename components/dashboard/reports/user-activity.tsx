@@ -108,6 +108,10 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
   };
 
   const currentTabUsers = getSelectedUsers();
+  const selectedActiveTotal = activeTimeframe === 'today' ? data?.activeUsersToday
+    : activeTimeframe === 'week' ? data?.activeUsersThisWeek : data?.activeUsersThisMonth;
+  const unidentifiedActiveCount = activeTimeframe === 'all' ? 0
+    : Math.max(0, (selectedActiveTotal || 0) - currentTabUsers.length);
 
   const filteredUsers = currentTabUsers.filter((u) => {
     if (!searchUserTerm.trim()) return true;
@@ -253,6 +257,14 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
             </div>
 
             {/* Timeframe Filter Tabs */}
+            {activeTimeframe !== 'all' && <p className="mt-3 text-xs text-gray-500 dark:text-slate-400">
+              {language === 'es'
+                ? 'Los perfiles privados se muestran con su identidad real a los administradores.'
+                : 'Private profiles are shown to administrators under their real identity.'}
+              {unidentifiedActiveCount > 0 && ` ${unidentifiedActiveCount} ${language === 'es'
+                ? 'visitantes sin sesión o cuentas no disponibles no tienen un perfil identificable.'
+                : 'guests or unavailable accounts have no identifiable profile.'}`}
+            </p>}
             <div className="grid grid-cols-4 gap-1 p-1 bg-gray-100 dark:bg-slate-900 rounded-xl mt-3">
               <button
                 type="button"

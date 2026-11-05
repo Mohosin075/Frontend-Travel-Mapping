@@ -40,7 +40,7 @@ export function EntityUsersModal({
 
   const { currentData: response, isFetching, isError, refetch } = useGetEntityUsersQuery(
     { type: entity?.type || "place", id: entity?.id || "", timeFilter },
-    { skip: !open || !entity?.id, refetchOnMountOrArgChange: true, pollingInterval: 30000, skipPollingIfUnfocused: true, refetchOnFocus: true }
+    { skip: !open || !entity?.id, refetchOnMountOrArgChange: true, pollingInterval: 30000, skipPollingIfUnfocused: true, refetchOnFocus: true, refetchOnReconnect: true }
   );
 
   const payload = response?.data || {};
@@ -107,15 +107,21 @@ export function EntityUsersModal({
                 {entity?.name}
               </span>
               <span className="shrink-0 bg-yellow-100 text-yellow-900 dark:bg-yellow-950/60 dark:text-yellow-300 font-bold px-2 py-0.5 rounded-full border border-yellow-300 dark:border-yellow-700/50 text-[11px]">
-                {users.length} {language === "es" ? "usuarios identificados" : "identified users"}
+                {isFetching && !response ? "…" : users.length} {language === "es" ? "cuentas identificadas" : "identified accounts"}
               </span>
             </DialogDescription>
             <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
               {language === "es"
-                ? "Se muestran usuarios identificados en los registros disponibles. Las vistas repetidas, anónimas o históricas pueden hacer que el total sea diferente."
-                : "Identified users from available records are shown. Repeat, anonymous or historical views can make the total differ."}
+                ? "Los administradores pueden identificar los perfiles privados. Los visitantes sin sesión no tienen una cuenta identificable. El historial anterior al registro detallado puede estar incompleto."
+                : "Private profiles remain identifiable to administrators. Guests have no account identity. Records predating detailed tracking may be incomplete."}
             </p>
           </DialogHeader>
+          {response && !isError && <p className="mt-2 text-xs text-gray-600 dark:text-slate-300" aria-live="polite">
+            {language === 'es' ? 'Total registrado' : 'Recorded total'}: {payload.totalCount ?? users.length}
+            {' · '}{users.length} {language === 'es' ? 'cuentas identificadas' : 'identified accounts'}
+            {' · '}{guestCount} {language === 'es' ? 'visitantes sin sesión' : 'guests'}
+            {' · '}{unavailableCount} {language === 'es' ? 'cuentas no disponibles' : 'unavailable accounts'}
+          </p>}
           <Input value={search} onChange={event => setSearch(event.target.value)}
             aria-label={language === "es" ? "Buscar usuarios" : "Search users"}
             placeholder={language === "es" ? "Buscar por nombre o correo" : "Search by name or email"}
@@ -125,7 +131,7 @@ export function EntityUsersModal({
 
         {/* User list */}
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 space-y-3">
-          {isFetching ? (
+          {isFetching && !response ? (
             <div className="py-12 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-slate-500">
               <Loader2 className="w-8 h-8 animate-spin text-[#fabf13]" />
               <p className="text-xs font-medium">{t("common.loading") || "Loading users..."}</p>
@@ -143,7 +149,7 @@ export function EntityUsersModal({
               </p>
               {guestCount > 0 && (
                 <p className="text-[11px] text-gray-400 dark:text-slate-500">
-                  {guestCount} {guestCount === 1 ? "anonymous visitor view recorded." : "anonymous visitor views recorded."}
+                  {guestCount} {guestCount === 1 ? "guest recorded." : "guests recorded."}
                 </p>
               )}
             </div>
@@ -195,7 +201,7 @@ export function EntityUsersModal({
 
               {guestCount > 0 && (
                 <div className="p-3 bg-gray-50/50 dark:bg-slate-900/40 rounded-xl border border-dashed border-gray-200 dark:border-slate-800 text-center text-xs text-gray-500 dark:text-slate-400 font-medium">
-                  + {guestCount} {guestCount === 1 ? "anonymous / guest view" : "anonymous / guest views"}
+                  + {guestCount} {guestCount === 1 ? "guest viewer" : "guest viewers"}
                 </div>
               )}
             </>
