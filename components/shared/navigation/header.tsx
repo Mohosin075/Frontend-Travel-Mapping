@@ -279,6 +279,19 @@ export default function Header() {
   const [isMobileProfileMenuOpen, setIsMobileProfileMenuOpen] = useState(false);
   const [isSharingProfile, setIsSharingProfile] = useState(false);
 
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1280px)");
+    const closeMobileMenus = () => {
+      if (!desktop.matches) return;
+      setIsMenuOpen(false);
+      setIsSearchOpen(false);
+      setIsMobileProfileMenuOpen(false);
+    };
+    closeMobileMenus();
+    desktop.addEventListener("change", closeMobileMenus);
+    return () => desktop.removeEventListener("change", closeMobileMenus);
+  }, []);
+
   const handleEditProfile = () => {
     setIsProfileMenuOpen(false);
     setIsMobileProfileMenuOpen(false);
@@ -406,10 +419,10 @@ export default function Header() {
   };
 
   return (
-    <div style={scrolled && headerHeight ? { height: headerHeight } : undefined}>
+    <div className="w-full min-w-0" style={scrolled && headerHeight ? { height: headerHeight } : undefined}>
       <header
         ref={headerRef}
-        className={`isolate border-b ${
+        className={`isolate w-full min-w-0 border-b ${
           scrolled
             ? "fixed top-0 inset-x-0 z-[100] border-gray-200/60 dark:border-slate-800/80 shadow-md animate-in slide-in-from-top duration-300"
             : "relative z-[100] border-gray-100 dark:border-slate-800/60"
@@ -424,7 +437,7 @@ export default function Header() {
               : "bg-white dark:bg-[#0b0f19]"
           }`}
         />
-        <nav className="flex items-center justify-between px-3 sm:px-6 py-3.5 sm:py-4 max-w-360 mx-auto gap-2 sm:gap-4">
+        <nav className="flex w-full min-w-0 items-center justify-between px-3 sm:px-6 py-3.5 sm:py-4 max-w-360 mx-auto gap-2 sm:gap-4">
           {/* Logo */}
           <div className="shrink-0">
             <Link href={isAuthenticated ? "/maps" : "/"}>
@@ -433,7 +446,7 @@ export default function Header() {
                 alt="Dashboard Logo"
                 height={200}
                 width={200}
-                className="w-32 sm:w-40 md:w-48 h-auto block dark:hidden"
+                className="w-24 min-[360px]:w-28 sm:w-40 md:w-48 h-auto block dark:hidden"
                 priority
               />
               <Image
@@ -441,7 +454,7 @@ export default function Header() {
                 alt="Dashboard Logo"
                 height={200}
                 width={200}
-                className="w-32 sm:w-40 md:w-48 h-auto hidden dark:block"
+                className="w-24 min-[360px]:w-28 sm:w-40 md:w-48 h-auto hidden dark:block"
                 priority
               />
             </Link>
@@ -449,7 +462,7 @@ export default function Header() {
 
           {/* Search Bar - Desktop — hidden on Places/Offers (page has its own) */}
           {!hideHeaderSearch && (
-            <div className="hidden md:block flex-1 min-w-[150px] lg:min-w-[170px] xl:min-w-[280px] max-w-xl mx-2 xl:mx-4">
+            <div className="hidden md:block flex-1 min-w-0 max-w-xl">
               <div className="relative group w-full">
                 <button
                   type="button"
@@ -481,7 +494,7 @@ export default function Header() {
 
                 {/* Search Results Dropdown */}
                 {searchTerm && (
-                  <div className="absolute top-full mt-2 left-0 w-full min-w-[340px] sm:min-w-[420px] max-w-[min(90vw,540px)] bg-white dark:bg-[#131b2e]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden z-50 animate-in fade-in-0 zoom-in-95">
+                  <div className="absolute top-full mt-2 left-0 w-[min(420px,calc(100vw-18rem))] max-w-[calc(100vw-18rem)] bg-white dark:bg-[#131b2e]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden z-50 animate-in fade-in-0 zoom-in-95">
                     {isSearchPending ? (
                       <div className="p-4 text-center text-sm text-gray-500 dark:text-slate-400 flex items-center justify-center gap-2">
                         <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
@@ -544,7 +557,7 @@ export default function Header() {
           )}
 
           {/* Desktop Nav Links */}
-          <div className="hidden lg:flex items-center gap-0.5 xl:gap-2 whitespace-nowrap">
+          <div className="hidden xl:flex shrink-0 items-center gap-0.5 2xl:gap-2 whitespace-nowrap">
             {navLinks.map((link, index) => {
               const isActive = pathname === link.href;
 
@@ -552,7 +565,7 @@ export default function Header() {
                 <AuthLink
                   key={index}
                   href={link.href}
-                  className={`font-semibold font-inter transition-all text-xs xl:text-sm rounded-xl py-1.5 px-2 xl:px-3.5 shrink-0 ${
+                  className={`font-semibold font-inter transition-all text-sm rounded-xl py-1.5 px-2 2xl:px-3.5 shrink-0 ${
                     isActive
                       ? "bg-primary text-black dark:text-slate-950 font-bold shadow-[0_2px_12px_rgba(250,191,19,0.35)]"
                       : "text-gray-700 dark:text-slate-300 hover:text-black dark:hover:text-primary hover:bg-black/5 dark:hover:bg-white/5"
@@ -735,7 +748,7 @@ export default function Header() {
           </div>
 
           {/* Mobile & Tablet Icons */}
-          <div className="flex lg:hidden items-center gap-2">
+          <div className="flex xl:hidden shrink-0 items-center gap-1 sm:gap-2">
             {!hideHeaderSearch && (
               <button
                 type="button"
@@ -772,7 +785,7 @@ export default function Header() {
                 </Avatar>
               </button>
             ) : (
-              <Link href="/login" className={cn(buttonVariants(), "bg-[#FFC107] hover:bg-[#FFB300] text-black font-bold font-public-sans rounded-xl px-4 py-2 text-sm shadow-none")}>
+              <Link href="/login" className={cn(buttonVariants(), "bg-[#FFC107] hover:bg-[#FFB300] text-black font-bold font-public-sans rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm shadow-none")}>
                   {t("nav.login")}
                 </Link>
             )}
@@ -799,7 +812,7 @@ export default function Header() {
             {/* Mobile & Tablet Search Backdrop — keeps map visible underneath with soft blur */}
             {isSearchOpen && (
               <div
-                className="fixed inset-0 bg-black/25 backdrop-blur-[2px] z-[90] lg:hidden transition-opacity duration-300 animate-in fade-in"
+                className="fixed inset-0 bg-black/25 backdrop-blur-[2px] z-[90] xl:hidden transition-opacity duration-300 animate-in fade-in"
                 onClick={closeMenus}
                 aria-hidden="true"
               />
@@ -807,7 +820,7 @@ export default function Header() {
 
             {/* Mobile & Tablet Search Header Drawer */}
             <div
-              className={`fixed top-0 inset-x-0 bg-white/95 dark:bg-[#0b0f19]/95 backdrop-blur-md shadow-2xl transition-all duration-300 ease-out z-[95] lg:hidden border-b border-gray-200/80 dark:border-slate-800 ${
+              className={`fixed top-0 inset-x-0 bg-white/95 dark:bg-[#0b0f19]/95 backdrop-blur-md shadow-2xl transition-all duration-300 ease-out z-[95] xl:hidden border-b border-gray-200/80 dark:border-slate-800 ${
                 isSearchOpen
                   ? "opacity-100 translate-y-0 pointer-events-auto"
                   : "opacity-0 -translate-y-8 pointer-events-none"
@@ -948,7 +961,7 @@ export default function Header() {
             {/* Mobile Profile Backdrop */}
             {isMobileProfileMenuOpen && (
               <div
-                className="fixed inset-0 bg-black/50 z-[90] lg:hidden transition-opacity duration-300 animate-in fade-in"
+                className="fixed inset-0 bg-black/50 z-[90] xl:hidden transition-opacity duration-300 animate-in fade-in"
                 onClick={closeMenus}
                 aria-hidden="true"
               />
@@ -956,7 +969,7 @@ export default function Header() {
 
             {/* Mobile Profile Slide-in / Drawer */}
             <div
-              className={`fixed inset-y-0 right-0 w-full sm:w-96 bg-white dark:bg-[#0e1424] border-l border-transparent dark:border-slate-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-[100] lg:hidden ${
+              className={`fixed inset-y-0 right-0 w-full sm:w-96 bg-white dark:bg-[#0e1424] border-l border-transparent dark:border-slate-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-[100] xl:hidden ${
                 isMobileProfileMenuOpen
                   ? "translate-x-0 pointer-events-auto"
                   : "translate-x-full pointer-events-none"
@@ -1115,7 +1128,7 @@ export default function Header() {
             {/* Mobile Menu Backdrop */}
             {isMenuOpen && (
               <div
-                className="fixed inset-0 bg-black/50 z-[90] lg:hidden transition-opacity duration-300 animate-in fade-in"
+                className="fixed inset-0 bg-black/50 z-[90] xl:hidden transition-opacity duration-300 animate-in fade-in"
                 onClick={closeMenus}
                 aria-hidden="true"
               />
@@ -1123,7 +1136,7 @@ export default function Header() {
 
             {/* Mobile & Tablet Menu Slide-in */}
             <div
-              className={`fixed inset-y-0 right-0 w-full md:w-96 bg-white dark:bg-[#0e1424] border-l border-transparent dark:border-slate-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-[100] lg:hidden ${
+              className={`fixed inset-y-0 right-0 w-full md:w-96 bg-white dark:bg-[#0e1424] border-l border-transparent dark:border-slate-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-[100] xl:hidden ${
                 isMenuOpen
                   ? "translate-x-0 pointer-events-auto"
                   : "translate-x-full pointer-events-none"
