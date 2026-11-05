@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, Compass, SlidersHorizontal, BadgePercent, MapPin } from "lucide-react";
-import { motion } from "motion/react";
+import { m as motion } from "motion/react";
 import Image from "next/image";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
@@ -127,7 +127,6 @@ export default function MapEasier() {
                 fill
                 className="object-cover group-hover:scale-106 transition-transform duration-700 ease-out"
                 sizes="(max-width: 1024px) 100vw, 50vw"
-                priority
               />
 
               {/* Cinematic Vignette Overlay */}

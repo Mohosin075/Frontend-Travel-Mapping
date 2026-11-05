@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Star, TrendingUp, Compass, Trophy } from "lucide-react";
-import { motion } from "motion/react";
+import { m as motion } from "motion/react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const listVariants = {
@@ -57,9 +57,9 @@ export default function ExploreMaps() {
             <Image
               src="/offer/Landing Page Reward - Dark.png"
               alt={t("landing.interactive_title")}
+              sizes="(max-width: 1023px) calc(100vw - 32px), 46vw"
               fill
               className="object-cover"
-              priority
             />
           </div>
         </motion.div>

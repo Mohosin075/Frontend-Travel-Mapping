@@ -3,7 +3,7 @@
 import React from "react";
 import { MapPin, Camera, Tag, LayoutGrid } from "lucide-react";
 import Image from "next/image";
-import { motion } from "motion/react";
+import { m as motion } from "motion/react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const containerVariants = {
@@ -148,6 +148,7 @@ export function Features() {
               <Image
                 src="/landing/La Playita - Cabo Rojo.png"
                 alt="La Playita - Cabo Rojo"
+                sizes="(max-width: 767px) 44vw, 23vw"
                 width={500}
                 height={500}
                 className="w-full h-full object-cover"
@@ -162,6 +163,7 @@ export function Features() {
               <Image
                 src="/landing/Cascada Barrio Perchgas - Morovis.png"
                 alt="Cascada Barrio Perchas - Morovis"
+                sizes="(max-width: 767px) 44vw, 23vw"
                 width={500}
                 height={500}
                 className="w-full h-full object-cover"
@@ -178,6 +180,7 @@ export function Features() {
               <Image
                 src="/landing/Piscinas Naturales de Culebrita.png"
                 alt="Piscinas Naturales de Culebrita"
+                sizes="(max-width: 767px) 44vw, 23vw"
                 width={500}
                 height={500}
                 className="w-full h-full object-cover"
@@ -192,6 +195,7 @@ export function Features() {
               <Image
                 src="/landing/Cueva de Punta Borinquen.png"
                 alt="Cueva de Punta Borinquen"
+                sizes="(max-width: 767px) 44vw, 23vw"
                 width={500}
                 height={500}
                 className="w-full h-full object-cover"

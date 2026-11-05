@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Tag } from "lucide-react";
 import Image from "next/image";
-import { motion } from "motion/react";
+import { m as motion } from "motion/react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const containerVariants = {

@@ -1,8 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { AuthLink } from "@/components/shared/auth-link";
-import { motion } from "motion/react";
+import { m as motion } from "motion/react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Target, Tag, BarChart3 } from "lucide-react";
 
@@ -120,9 +121,9 @@ export default function PromoteBusiness() {
             className="inline-block w-full sm:w-auto relative z-10"
           >
             <AuthLink href={"/for-business"} className="block w-full sm:w-auto">
-              <Button className="w-full sm:w-auto bg-black hover:bg-gray-900 text-white font-bold px-8 sm:px-10 h-12 sm:h-13 rounded-xl cursor-pointer text-sm sm:text-base shadow-lg">
+              <span className={cn(buttonVariants(), "w-full sm:w-auto bg-black hover:bg-gray-900 text-white font-bold px-8 sm:px-10 h-12 sm:h-13 rounded-xl cursor-pointer text-sm sm:text-base shadow-lg")}>
                 {t("landing.add_business")}
-              </Button>
+              </span>
             </AuthLink>
           </motion.div>
         </motion.div>

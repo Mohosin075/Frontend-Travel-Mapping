@@ -1,10 +1,11 @@
 "use client";
 
 import { Zap } from "lucide-react";
-import { Button } from "../../ui/button";
+import { buttonVariants } from "../../ui/button";
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "motion/react";
+import { m as motion } from "motion/react";
 import { useLoginRequired } from "@/components/shared/login-required-modal";
 import { useAppSelector } from "@/redux/hook";
 import { selectAccessToken } from "@/redux/features/auth/authSlice";
@@ -73,13 +74,13 @@ export default function HeroBanner() {
         {/* Left Content */}
         <motion.div
           className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left"
-          initial={{ opacity: 0, x: -30 }}
+          initial={false}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
           <motion.p
-            className="text-amber-600 dark:text-amber-400 font-extrabold font-inter text-xs sm:text-sm tracking-[0.18em] mb-2 sm:mb-3 leading-4 uppercase"
-            initial={{ opacity: 0, y: -10 }}
+            className="text-amber-700 dark:text-amber-400 font-extrabold font-inter text-xs sm:text-sm tracking-[0.18em] mb-2 sm:mb-3 leading-4 uppercase"
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
@@ -88,7 +89,7 @@ export default function HeroBanner() {
 
           <motion.h1
             className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight text-gray-900 dark:text-slate-100 leading-[1.18] sm:leading-tight lg:leading-20 mb-3.5 sm:mb-5"
-            initial={{ opacity: 0, y: 20 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
@@ -99,7 +100,7 @@ export default function HeroBanner() {
 
           <motion.p
             className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-slate-400 leading-relaxed mb-6 sm:mb-10 max-w-md sm:max-w-lg mx-auto lg:mx-0"
-            initial={{ opacity: 0 }}
+            initial={false}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.6 }}
           >
@@ -108,32 +109,29 @@ export default function HeroBanner() {
 
           <motion.div
             className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3 sm:gap-4 mb-6 sm:mb-12 w-full"
-            initial={{ opacity: 0, y: 15 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.5 }}
           >
             <Link href={"/places"} onClick={handleExplorePlaces} className="w-full sm:w-auto">
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full">
-                <Button className="w-full sm:w-auto bg-[#fabf13] hover:bg-[#e0ac10] text-black font-extrabold rounded-xl px-7 sm:px-10 h-11 sm:h-14 text-sm sm:text-base shadow-lg shadow-amber-500/25 cursor-pointer">
+                <span className={cn(buttonVariants(), "w-full sm:w-auto bg-[#fabf13] hover:bg-[#e0ac10] text-black font-extrabold rounded-xl px-7 sm:px-10 h-11 sm:h-14 text-sm sm:text-base shadow-lg shadow-amber-500/25 cursor-pointer")}>
                   {t("landing.hero_btn_1", t("landing.explore_places"))}
-                </Button>
+                </span>
               </motion.div>
             </Link>
             <Link href={"/catalog"} className="w-full sm:w-auto">
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full">
-                <Button
-                  variant="outline"
-                  className="w-full sm:w-auto bg-white dark:bg-[#131b2e]/90 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-900 dark:text-slate-100 font-bold rounded-xl px-7 sm:px-10 h-11 sm:h-14 text-sm sm:text-base border border-gray-200 dark:border-slate-800 shadow-sm sm:shadow-md backdrop-blur-md cursor-pointer"
-                >
+                <span className={cn(buttonVariants({ variant: "outline" }), "w-full sm:w-auto bg-white dark:bg-[#131b2e]/90 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-900 dark:text-slate-100 font-bold rounded-xl px-7 sm:px-10 h-11 sm:h-14 text-sm sm:text-base border border-gray-200 dark:border-slate-800 shadow-sm sm:shadow-md backdrop-blur-md cursor-pointer")}>
                   {t("landing.hero_btn_2", t("landing.browse_catalog"))}
-                </Button>
+                </span>
               </motion.div>
             </Link>
           </motion.div>
 
           <motion.div
             className="flex items-center justify-center lg:justify-start gap-3 sm:gap-4"
-            initial={{ opacity: 0 }}
+            initial={false}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.6 }}
           >
@@ -142,7 +140,7 @@ export default function HeroBanner() {
                 <motion.div
                   key={i}
                   className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white dark:border-slate-800 bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center overflow-hidden text-xs sm:text-sm font-bold text-amber-800 dark:text-amber-300"
-                  initial={{ scale: 0, opacity: 0 }}
+                  initial={false}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.6 + i * 0.1, type: "spring", stiffness: 200 }}
                 >
@@ -163,16 +161,18 @@ export default function HeroBanner() {
         <div className="relative mt-4 lg:mt-0">
           <motion.div
             className="relative rounded-2xl sm:rounded-[40px] overflow-hidden shadow-xl sm:shadow-2xl border border-transparent dark:border-slate-800/80"
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={false}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <Image
-              src="/landing/banner.png"
+              src="/landing/banner.webp"
               alt="Puerto Rico"
               width={600}
               height={450}
               className="w-full h-auto object-cover aspect-4/3"
+              sizes="(max-width: 1023px) calc(100vw - 48px), (max-width: 1440px) 46vw, 660px"
+              fetchPriority="high"
               priority
             />
           </motion.div>
@@ -180,7 +180,7 @@ export default function HeroBanner() {
           {/* Floating Card */}
           <motion.div
             className="absolute -bottom-5 left-2 sm:left-4 bg-white/95 dark:bg-[#131b2e]/90 backdrop-blur-xl font-inter p-3.5 sm:p-4 rounded-xl shadow-2xl flex items-center gap-3 sm:gap-4 min-w-56 sm:min-w-64 max-w-xs sm:max-w-sm border border-gray-100 dark:border-slate-800/80 ring-1 ring-black/5 dark:ring-white/5 z-20 transition-colors"
-            initial={{ opacity: 0, y: 30 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.5 }}
             whileHover={{ y: -5, scale: 1.02 }}

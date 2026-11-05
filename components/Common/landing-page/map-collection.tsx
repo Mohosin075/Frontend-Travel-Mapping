@@ -10,7 +10,7 @@ import {
 import { getImageUrl } from "@/lib/utils";
 import { useGetMapsQuery } from "@/redux/features/map/mapApi";
 import Link from "next/link";
-import { motion } from "motion/react";
+import { m as motion } from "motion/react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function MapCollection() {
@@ -38,19 +38,19 @@ export default function MapCollection() {
         </div>
 
         <Link href={"/catalog"} className="self-start sm:self-auto shrink-0">
-          <motion.button
+          <motion.span
             className="text-sm font-semibold border-b-2 border-[#fabf13] text-gray-900 dark:text-slate-200 hover:text-black dark:hover:text-[#fabf13] cursor-pointer pb-0.5 transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             {t("landing.view_full_catalog")} →
-          </motion.button>
+          </motion.span>
         </Link>
       </motion.div>
 
       {/* Carousel Container */}
       <motion.div
-        className="relative"
+        className="relative min-h-80 sm:min-h-96 md:min-h-105"
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-50px" }}
@@ -90,6 +90,10 @@ export default function MapCollection() {
                         src={getImageUrl(map.images?.[0])}
                         alt={map.name}
                         className="w-full h-80 sm:h-96 md:h-105 object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                        loading="lazy"
+                        decoding="async"
+                        width={600}
+                        height={420}
                         referrerPolicy="no-referrer"
                       />
 

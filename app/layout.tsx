@@ -31,6 +31,7 @@ const inter = localFont({
 });
 
 const publicSans = localFont({
+  preload: false,
   src: [
     { path: "./fonts/public-sans-400.woff2", weight: "400", style: "normal" },
     { path: "./fonts/public-sans-500.woff2", weight: "500", style: "normal" },
@@ -43,6 +44,7 @@ const publicSans = localFont({
 });
 
 const arial = localFont({
+  preload: false,
   src: [
     {
       path: "./fonts/arial.ttf",
@@ -105,7 +107,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

@@ -1,15 +1,20 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import bgImg from "@/public/exploring-today.jpg";
 import Link from "next/link";
-import { motion } from "motion/react";
+import { LazyMotion, m as motion } from "motion/react";
+
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+
+const loadAnimationFeatures = () => import("./animation-features").then(module => module.default);
 
 export default function StartExploring() {
   const { t } = useLanguage();
 
   return (
+    <LazyMotion features={loadAnimationFeatures}>
     <section className="w-full py-14 sm:py-18 lg:py-20 overflow-hidden font-inter">
       <div className="max-w-360 mx-auto px-3 sm:px-6 w-full">
         <motion.div
@@ -62,9 +67,9 @@ export default function StartExploring() {
                 whileTap={{ scale: 0.97 }}
                 className="w-full"
               >
-                <Button className="w-full sm:w-auto bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-8 py-5 sm:py-6 rounded-xl cursor-pointer text-base shadow-lg">
+                <span className={cn(buttonVariants(), "w-full sm:w-auto bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-8 py-5 sm:py-6 rounded-xl cursor-pointer text-base shadow-lg")}>
                   {t("landing.browse_maps")}
-                </Button>
+                </span>
               </motion.div>
             </Link>
 
@@ -76,5 +81,6 @@ export default function StartExploring() {
       </motion.div>
       </div>
     </section>
+    </LazyMotion>
   );
 }

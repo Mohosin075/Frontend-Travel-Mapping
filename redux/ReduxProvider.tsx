@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useLayoutEffect } from "react";
 import { Provider } from "react-redux";
+import { usePathname } from "next/navigation";
 import { PersistGate } from "redux-persist/integration/react";
 import store, { persistor } from "@/redux/store";
 import { Toaster } from "sonner";
@@ -40,13 +41,20 @@ function AuthCookieSync() {
 }
 
 export function ReduxProvider({ children }: { children: React.ReactNode }) {
+  // Public landing content must be discoverable before browser storage rehydrates.
+  // Keep every other route behind the existing persistence gate.
+  const isLandingPage = usePathname() === "/";
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <AuthCookieSync />
-        <CrossTabLogoutListener />
-        {children}
-        <Toaster position="top-center" />
+        {(bootstrapped) => (
+          <>
+            {bootstrapped && <AuthCookieSync />}
+            {bootstrapped && <CrossTabLogoutListener />}
+            {(bootstrapped || isLandingPage) ? children : null}
+            <Toaster position="top-center" />
+          </>
+        )}
       </PersistGate>
     </Provider>
   );

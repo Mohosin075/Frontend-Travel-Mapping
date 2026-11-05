@@ -53,6 +53,7 @@ export default function Footer() {
             {/* Social Icons */}
             <div className="flex gap-4 mt-6">
               <a
+                aria-label="Roadtripeado on Facebook"
                 href="https://www.facebook.com/share/19EaG6cYHv/"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -62,6 +63,7 @@ export default function Footer() {
               </a>
 
               <a
+                aria-label="Roadtripeado on Instagram"
                 href="https://www.instagram.com/roadtripeado?igsh=MTNra3VwbGdwNzd5bw=="
                 target="_blank"
                 rel="noopener noreferrer"
@@ -71,6 +73,7 @@ export default function Footer() {
               </a>
 
               <a
+                aria-label="Roadtripeado on YouTube"
                 href="https://youtube.com/@roadtripeado?si=hKx3FtiXlL5dTFzQ"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -80,6 +83,7 @@ export default function Footer() {
               </a>
 
               <a
+                aria-label="Roadtripeado on TikTok"
                 href="https://www.tiktok.com/@roadtripeado?_r=1&_t=ZT-989KjXNc92E"
                 target="_blank"
                 rel="noopener noreferrer"

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { canRevealPlace } from "@/lib/place-access";
 import {
   DropdownMenu,
@@ -33,7 +33,7 @@ import {
   Compass,
 } from "lucide-react";
 
-import { DEFAULT_AVATAR, getImageUrl, getLocalized, getProfileImageUrl } from "@/lib/utils";
+import { cn, DEFAULT_AVATAR, getImageUrl, getLocalized, getProfileImageUrl } from "@/lib/utils";
 import { useLogoutMutation } from "@/redux/features/auth/authApi";
 import { logout } from "@/redux/features/auth/authSlice";
 import { broadcastLogout } from "@/components/shared/cross-tab-logout-listener";
@@ -56,12 +56,15 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { NoImage } from "@/lib/others/others";
 import { Progress } from "@/components/ui/progress";
-import ProfileUpdateModal from "@/components/Common/profile/profile-update-modal";
+import dynamic from "next/dynamic";
+
 import { shareProfile } from "@/lib/share-profile";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import LanguageSwitcher from "@/components/shared/language-switcher";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import NotificationBellDropdown from "@/components/shared/notification-bell-dropdown";
+
+const ProfileUpdateModal = dynamic(() => import("@/components/Common/profile/profile-update-modal"), { ssr: false });
 
 function getPlaceSearchHref(place: any, onMapsPage: boolean) {
   if (!onMapsPage && !place.isLocked) return `/places/${place._id || place.id}`;
@@ -115,7 +118,11 @@ export default function Header() {
   useEffect(() => {
     const header = headerRef.current;
     if (!header) return;
-    const measure = () => document.documentElement.style.setProperty("--site-header-height", `${header.offsetHeight}px`);
+    const measure = () => {
+      const height = header.offsetHeight;
+      document.documentElement.style.setProperty("--site-header-height", `${height}px`);
+      if (window.scrollY <= 120) setHeaderHeight(height);
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(header);
@@ -145,9 +152,6 @@ export default function Header() {
   useEffect(() => {
     const onScroll = () => {
       const past = window.scrollY > 120;
-      if (!past && headerRef.current) {
-        setHeaderHeight(headerRef.current.offsetHeight);
-      }
       setScrolled(past);
     };
     onScroll();
@@ -632,7 +636,7 @@ export default function Header() {
                           {currentLevelName ? ` · ${currentLevelName}` : ""}
                         </p>
 
-                        <Progress value={progress} className="h-2" />
+                        <Progress value={progress} aria-label={isEs ? "Progreso al siguiente nivel" : "Progress to next level"} className="h-2" />
 
                         <p className="text-sm text-gray-500 dark:text-slate-400">
                           {user?.points || 0} / {maxPoints} {t("levels.points")}
@@ -723,11 +727,9 @@ export default function Header() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Link href="/login">
-                  <Button className="bg-[#FFC107] hover:bg-[#FFB300] text-black font-bold font-public-sans rounded-xl px-4 xl:px-8 py-2 xl:py-2.5 text-xs xl:text-base shadow-none h-auto">
+                <Link href="/login" className={cn(buttonVariants(), "bg-[#FFC107] hover:bg-[#FFB300] text-black font-bold font-public-sans rounded-xl px-4 xl:px-8 py-2 xl:py-2.5 text-xs xl:text-base shadow-none h-auto")}>
                     {t("nav.login") || "Log In"}
-                  </Button>
-                </Link>
+                  </Link>
               )}
             </div>
           </div>
@@ -770,11 +772,9 @@ export default function Header() {
                 </Avatar>
               </button>
             ) : (
-              <Link href="/login">
-                <Button className="bg-[#FFC107] hover:bg-[#FFB300] text-black font-bold font-public-sans rounded-xl px-4 py-2 text-sm shadow-none">
+              <Link href="/login" className={cn(buttonVariants(), "bg-[#FFC107] hover:bg-[#FFB300] text-black font-bold font-public-sans rounded-xl px-4 py-2 text-sm shadow-none")}>
                   {t("nav.login")}
-                </Button>
-              </Link>
+                </Link>
             )}
             {/* Hamburger Menu Button */}
             <button
@@ -1021,7 +1021,7 @@ export default function Header() {
                         {user?.points || 0} / {maxPoints} {t("levels.points")}
                       </span>
                     </div>
-                    <Progress value={progress} className="h-2" />
+                    <Progress value={progress} aria-label={isEs ? "Progreso al siguiente nivel" : "Progress to next level"} className="h-2" />
                   </div>
 
                   {/* Action Buttons: View Profile + Edit Profile + Share */}
@@ -1229,11 +1229,11 @@ export default function Header() {
           document.body
         )}
 
-      <ProfileUpdateModal
+      {isAuthenticated && <ProfileUpdateModal
         data={user}
         open={isUpdateModalOpen}
         onOpenChange={setIsUpdateModalOpen}
-      />
+      />}
     </div>
   );
 }
