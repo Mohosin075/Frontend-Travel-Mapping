@@ -26,8 +26,8 @@ import {
   Star,
   Sparkles,
   MapPin,
-  WifiOff,
-  Navigation,
+  Trophy,
+  Route,
   RefreshCw,
   MailCheck,
   UserPlus,
@@ -504,28 +504,28 @@ function ClaimPromoContent() {
           : "Handpicked points of interest including photo locations, sights, and dining.",
     },
     {
-      icon: WifiOff,
-      title: language === "es" ? "Navegación Sin Conexión" : "Offline Access Navigation",
+      icon: Trophy,
+      title: language === "es" ? "Gana Puntos y Recompensas" : "Earn Points and Rewards",
       desc:
         language === "es"
-          ? "Guarda todos los pines directamente en Google Maps para navegar sin señal."
-          : "Save all custom pins directly to Google Maps to access offline without signal.",
+          ? "Acumula puntos, sube de nivel y desbloquea recompensas como itinerarios y mapas digitales gratuitos."
+          : "Accumulate points, level up, and unlock rewards such as free itineraries and digital maps.",
     },
     {
-      icon: Navigation,
-      title: language === "es" ? "Rutas Guiadas en Carretera" : "Curated Road Routes",
+      icon: Route,
+      title: language === "es" ? "Crea Tus Propias Rutas" : "Create Your Own Routes",
       desc:
         language === "es"
-          ? "Rutas optimizadas con el mejor recorrido para tu experiencia de viaje."
-          : "Optimized road routes mapping the best path for your road trip experience.",
+          ? "Planifica, organiza y guarda tus rutas personalizadas para mantener todos tus viajes por carretera en un solo lugar."
+          : "Plan, organize, and save your custom routes to keep all your road trips in one place.",
     },
     {
       icon: RefreshCw,
-      title: language === "es" ? "Actualizaciones Automáticas" : "Regular Auto Updates",
+      title: language === "es" ? "Actualizaciones Automáticas" : "Automatic Updates",
       desc:
         language === "es"
-          ? "Nuevas recomendaciones se sincronizan con tu panel al instante."
-          : "Updates and new recommendations automatically sync to your dashboard instantly.",
+          ? "Descubre nuevos lugares turísticos que se añaden automáticamente a tu mapa, sin costo adicional."
+          : "Discover new tourist spots that are automatically added to your map—at no extra cost.",
     },
   ];
 
@@ -582,7 +582,7 @@ function ClaimPromoContent() {
             </h1>
             <p className={`text-sm sm:text-base leading-relaxed max-w-lg ${isVipTheme ? "text-slate-400" : "text-gray-600 dark:text-slate-400"}`}>
               {t("promo_claim.hero_subtitle") ||
-                "Welcome to Roadtripeado! Get ready to explore curated routes, offline navigation pins, and expert local guidelines."}
+                "Welcome to Roadtripeado! Discover hundreds of tourist spots, create your own routes, save your favorites, and enjoy exclusive discounts at local businesses."}
             </p>
           </div>
 
