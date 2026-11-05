@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { EntityUsersModal } from "./entity-users-modal";
 
 interface StatItem {
+  profileCount?: number;
   countMetric?: "unique_viewers";
   totalViews?: number;
   entityType?: "map" | "place" | "offer" | "business";
@@ -225,7 +226,12 @@ function StatColumn({
                   </div>
                 </div>
 
-                {/* Count Badge - Clickable to see who these users are */}
+                <span className="text-[10px] text-gray-500 shrink-0">
+                  {item.count.toLocaleString()} {type === 'offer'
+                    ? (language === 'es' ? 'canjes' : 'redemptions')
+                    : (language === 'es' ? 'visitantes' : 'visitors')}
+                </span>
+                {/* Profile count excludes guests and unavailable accounts. */}
                 <button
                   type="button"
                   onClick={(e) => {
@@ -243,7 +249,7 @@ function StatColumn({
                   title={t("reports_admin.click_to_view_users") || "Click to view interacting users"}
                 >
                   <Users size={12} className="opacity-70 group-hover/btn:opacity-100" />
-                  <span>{item.count.toLocaleString()}</span>
+                  <span>{(item.profileCount ?? 0).toLocaleString()} {language === "es" ? "perfiles" : "profiles"}</span>
                 </button>
               </div>
             );
@@ -393,7 +399,7 @@ export function UsageStatistics({
 
       {/* Modal to view interacting users */}
       <EntityUsersModal
-        key={`${selectedEntity?.type}:${selectedEntity?.id}:${isModalOpen}`}
+        key={`${selectedEntity?.type}:${selectedEntity?.id}:${timeFilter}:${isModalOpen}`}
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         entity={selectedEntity}

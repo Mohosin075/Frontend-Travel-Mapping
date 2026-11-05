@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getLocalized } from "@/lib/utils";
+import { csvCell, htmlText } from "@/lib/report-export";
 
 type ReportEntityType = "place" | "business" | "map" | "offer";
 
@@ -47,7 +49,7 @@ const ENTITY_META: Record<
 };
 
 export default function ReportsPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [timeFilter, setTimeFilter] = useState("");
   const [country, setCountry] = useState("");
   const [category, setCategory] = useState("");
@@ -99,7 +101,7 @@ export default function ReportsPage() {
 
   // Fetch reports stats with applied filters
   const {
-    data: response,
+    currentData: response,
     isLoading,
     isError,
     refetch,
@@ -117,8 +119,9 @@ export default function ReportsPage() {
   );
 
   const reportData = response?.data;
-  const categoryLabel =
-    categoriesResponse?.data?.find((cat: any) => cat._id === category)?.name || "";
+  const categoryLabel = getLocalized(
+    categoriesResponse?.data?.find((cat: any) => cat._id === category)?.name, language,
+  );
 
   const handleSelectEntity = (item: ReportEntity) => {
     setSelectedEntity(item);
@@ -161,23 +164,23 @@ export default function ReportsPage() {
 
     // Usage Lists
     csvContent += "USAGE STATISTICS - TOP VIEWED MAPS\n";
-    csvContent += "Map Name,Spots,Views\n";
+    csvContent += "Map Name,Spots,Unique Visitors,Identified Profiles\n";
     reportData.usage?.mostViewedMaps?.forEach((item: any) => {
-      csvContent += `"${item.name}","${item.placesCount ?? 0}","${item.count}"\n`;
+      csvContent += `${[item.name, item.placesCount ?? 0, item.count, item.profileCount ?? 0].map(csvCell).join(",")}\n`;
     });
     csvContent += "\n";
 
     csvContent += "USAGE STATISTICS - TOP OPENED PLACES\n";
-    csvContent += "Place Name,Opens\n";
+    csvContent += "Place Name,Unique Visitors,Identified Profiles\n";
     reportData.usage?.mostOpenedPlaces?.forEach((item: any) => {
-      csvContent += `"${item.name}","${item.count}"\n`;
+      csvContent += `${[item.name, item.count, item.profileCount ?? 0].map(csvCell).join(",")}\n`;
     });
     csvContent += "\n";
 
     csvContent += "USAGE STATISTICS - TOP REDEEMED OFFERS\n";
-    csvContent += "Offer Title,Business,Redemptions\n";
+    csvContent += "Offer Title,Business,Redemptions,Identified Profiles\n";
     reportData.usage?.mostRedeemedOffers?.forEach((item: any) => {
-      csvContent += `"${item.name}","${item.businessName || ''}","${item.count}"\n`;
+      csvContent += `${[item.name, item.businessName || "", item.count, item.profileCount ?? 0].map(csvCell).join(",")}\n`;
     });
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -191,6 +194,7 @@ export default function ReportsPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleExportPDF = () => {
@@ -263,6 +267,7 @@ export default function ReportsPage() {
                       <th>${t("reports.map_name") || "Map Name"}</th>
                       <th>${t("reports_admin.places_plural") || "Spots"}</th>
                       <th>${t("business_admin.views") || "Views"}</th>
+                      <th>${language === "es" ? "Perfiles identificados" : "Identified profiles"}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -270,12 +275,13 @@ export default function ReportsPage() {
                       reportData.usage?.mostViewedMaps?.map(
                         (item: any) => `
                         <tr>
-                          <td>${item.name}</td>
+                          <td>${htmlText(item.name)}</td>
                           <td>${item.placesCount ?? 0} ${item.placesCount === 1 ? (t("reports_admin.place_singular") || "spot") : (t("reports_admin.places_plural") || "spots")}</td>
                           <td>${item.count?.toLocaleString()}</td>
+                          <td>${item.profileCount ?? 0}</td>
                         </tr>
                       `
-                      ).join("") || `<tr><td colspan="3">${t("reports_admin.no_data") || "No data"}</td></tr>`
+                      ).join("") || `<tr><td colspan="4">${t("reports_admin.no_data") || "No data"}</td></tr>`
                     }
                   </tbody>
                 </table>
@@ -288,6 +294,7 @@ export default function ReportsPage() {
                     <tr>
                       <th>${t("reports.place_name") || "Place Name"}</th>
                       <th>${t("reports_admin.activity") || "Opens"}</th>
+                      <th>${language === "es" ? "Perfiles identificados" : "Identified profiles"}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -295,11 +302,12 @@ export default function ReportsPage() {
                       reportData.usage?.mostOpenedPlaces?.map(
                         (item: any) => `
                         <tr>
-                          <td>${item.name}</td>
+                          <td>${htmlText(item.name)}</td>
                           <td>${item.count?.toLocaleString()}</td>
+                          <td>${item.profileCount ?? 0}</td>
                         </tr>
                       `
-                      ).join("") || `<tr><td colspan="2">${t("reports_admin.no_data") || "No data"}</td></tr>`
+                      ).join("") || `<tr><td colspan="3">${t("reports_admin.no_data") || "No data"}</td></tr>`
                     }
                   </tbody>
                 </table>
@@ -313,6 +321,7 @@ export default function ReportsPage() {
                       <th>${t("reports.offer_title") || "Offer Title"}</th>
                       <th>${t("business_admin.business") || "Business"}</th>
                       <th>${t("reports_admin.offers_redeemed") || "Redemptions"}</th>
+                      <th>${language === "es" ? "Perfiles identificados" : "Identified profiles"}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -320,12 +329,13 @@ export default function ReportsPage() {
                       reportData.usage?.mostRedeemedOffers?.map(
                         (item: any) => `
                         <tr>
-                          <td>${item.name}</td>
-                          <td>${item.businessName || "-"}</td>
+                          <td>${htmlText(item.name)}</td>
+                          <td>${htmlText(item.businessName || "-")}</td>
                           <td>${item.count?.toLocaleString()}</td>
+                          <td>${item.profileCount ?? 0}</td>
                         </tr>
                       `
-                      ).join("") || `<tr><td colspan="3">${t("reports_admin.no_data") || "No data"}</td></tr>`
+                      ).join("") || `<tr><td colspan="4">${t("reports_admin.no_data") || "No data"}</td></tr>`
                     }
                   </tbody>
                 </table>
@@ -340,7 +350,7 @@ export default function ReportsPage() {
     printWindow.document.close();
   };
 
-  if (isLoading) {
+  if (isLoading || (isFetching && !response)) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-[#fabf13] animate-spin" />
@@ -538,7 +548,7 @@ export default function ReportsPage() {
           <option value="">{t("filters.all_categories") || "All Categories"}</option>
           {categoriesResponse?.data?.map((cat: any) => (
             <option key={cat._id} value={cat._id}>
-              {cat.name}
+              {getLocalized(cat.name, language)}
             </option>
           ))}
         </select>
@@ -572,7 +582,7 @@ export default function ReportsPage() {
       {/* MAIN SECTIONS FLOW (Natural UX Hierarchy) */}
       <div className="space-y-8">
         {/* 2. USER ACTIVITY & ACTIVE USERS KPI CARDS */}
-        <UserActivityOverview data={reportData?.userActivity} />
+        <UserActivityOverview data={reportData?.userActivity} country={country} />
 
         {/* 3. CORE USAGE STATISTICS (Maps with spots count, Places, and Offers with View More) */}
         <UsageStatistics

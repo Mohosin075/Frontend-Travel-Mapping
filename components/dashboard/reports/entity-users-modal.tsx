@@ -117,10 +117,15 @@ export function EntityUsersModal({
             </p>
           </DialogHeader>
           {response && !isError && <p className="mt-2 text-xs text-gray-600 dark:text-slate-300" aria-live="polite">
-            {language === 'es' ? 'Total registrado' : 'Recorded total'}: {payload.totalCount ?? users.length}
+            {entity?.type === 'offer'
+              ? (language === 'es' ? 'Canjes registrados' : 'Recorded redemptions')
+              : (language === 'es' ? 'Visitantes registrados' : 'Recorded visitors')}: {payload.totalCount ?? users.length}
             {' · '}{users.length} {language === 'es' ? 'cuentas identificadas' : 'identified accounts'}
             {' · '}{guestCount} {language === 'es' ? 'visitantes sin sesión' : 'guests'}
             {' · '}{unavailableCount} {language === 'es' ? 'cuentas no disponibles' : 'unavailable accounts'}
+          </p>}
+          {payload.unavailableRedemptions > 0 && <p className="mt-2 text-xs text-gray-500">
+            {payload.unavailableRedemptions} {language === 'es' ? 'canjes de cuentas no disponibles' : 'redemptions from unavailable accounts'}
           </p>}
           <Input value={search} onChange={event => setSearch(event.target.value)}
             aria-label={language === "es" ? "Buscar usuarios" : "Search users"}
@@ -188,7 +193,9 @@ export function EntityUsersModal({
                         variant="secondary"
                         className="text-[10px] font-semibold bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 mb-1"
                       >
-                        {u.action || "Interacted"}
+                        {u.redemptionCount !== undefined
+                          ? `${u.redemptionCount} ${language === 'es' ? 'canjes' : 'redemptions'}`
+                          : u.action || "Interacted"}
                       </Badge>
                       <p className="text-[10px] text-gray-400 dark:text-slate-500 flex items-center gap-1 justify-end font-medium">
                         <Calendar size={9} />

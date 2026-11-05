@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useGetRegisteredReportUsersQuery } from "@/redux/features/stats/statsApi";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getProfileImageUrl, getLocalized } from "@/lib/utils";
 
@@ -61,6 +62,9 @@ export interface IActiveUserSummary {
 }
 
 export interface IUserActivityStats {
+  guestVisitorsToday?: number;
+  guestVisitorsThisWeek?: number;
+  guestVisitorsThisMonth?: number;
   activeUsersToday: number;
   activeUsersThisWeek: number;
   activeUsersThisMonth: number;
@@ -76,12 +80,27 @@ export interface IUserActivityStats {
   allUsersList?: IActiveUserSummary[];
 }
 
-export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
+export function UserActivityOverview({ data, country }: { data?: IUserActivityStats; country?: string }) {
   const { t, language } = useLanguage();
   const router = useRouter();
   const [isActiveUsersModalOpen, setIsActiveUsersModalOpen] = useState(false);
   const [activeTimeframe, setActiveTimeframe] = useState<"today" | "week" | "month" | "all">("today");
   const [searchUserTerm, setSearchUserTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const [registeredSearch, setRegisteredSearch] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => { setRegisteredSearch(searchUserTerm.trim()); setPage(1); }, 250);
+    return () => clearTimeout(timer);
+  }, [searchUserTerm]);
+  useEffect(() => { setPage(1); }, [country]);
+  const { currentData: registeredResponse, isFetching: loadingRegistered, isError: registeredError, refetch: retryRegistered } = useGetRegisteredReportUsersQuery(
+    { country, search: registeredSearch, page },
+    { skip: !isActiveUsersModalOpen || activeTimeframe !== 'all', refetchOnMountOrArgChange: true, pollingInterval: 30000, skipPollingIfUnfocused: true },
+  );
+  const registeredData = registeredResponse?.data;
+  useEffect(() => {
+    if (registeredData && page > Math.max(1, registeredData.totalPages)) setPage(Math.max(1, registeredData.totalPages));
+  }, [registeredData, page]);
 
   const getSelectedUsers = (): IActiveUserSummary[] => {
     if (activeTimeframe === "today") {
@@ -103,8 +122,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
       );
     }
     // "all"
-    if (data?.allUsersList !== undefined) return data.allUsersList;
-    return data?.activeUsersList || [];
+    return registeredData?.users || [];
   };
 
   const currentTabUsers = getSelectedUsers();
@@ -114,6 +132,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
     : Math.max(0, (selectedActiveTotal || 0) - currentTabUsers.length);
 
   const filteredUsers = currentTabUsers.filter((u) => {
+    if (activeTimeframe === 'all') return true;
     if (!searchUserTerm.trim()) return true;
     const term = searchUserTerm.toLowerCase();
     return (
@@ -131,6 +150,8 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
   const handleOpenModalWithFilter = (timeframe: "today" | "week" | "month" | "all") => {
     setActiveTimeframe(timeframe);
     setSearchUserTerm("");
+    setRegisteredSearch("");
+    setPage(1);
     setIsActiveUsersModalOpen(true);
   };
 
@@ -236,10 +257,16 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
         ))}
       </div>
 
+      <p className="text-xs text-gray-500 dark:text-slate-400">
+        {language === 'es'
+          ? `Las cifras de usuarios activos cuentan perfiles registrados. Visitantes sin sesión: 24 h ${data?.guestVisitorsToday || 0}, 7 días ${data?.guestVisitorsThisWeek || 0}, 30 días ${data?.guestVisitorsThisMonth || 0}. El total de cuentas usa únicamente el filtro de país.`
+          : `Active user counts represent registered profiles. Guest visitors: 24h ${data?.guestVisitorsToday || 0}, 7d ${data?.guestVisitorsThisWeek || 0}, 30d ${data?.guestVisitorsThisMonth || 0}. Total accounts uses only the country filter.`}
+      </p>
+
       {/* Active Users Dialog */}
       <Dialog open={isActiveUsersModalOpen} onOpenChange={setIsActiveUsersModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 overflow-hidden rounded-3xl bg-white dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 shadow-2xl">
-          <DialogHeader className="p-5 pb-3 border-b border-gray-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40">
+        <DialogContent className="max-w-2xl h-[85dvh] max-h-[85dvh] min-h-0 flex flex-col p-0 overflow-hidden rounded-3xl bg-white dark:bg-[#131b2e] border border-gray-200 dark:border-slate-800 shadow-2xl">
+          <DialogHeader className="shrink-0 p-5 pb-3 border-b border-gray-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-2xl bg-[#fabf13]/10 text-yellow-700 dark:text-[#fabf13] flex items-center justify-center">
@@ -250,7 +277,7 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
                     {timeframeTitles[activeTimeframe]}
                   </DialogTitle>
                   <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                    {filteredUsers.length} {t("reports_admin.active_users_found") || "user(s) found"}
+                    {activeTimeframe === 'all' ? (registeredData?.total ?? '…') : filteredUsers.length} {t("reports_admin.active_users_found") || "user(s) found"}
                   </p>
                 </div>
               </div>
@@ -357,8 +384,12 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
           </DialogHeader>
 
           {/* Active Users List */}
-          <div className="p-4 sm:p-5 overflow-y-auto max-h-[60vh] space-y-2.5">
-            {filteredUsers.length === 0 ? (
+          <div className="flex-1 min-h-0 p-4 sm:p-5 overflow-y-auto overscroll-contain space-y-2.5">
+            {activeTimeframe === 'all' && registeredError ? (
+              <button type="button" onClick={() => retryRegistered()} className="p-4 underline">{language === 'es' ? 'Error al cargar. Reintentar' : 'Unable to load users. Retry'}</button>
+            ) : activeTimeframe === 'all' && (loadingRegistered || registeredSearch !== searchUserTerm.trim()) ? (
+              <p role="status" className="p-4">{t('common.loading') || 'Loading...'}</p>
+            ) : filteredUsers.length === 0 ? (
               <div className="text-center py-10 text-xs text-gray-400 dark:text-slate-500">
                 {t("reports_admin.no_active_users_found") || "No users found in this time period."}
               </div>
@@ -426,6 +457,11 @@ export function UserActivityOverview({ data }: { data?: IUserActivityStats }) {
               ))
             )}
           </div>
+          {activeTimeframe === 'all' && registeredData && <div className="shrink-0 flex items-center justify-between gap-3 border-t p-4 text-xs">
+            <button type="button" disabled={page <= 1 || loadingRegistered} onClick={() => setPage(p => p - 1)} className="disabled:opacity-40">{language === 'es' ? 'Anterior' : 'Previous'}</button>
+            <span>{page} / {Math.max(1, registeredData.totalPages)} · {registeredData.total} {language === 'es' ? 'perfiles' : 'profiles'}</span>
+            <button type="button" disabled={page >= registeredData.totalPages || loadingRegistered} onClick={() => setPage(p => p + 1)} className="disabled:opacity-40">{language === 'es' ? 'Siguiente' : 'Next'}</button>
+          </div>}
         </DialogContent>
       </Dialog>
 

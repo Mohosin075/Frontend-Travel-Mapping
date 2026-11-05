@@ -2,6 +2,10 @@ import { baseApi } from "@/redux/api/baseApi";
 
 export const statsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    getRegisteredReportUsers: builder.query<any, { country?: string; search?: string; page: number }>({
+      query: (params) => ({ url: '/stats/registered-users', params }),
+      providesTags: ['Stats'],
+    }),
     recordActivity: builder.mutation<any, void>({
       query: () => ({ url: '/stats/activity', method: 'POST' }),
     }),
@@ -42,6 +46,7 @@ export const statsApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useGetRegisteredReportUsersQuery,
   useRecordActivityMutation,
   useGetDashboardStatsQuery,
   useGetReportsQuery,
