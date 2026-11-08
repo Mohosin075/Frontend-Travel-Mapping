@@ -30,6 +30,7 @@ import LocationDialog from "./location-dialog";
 import { editorCanAccessMap } from "@/lib/editor-access";
 import { canRevealPlace } from "@/lib/place-access";
 import { getUsableMediaUrl } from "@/lib/utils";
+import { geocodeInFlight } from "@/lib/maps/geocode";
 import { X } from "lucide-react";
 
 export function getCategoryColor(cat: any) {
@@ -583,9 +584,8 @@ function CountryPanner({
     if (!geocodingLib) return;
     let cancelled = false;
     const geocoder = new geocodingLib.Geocoder();
-    geocoder.geocode(
-      { address: selectedCountry },
-      (results: any[] | null, status: string) => {
+    void geocodeInFlight(geocoder, { address: selectedCountry }).then(
+      ({ results, status }) => {
         if (!cancelled && status === "OK" && results?.[0]) {
           lastPannedCountryRef.current = norm;
           if (results[0].geometry.viewport) {
@@ -596,7 +596,7 @@ function CountryPanner({
           }
         }
       },
-    );
+    ).catch(() => { /* A later country selection can retry a failed lookup. */ });
     return () => { cancelled = true; };
   }, [selectedCountry, places, map, geocodingLib, disabled]);
 
@@ -1170,11 +1170,11 @@ export default function MapPage() {
   useEffect(() => {
     if (!geocodingLib || !hasUserLocation || !markerPos.lat || !markerPos.lng) return;
 
+    let cancelled = false;
     const geocoder = new geocodingLib.Geocoder();
-    geocoder.geocode(
-      { location: markerPos },
-      (results: any[] | null, status: string) => {
-        if (status === "OK" && results?.[0]) {
+    void geocodeInFlight(geocoder, { location: markerPos }).then(
+      ({ results, status }) => {
+        if (!cancelled && status === "OK" && results?.[0]) {
           const countryComponent = results[0].address_components.find(
             (c: { types: string[]; long_name: string }) =>
               c.types.includes("country"),
@@ -1184,8 +1184,9 @@ export default function MapPage() {
           }
         }
       },
-    );
-  }, [markerPos, geocodingLib]);
+    ).catch(() => { /* Keep the current country if detection fails. */ });
+    return () => { cancelled = true; };
+  }, [markerPos, geocodingLib, hasUserLocation]);
 
   // Apply deep-link map once only (never fight later manual map switches)
   useEffect(() => {
@@ -1379,11 +1380,13 @@ export default function MapPage() {
 
   return (
     <div className="">
-      <div className="relative" style={{ height: "calc(100vh - 90px)", width: "100%" }}>
+      <div className="explorer-map-canvas relative bg-gray-100 dark:bg-[#0b0f19]" style={{ height: "calc(100vh - 90px)", width: "100%" }}>
         <APIProvider
           apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY as string}
         >
           <Map
+            reuseMaps={process.env.NEXT_PUBLIC_GOOGLE_MAP_REUSE === "true"}
+            backgroundColor={isDark ? "#0b0f19" : "#f3f4f6"}
             defaultCenter={initialMapState?.center || defaultPosition}
             defaultZoom={initialMapState?.zoom || 13}
             onCameraChanged={(ev) => {

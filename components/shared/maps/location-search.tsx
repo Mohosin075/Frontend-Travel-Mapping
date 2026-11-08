@@ -1,6 +1,7 @@
 "use client";
 
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
+import { geocodeInFlight } from "@/lib/maps/geocode";
 import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -27,6 +28,11 @@ export function LocationSearch({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const revision = useRef(0);
+  const selectionPending = useRef(false);
+  const selectedQuery = useRef<{ label: string; country?: string } | null>(null);
+
+  useEffect(() => () => { revision.current += 1; }, []);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -37,9 +43,18 @@ export function LocationSearch({
   }, []);
 
   useEffect(() => {
+    const requestRevision = ++revision.current;
+    selectionPending.current = false;
+    setLoading(false);
+    let cancelled = false;
+    const isCurrent = () => !cancelled && revision.current === requestRevision;
     const q = query.trim();
-    if (q.length < 2) {
+    if (disabled || q.length < 2 || (
+      selectedQuery.current?.label === query &&
+      selectedQuery.current.country === countryName
+    )) {
       setSuggestions([]);
+      setOpen(false);
       return;
     }
 
@@ -51,6 +66,7 @@ export function LocationSearch({
         service.getPlacePredictions(
           { input: biased },
           (results, status) => {
+            if (!isCurrent()) return;
             if (String(status) === "OK" && results?.length) {
               setSuggestions(
                 results.slice(0, 6).map((item) => ({
@@ -66,7 +82,8 @@ export function LocationSearch({
               return;
             }
             const geocoder = new geocoding.Geocoder();
-            geocoder.geocode({ address: biased }, (geoResults, geoStatus) => {
+            void geocodeInFlight(geocoder, { address: biased }).then(({ results: geoResults, status: geoStatus }) => {
+              if (!isCurrent()) return;
               if (String(geoStatus) !== "OK" || !geoResults?.[0]?.geometry?.location) {
                 setSuggestions([]);
                 return;
@@ -80,7 +97,7 @@ export function LocationSearch({
                 },
               ]);
               setOpen(true);
-            });
+            }).catch(() => { if (isCurrent()) setSuggestions([]); });
           },
         );
         return;
@@ -88,7 +105,8 @@ export function LocationSearch({
 
       if (!geocoding) return;
       const geocoder = new geocoding.Geocoder();
-      geocoder.geocode({ address: biased }, (results, status) => {
+      void geocodeInFlight(geocoder, { address: biased }).then(({ results, status }) => {
+        if (!isCurrent()) return;
         if (status !== "OK" || !results?.[0]?.geometry?.location) {
           setSuggestions([]);
           return;
@@ -102,32 +120,46 @@ export function LocationSearch({
           },
         ]);
         setOpen(true);
-      });
+      }).catch(() => { if (isCurrent()) setSuggestions([]); });
     }, 280);
 
-    return () => window.clearTimeout(timer);
-  }, [query, countryName, places, geocoding]);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [query, countryName, places, geocoding, disabled]);
 
   const selectSuggestion = async (item: Suggestion) => {
+    if (disabled || selectionPending.current) return;
+    const selectionRevision = ++revision.current;
+    selectionPending.current = true;
+    setOpen(false);
     setLoading(true);
+    const commit = (lat: number, lng: number) => {
+      if (revision.current !== selectionRevision) return;
+      selectedQuery.current = { label: item.label, country: countryName };
+      setQuery(item.label);
+      setSuggestions([]);
+      setOpen(false);
+      onPick(lat, lng, item.label);
+    };
     try {
       if (item.lat != null && item.lng != null) {
-        onPick(item.lat, item.lng, item.label);
-        setQuery(item.label);
-        setOpen(false);
+        commit(item.lat, item.lng);
         return;
       }
       if (!item.placeId || !geocoding) return;
       const geocoder = new geocoding.Geocoder();
-      geocoder.geocode({ placeId: item.placeId }, (results, status) => {
-        const loc = results?.[0]?.geometry?.location;
-        if (status !== "OK" || !loc) return;
-        onPick(loc.lat(), loc.lng(), item.label);
-        setQuery(item.label);
-        setOpen(false);
-      });
+      const { results, status } = await geocodeInFlight(geocoder, { placeId: item.placeId });
+      const loc = results?.[0]?.geometry?.location;
+      if (status === "OK" && loc) commit(loc.lat(), loc.lng());
+    } catch {
+      // Leave the query editable so a failed lookup can be retried.
     } finally {
-      setLoading(false);
+      if (revision.current === selectionRevision) {
+        selectionPending.current = false;
+        setLoading(false);
+      }
     }
   };
 
@@ -137,7 +169,15 @@ export function LocationSearch({
       <input
         value={query}
         disabled={disabled}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => {
+          revision.current += 1;
+          selectionPending.current = false;
+          setLoading(false);
+          selectedQuery.current = null;
+          setSuggestions([]);
+          setOpen(false);
+          setQuery(e.target.value);
+        }}
         onFocus={() => suggestions.length > 0 && setOpen(true)}
         placeholder={
           countryName
