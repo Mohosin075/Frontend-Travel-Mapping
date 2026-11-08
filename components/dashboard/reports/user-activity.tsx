@@ -33,7 +33,7 @@ import { useRouter } from "next/navigation";
 
 export interface IUserActivityItem {
   id: string;
-  type: "visit" | "review" | "redemption" | "registration";
+  type: "view" | "visit" | "review" | "redemption" | "registration";
   userId?: string;
   userName: string;
   userEmail?: string;
@@ -555,6 +555,12 @@ export function RecentUserActivityLog({
 
   const getActivityBadge = (type: IUserActivityItem["type"]) => {
     switch (type) {
+      case "view":
+        return {
+          label: t("reports_admin.place_viewed", "Viewed"),
+          color: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/60",
+          Icon: MapPin,
+        };
       case "visit":
         return {
           label: t("reports_admin.place_visited") || "Visited",

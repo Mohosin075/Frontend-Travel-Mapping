@@ -1108,8 +1108,6 @@ export default function Header() {
                   })}
                 </div>
 
-                </div>
-
                 {/* Logout Button */}
                 <div data-profile-menu-footer className="shrink-0 mt-4 pt-4 border-t border-gray-100 dark:border-slate-800">
                   <button
@@ -1121,6 +1119,7 @@ export default function Header() {
                     <Map className="size-5" />
                     <span>{isLoggingOut ? (t("common.logging_out") || "Logging out...") : t("nav.logout")}</span>
                   </button>
+                </div>
                 </div>
               </div>
             </div>

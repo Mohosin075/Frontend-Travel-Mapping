@@ -972,34 +972,64 @@ export default function AddPlacePage() {
     }
   };
 
+  const pinMoveInFlight = useRef(false);
+  useEffect(() => {
+    setDraggedPositions(prev => {
+      const next = { ...prev };
+      let changed = false;
+      for (const place of fetchedPlaces) {
+        const id = String(place._id || place.id);
+        const pos = next[id];
+        const coords = place.location?.mapLocation?.coordinates || place.location?.coordinates;
+        if (pos && coords && !coordsChanged([pos.lng, pos.lat], coords)) {
+          delete next[id];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [fetchedPlaces]);
   const handleMarkerDragEnd = useCallback(
     async (placeId: string, pos: { lat: number; lng: number }) => {
-      setDraggedPositions((prev) => ({
-        ...prev,
-        [placeId]: pos,
-      }));
-      const match = displayPlaces.find((p: any) => (p._id || p.id) === placeId);
-      setSelectedPlace((prev: any) => ({
-        ...((prev?._id || prev?.id) === placeId ? prev : match || {}),
-        position: pos,
-      }));
-      // The pointer is released now, so loading full details cannot interrupt dragging.
-      // Preserve unsaved coordinates while fetching fields needed for a safe edit.
+      if (pinMoveInFlight.current) return;
+      if (!Number.isFinite(pos.lat) || !Number.isFinite(pos.lng) || Math.abs(pos.lat) > 90 || Math.abs(pos.lng) > 180) return;
+      const match = displayPlaces.find((p: any) => String(p._id || p.id) === String(placeId));
+      if (!match) return;
+      pinMoveInFlight.current = true;
+      const previous = draggedPositions[placeId];
+      let saved = false;
+      setDraggedPositions(prev => ({ ...prev, [placeId]: pos }));
+      // Close the info window; relocation never opens or saves the full edit form.
+      placeDetailsRequest.current += 1;
+      setSelectedPlace(null);
       setActivePoi(null);
-      if (match) {
-        const selection = handleSelectPlace(match);
-        const request = placeDetailsRequest.current;
-        await selection;
-        if (request !== placeDetailsRequest.current) return;
+      try {
+        const result = await appAlert.fire({
+          title: language === 'es' ? '¿Confirmar nueva ubicación?' : 'Confirm new pin location?',
+          text: language === 'es' ? 'Solo se actualizará la ubicación del pin.' : 'Only the pin coordinates will be updated.',
+          icon: 'question', showCancelButton: true,
+          confirmButtonText: language === 'es' ? 'Confirmar' : 'Confirm',
+          cancelButtonText: language === 'es' ? 'Cancelar' : 'Cancel',
+        });
+        if (!result.isConfirmed) return;
+        await updatePlace({ id: placeId, data: {
+          location: { type: 'Point', coordinates: [pos.lng, pos.lat] },
+        } }).unwrap();
+        saved = true;
+        toast.success(language === 'es' ? 'Ubicación actualizada.' : 'Pin location updated.');
+      } catch (error: any) {
+        toast.error(error?.data?.message || (language === 'es' ? 'No se pudo actualizar la ubicación.' : 'Failed to update pin location.'));
+      } finally {
+        if (!saved) setDraggedPositions(prev => {
+          const next = { ...prev };
+          if (previous) next[placeId] = previous;
+          else delete next[placeId];
+          return next;
+        });
+        pinMoveInFlight.current = false;
       }
-      updateAddressFromCoords(pos.lat, pos.lng);
-      toast.success(
-        language === "es"
-          ? "Ubicación del pin actualizada. Haz clic en Guardar para confirmar."
-          : "Pin location updated. Click Save to confirm."
-      );
     },
-    [displayPlaces, language, updateAddressFromCoords, handleSelectPlace]
+    [displayPlaces, draggedPositions, language, updatePlace]
   );
 
   const handleSavePlace = async (data?: any) => {

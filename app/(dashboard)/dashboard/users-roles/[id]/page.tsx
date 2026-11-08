@@ -520,7 +520,7 @@ export default function UserDetailPage() {
                     className="bg-gray-50/70 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 p-3.5 rounded-xl flex items-start gap-3"
                   >
                     <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
-                      {act.type === "place_visit" && <MapPin size={16} />}
+                      {(act.type === "place_visit" || act.type === "place_view") && <MapPin size={16} />}
                       {act.type === "review_submitted" && <Star size={16} />}
                       {act.type === "offer_claimed" && <Ticket size={16} />}
                     </div>
