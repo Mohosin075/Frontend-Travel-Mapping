@@ -1,4 +1,5 @@
 "use client";
+import { MapCostObserver } from "@/components/shared/maps/map-cost-observer";
 
 import RouteModalLayer from "./route-modal-layer";
 
@@ -86,6 +87,11 @@ export default function AddStopModal({
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [onlyUnadded, setOnlyUnadded] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [hasOpenedMap, setHasOpenedMap] = useState(false);
+  useEffect(() => {
+    if (!isOpen) setHasOpenedMap(false);
+    else if (viewMode === "map") setHasOpenedMap(true);
+  }, [isOpen, viewMode]);
   const [activePinPlace, setActivePinPlace] = useState<any | null>(null);
 
   // Categories & Maps Queries
@@ -214,7 +220,7 @@ export default function AddStopModal({
               </button>
               <button
                 type="button"
-                onClick={() => setViewMode("map")}
+                onClick={() => { setHasOpenedMap(true); setViewMode("map"); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   viewMode === "map"
                     ? "bg-white dark:bg-[#131b2e] text-gray-950 dark:text-white shadow-sm"
@@ -538,9 +544,10 @@ export default function AddStopModal({
                 </div>
               )}
             </div>
-          ) : (
-            /* MAP VIEW */
-            <div className="h-full w-full relative">
+          ) : null}
+          {/* Mount on the first map-tab visit, then retain it during list/filter changes. */}
+          {hasOpenedMap && (
+            <div className={`h-full w-full relative ${viewMode === "map" && !isLoading ? "" : "hidden"}`}>
               <Map
                 colorScheme={isDark ? "DARK" : "LIGHT"}
                 defaultCenter={{ lat: 18.2208, lng: -66.5901 }}
@@ -553,6 +560,7 @@ export default function AddStopModal({
                 gestureHandling="greedy"
                 className="w-full h-full"
               >
+                <MapCostObserver surface="add-stop" />
                 {places.map((place: any) => {
                   const placeId = place._id || place.id;
                   const pos = extractCoords(place);

@@ -1,4 +1,5 @@
 "use client";
+import { MapCostObserver } from "@/components/shared/maps/map-cost-observer";
 
 import { AnimatedMapPin } from "@/components/shared/maps/animated-map-pin";
 import { CustomLocationButton } from "@/components/shared/maps/CustomLocationButton";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { pinMatchesSelectedMap } from "@/lib/map-country";
+import { fetchGeocodeJson } from "@/lib/maps/geocode";
 import { parseCoordinatesFromMapsUrl } from "@/lib/parse-maps-url";
 import { useExtractCoordinatesMutation } from "@/redux/features/place/placeApi";
 import { useGetMapsQuery } from "@/redux/features/map/mapApi";
@@ -16,7 +18,7 @@ import {
   MapMouseEvent,
   useMap,
 } from "@vis.gl/react-google-maps";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { appAlert } from "@/lib/app-alert";
@@ -104,6 +106,7 @@ function MapContent({
       mapTypeControl={true}
       onClick={onMapClick}
     >
+      <MapCostObserver surface="business-form" />
       <CustomLocationButton onLocated={onMyLocation} />
       {markerPosition && (
         <AnimatedMapPin
@@ -143,10 +146,9 @@ async function geocodeQuery(query: string): Promise<{
   const apiKey = googleMapsApiKey();
   if (!apiKey || !query) return null;
 
-  const res = await fetch(
+  const data = await fetchGeocodeJson(
     `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`,
   );
-  const data = await res.json();
   const result = data?.results?.[0];
   const loc = result?.geometry?.location;
   if (!loc) return null;
@@ -177,10 +179,9 @@ async function reverseGeocode(lat: number, lng: number): Promise<AddressInfo | n
   const apiKey = googleMapsApiKey();
   if (!apiKey) return null;
 
-  const res = await fetch(
+  const data = await fetchGeocodeJson(
     `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`,
   );
-  const data = await res.json();
   if (!data.results?.length) return null;
 
   let streetAddress = "";
@@ -225,6 +226,8 @@ export function BusinessFormStep2({ form }: BusinessFormStep2Props) {
   const { t } = useLanguage();
   const selectedMapName = form.watch("country");
   const savedLocation = form.watch("mapLocation");
+  const savedLocationRef = useRef(savedLocation);
+  useEffect(() => { savedLocationRef.current = savedLocation; }, [savedLocation]);
   const streetAddress = form.watch("streetAddress");
   const city = form.watch("city");
   const { data: mapsRes } = useGetMapsQuery({ limit: 100 });
@@ -235,6 +238,13 @@ export function BusinessFormStep2({ form }: BusinessFormStep2Props) {
 
   const [isExtracting, setIsExtracting] = useState(false);
   const [isCheckingPin, setIsCheckingPin] = useState(false);
+  const pinRequest = useRef(0);
+  useEffect(() => {
+    pinRequest.current += 1;
+    setIsCheckingPin(false);
+    setPreviewPosition(null);
+    return () => { pinRequest.current += 1; };
+  }, [selectedMapName]);
   const [markerPosition, setMarkerPosition] = useState<MarkerPosition | null>(
     () => savedLocation ?? null,
   );
@@ -246,6 +256,7 @@ export function BusinessFormStep2({ form }: BusinessFormStep2Props) {
       ? { lat: savedLocation.lat, lng: savedLocation.lng, zoom: 15 }
       : null,
   );
+  const countryCenterRef = useRef<{ lat: number; lng: number; zoom: number } | null>(null);
 
   const [expectedGeoCountry, setExpectedGeoCountry] = useState<string>("");
   const [mapViewport, setMapViewport] = useState<MapViewport | null>(null);
@@ -259,38 +270,51 @@ export function BusinessFormStep2({ form }: BusinessFormStep2Props) {
       return;
     }
     setMarkerPosition(null);
+    if (countryCenterRef.current) setMapCenter(countryCenterRef.current);
   }, [savedLocation?.lat, savedLocation?.lng]);
 
   useEffect(() => {
     if (!selectedMapName) return;
 
     let cancelled = false;
+    countryCenterRef.current = null;
+    setExpectedGeoCountry("");
+    setMapViewport(null);
     const query = selectedMap?.country || selectedMapName;
 
     geocodeQuery(query).then((coords) => {
       if (cancelled) return;
       if (coords) {
-        if (!savedLocation) {
-          setMapCenter({ lat: coords.lat, lng: coords.lng, zoom: 7 });
+        countryCenterRef.current = { lat: coords.lat, lng: coords.lng, zoom: 7 };
+        if (!savedLocationRef.current) {
+          setMapCenter(countryCenterRef.current);
         }
         if (coords.country) setExpectedGeoCountry(coords.country);
         setMapViewport(coords.viewport || null);
-      } else if (!savedLocation) {
-        setMapCenter({ lat: 20, lng: 0, zoom: 2 });
+      } else {
+        countryCenterRef.current = { lat: 20, lng: 0, zoom: 2 };
+        if (!savedLocationRef.current) setMapCenter(countryCenterRef.current);
         setMapViewport(null);
       }
+    }).catch(() => {
+      if (cancelled) return;
+      countryCenterRef.current = { lat: 20, lng: 0, zoom: 2 };
+      if (!savedLocationRef.current) setMapCenter(countryCenterRef.current);
+      setMapViewport(null);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [selectedMapName, selectedMap?.country, savedLocation]);
+  }, [selectedMapName, selectedMap?.country]);
 
   const resolvePin = async (
     lat: number,
     lng: number,
+    request: number,
   ): Promise<{ ok: boolean; address: AddressInfo | null }> => {
     const address = await reverseGeocode(lat, lng);
+    if (pinRequest.current !== request) return { ok: false, address: null };
     const pinCountry = address?.country;
     const insideSelectedMap = isInsideViewport(lat, lng, mapViewport);
 
@@ -335,6 +359,8 @@ export function BusinessFormStep2({ form }: BusinessFormStep2Props) {
       "The current pin will be removed. You can set a new location after that.",
     );
     if (!confirmed) return;
+    pinRequest.current += 1;
+    setIsCheckingPin(false);
     form.setValue("mapLocation", null);
     form.setValue("mapUrl", "");
     setMarkerPosition(null);
@@ -349,10 +375,23 @@ export function BusinessFormStep2({ form }: BusinessFormStep2Props) {
     }
 
     const isUpdate = !!markerPosition;
+    const request = ++pinRequest.current;
     setPreviewPosition({ lat, lng });
     setIsCheckingPin(true);
-    const { ok, address } = await resolvePin(lat, lng);
-    setIsCheckingPin(false);
+    let result: Awaited<ReturnType<typeof resolvePin>>;
+    try {
+      result = await resolvePin(lat, lng, request);
+    } catch {
+      if (pinRequest.current === request) {
+        setPreviewPosition(null);
+        toast.error(t("business.verify_location_failed"));
+      }
+      return false;
+    } finally {
+      if (pinRequest.current === request) setIsCheckingPin(false);
+    }
+    if (pinRequest.current !== request) return false;
+    const { ok, address } = result;
 
     if (!ok) {
       setPreviewPosition(null);
@@ -365,6 +404,7 @@ export function BusinessFormStep2({ form }: BusinessFormStep2Props) {
         t("for_business.step2.update_location_title"),
         `${t("for_business.step2.move_pin_to")} ${label}?`,
       );
+      if (pinRequest.current !== request) return false;
       if (!confirmed) {
         setPreviewPosition(null);
         return false;

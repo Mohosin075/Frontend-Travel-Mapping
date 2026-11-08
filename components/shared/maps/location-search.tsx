@@ -2,6 +2,7 @@
 
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import { geocodeInFlight } from "@/lib/maps/geocode";
+import { countMapCost } from "@/lib/maps/cost-diagnostics";
 import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -63,6 +64,7 @@ export function LocationSearch({
 
       if (places) {
         const service = new places.AutocompleteService();
+        countMapCost("autocompleteRequests", "location-search");
         service.getPlacePredictions(
           { input: biased },
           (results, status) => {
@@ -138,6 +140,7 @@ export function LocationSearch({
     const commit = (lat: number, lng: number) => {
       if (revision.current !== selectionRevision) return;
       selectedQuery.current = { label: item.label, country: countryName };
+      countMapCost("autocompleteSelections", "location-search");
       setQuery(item.label);
       setSuggestions([]);
       setOpen(false);

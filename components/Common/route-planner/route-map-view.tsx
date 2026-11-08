@@ -1,4 +1,5 @@
 "use client";
+import { MapCostObserver } from "@/components/shared/maps/map-cost-observer";
 
 import { HIDE_GOOGLE_POI_STYLES } from "@/components/Common/maps/map";
 
@@ -403,6 +404,7 @@ export default function RouteMapView({
         className="w-full h-full"
       >
         {/* Fit Bounds Handler */}
+        <MapCostObserver surface="route" />
         <FitBoundsHandler stops={stops} fitTrigger={fitTrigger} />
 
         {/* Pan to Selected Active Stop Handler */}

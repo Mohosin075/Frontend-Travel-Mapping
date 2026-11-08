@@ -1,4 +1,6 @@
 "use client";
+import { MapCostObserver } from "@/components/shared/maps/map-cost-observer";
+import { useMapVisibility } from "@/components/shared/maps/use-map-visibility";
 
 import { Switch } from "@/components/ui/switch";
 import { useUpdateBusinessMutation } from "@/redux/features/business/businessApi";
@@ -19,6 +21,7 @@ export default function LocationVerification({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const isDark = mounted && resolvedTheme === "dark";
+  const { containerRef, visible } = useMapVisibility();
 
   // mapLocation.coordinates is [lng, lat] (GeoJSON order)
   const lng = location?.mapLocation?.coordinates?.[0];
@@ -64,11 +67,11 @@ export default function LocationVerification({
       </div>
 
       {/* Map replaces the placeholder — same h-48 + rounded-lg + mb-4 classes */}
-      <div className="bg-gray-200 dark:bg-slate-900 rounded-lg h-48 mb-4 overflow-hidden">
+      <div ref={containerRef} className="bg-gray-200 dark:bg-slate-900 rounded-lg h-48 mb-4 overflow-hidden">
         <APIProvider
           apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY as string}
         >
-          <Map
+          {mounted && visible && <Map
             colorScheme={isDark ? "DARK" : "LIGHT"}
             style={{ width: "100%", height: "100%" }}
             center={center}
@@ -81,8 +84,9 @@ export default function LocationVerification({
             disableDefaultUI={true}
             clickableIcons={false}
           >
+            <MapCostObserver surface="business-verification" />
             {hasCoords && <AdvancedMarker position={{ lat, lng }} />}
-          </Map>
+          </Map>}
         </APIProvider>
       </div>
 

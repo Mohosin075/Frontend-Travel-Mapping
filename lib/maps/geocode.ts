@@ -1,3 +1,5 @@
+import { countMapCost } from "./cost-diagnostics";
+
 type GeocodeOutcome = {
   results: google.maps.GeocoderResult[] | null;
   status: string;
@@ -18,7 +20,12 @@ export function geocodeInFlight(
   // Callers use plain address/placeId/lat-lng values, not LatLng instances.
   const key = JSON.stringify(request);
   const existing = pending.get(key);
-  if (existing) return existing;
+  if (existing) {
+    countMapCost("geocodingShared", "javascript");
+    return existing;
+  }
+
+  countMapCost("geocodingRequests", "javascript");
 
   const operation = new Promise<GeocodeOutcome>((resolve, reject) => {
     const response = geocoder.geocode(request, (results, status) => resolve({ results, status }));
@@ -30,5 +37,25 @@ export function geocodeInFlight(
   });
   const tracked = operation.finally(() => pending.delete(key));
   pending.set(key, tracked);
+  return tracked;
+}
+// REST callers share the JSON promise, never a Response body that can only be
+// consumed once. Keep validation/address behavior at the call sites unchanged.
+const pendingHttp = new Map<string, Promise<any>>();
+
+export function fetchGeocodeJson(url: string): Promise<any> {
+  const existing = pendingHttp.get(url);
+  if (existing) {
+    countMapCost("geocodingShared", "rest");
+    return existing;
+  }
+  countMapCost("geocodingRequests", "rest");
+  const operation = Promise.resolve().then(async () => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Geocoding request failed");
+    return response.json();
+  });
+  const tracked = operation.finally(() => pendingHttp.delete(url));
+  pendingHttp.set(url, tracked);
   return tracked;
 }

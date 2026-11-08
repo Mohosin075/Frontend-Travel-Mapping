@@ -1,4 +1,5 @@
 "use client";
+import { MapCostObserver } from "@/components/shared/maps/map-cost-observer";
 
 import { CustomLocationButton } from "@/components/shared/maps/CustomLocationButton";
 import { SatelliteToggleButton } from "@/components/shared/maps/SatelliteToggleButton";
@@ -1385,7 +1386,7 @@ export default function MapPage() {
           apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY as string}
         >
           <Map
-            reuseMaps={process.env.NEXT_PUBLIC_GOOGLE_MAP_REUSE === "true"}
+            reuseMaps={process.env.NEXT_PUBLIC_GOOGLE_MAP_REUSE !== "false"}
             backgroundColor={isDark ? "#0b0f19" : "#f3f4f6"}
             defaultCenter={initialMapState?.center || defaultPosition}
             defaultZoom={initialMapState?.zoom || 13}
@@ -1412,6 +1413,7 @@ export default function MapPage() {
             styles={isDark ? DARK_MAP_STYLES_NO_POI : HIDE_GOOGLE_POI_STYLES}
             clickableIcons={false}
           >
+            <MapCostObserver surface="main" />
             <MapPoiHider isDark={isDark} />
             <GeolocationOnLoad
               onLocation={(pos) => {

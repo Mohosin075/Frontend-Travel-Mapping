@@ -1,7 +1,9 @@
 "use client";
+import { MapCostObserver } from "@/components/shared/maps/map-cost-observer";
 
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useTheme } from "next-themes";
+import { fetchGeocodeJson, geocodeInFlight } from "@/lib/maps/geocode";
 import { AddCategoryDialog } from "@/components/dashboard/categories/AddCategoryDialog";
 
 import { CategoryIcon } from "@/components/shared/categories/category-icon";
@@ -153,7 +155,9 @@ function CountryPanner({ selectedMap, language = "es" }: { selectedMap: any; lan
     if (!searchTarget || !geocodingLib) return;
 
     const geocoder = new geocodingLib.Geocoder();
-    geocoder.geocode({ address: searchTarget }, (results, status) => {
+    let cancelled = false;
+    void geocodeInFlight(geocoder, { address: searchTarget }).then(({ results, status }) => {
+      if (cancelled) return;
       if (status !== "OK" || !results?.[0]) return;
       const { viewport, location } = results[0].geometry;
       if (viewport) {
@@ -162,7 +166,8 @@ function CountryPanner({ selectedMap, language = "es" }: { selectedMap: any; lan
         map.setCenter(location);
         map.setZoom(8);
       }
-    });
+    }).catch(() => { /* Keep the current camera on lookup failure. */ });
+    return () => { cancelled = true; };
   }, [selectedMap, map, geocodingLib, language]);
 
   return null;
@@ -781,10 +786,9 @@ export default function AddPlacePage() {
     const request = ++addressLookupRequest.current;
     setIsFetchingAddress(true);
     try {
-      const response = await fetch(
+      const data = await fetchGeocodeJson(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY}`
       );
-      const data = await response.json();
       if (request !== addressLookupRequest.current) return;
       if (data.status === "OK" && data.results.length > 0) {
         const address = data.results[0].formatted_address;
@@ -1533,7 +1537,7 @@ export default function AddPlacePage() {
           </div>
 
           <div className="w-full h-full bg-gray-200 dark:bg-slate-900">
-            <Map
+            {mounted && <Map
               colorScheme={isDark ? "DARK" : "LIGHT"}
               defaultCenter={defaultPosition}
               defaultZoom={13}
@@ -1548,6 +1552,7 @@ export default function AddPlacePage() {
               style={{ cursor: isAddingMarker ? "crosshair" : "grab" }}
             >
               {/* Pans to user's geolocation once on mount */}
+              <MapCostObserver surface="admin-places" />
               <GeolocationOnLoad />
 
               <CustomLocationButton />
@@ -1630,7 +1635,7 @@ export default function AddPlacePage() {
                 </InfoWindow>
               )}
 
-            </Map>
+            </Map>}
           </div>
         </div>
 

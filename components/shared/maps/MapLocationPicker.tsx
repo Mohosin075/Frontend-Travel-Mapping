@@ -1,4 +1,5 @@
 "use client";
+import { MapCostObserver } from "@/components/shared/maps/map-cost-observer";
 
 import {
   AdvancedMarker,
@@ -6,7 +7,7 @@ import {
   Map,
   useMap,
 } from "@vis.gl/react-google-maps";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import { CustomLocationButton } from "./CustomLocationButton";
 
@@ -22,15 +23,20 @@ function GeolocationOnLoad({
   onLocation: (pos: { lat: number; lng: number }) => void;
 }) {
   const map = useMap();
+  const latestOnLocation = useRef(onLocation);
+  useEffect(() => { latestOnLocation.current = onLocation; }, [onLocation]);
 
   useEffect(() => {
     if (!map || !navigator.geolocation) return;
+    let cancelled = false;
     navigator.geolocation.getCurrentPosition((pos) => {
+      if (cancelled) return;
       const location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       map.panTo(location);
-      onLocation(location);
+      latestOnLocation.current(location);
     });
-  }, [map, onLocation]);
+    return () => { cancelled = true; };
+  }, [map]);
 
   return null;
 }
@@ -60,7 +66,7 @@ export function MapLocationPicker({
       <APIProvider
         apiKey={(process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY || "").trim()}
       >
-        <Map
+        {mounted && <Map
           colorScheme={isDark ? "DARK" : "LIGHT"}
           defaultCenter={defaultPosition}
           defaultZoom={13}
@@ -75,6 +81,7 @@ export function MapLocationPicker({
           style={{ width: "100%", height: "100%" }}
           clickableIcons={true}
         >
+          <MapCostObserver surface="location-picker" />
           {!initialLocation && (
             <GeolocationOnLoad
               onLocation={(pos) => {
@@ -95,7 +102,7 @@ export function MapLocationPicker({
               }
             }}
           />
-        </Map>
+        </Map>}
       </APIProvider>
     </div>
   );

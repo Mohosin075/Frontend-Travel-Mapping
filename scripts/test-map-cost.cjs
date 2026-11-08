@@ -13,6 +13,9 @@ function load(file, dependencies = {}, globals = {}) {
   const loaded = { exports: {} };
   new Function("require", "module", "exports", ...Object.keys(globals), code)(
     (name) => {
+      if (name === "./cost-diagnostics" || name === "@/lib/maps/cost-diagnostics") {
+        return load("lib/maps/cost-diagnostics.ts");
+      }
       if (!(name in dependencies)) throw new Error(`Unexpected dependency: ${name}`);
       return dependencies[name];
     }, loaded, loaded.exports, ...Object.values(globals),
@@ -294,4 +297,70 @@ test("a failed selection can be retried and rapid duplicate clicks only start on
   h.lookups[1].callback([{ geometry: { location: { lat: () => 18, lng: () => -66 } } }], "OK");
   await new Promise(setImmediate);
   assert.deepEqual(h.picks, [[18, -66, "Beach PR"]]);
+});
+
+test("REST lookups share one fetch and one JSON parse, without retaining completed results", async () => {
+  let fetches = 0;
+  let parses = 0;
+  let complete;
+  const { fetchGeocodeJson } = load("lib/maps/geocode.ts", {}, {
+    fetch: () => {
+      fetches += 1;
+      return new Promise((resolve) => { complete = resolve; });
+    },
+  });
+  const first = fetchGeocodeJson("https://test.invalid/geocode?address=one");
+  const second = fetchGeocodeJson("https://test.invalid/geocode?address=one");
+  assert.equal(first, second);
+  await Promise.resolve();
+  assert.equal(fetches, 1);
+  complete({ ok: true, json: async () => { parses += 1; return { status: "OK", results: [] }; } });
+  assert.deepEqual(await first, await second);
+  assert.equal(parses, 1);
+  const third = fetchGeocodeJson("https://test.invalid/geocode?address=one");
+  await Promise.resolve();
+  assert.equal(fetches, 2);
+  complete({ ok: true, json: async () => ({ status: "ZERO_RESULTS", results: [] }) });
+  await third;
+});
+
+test("REST errors release pending lookups and different locations do not share a request", async () => {
+  let fetches = 0;
+  const { fetchGeocodeJson } = load("lib/maps/geocode.ts", {}, {
+    fetch: async () => { fetches += 1; return { ok: false }; },
+  });
+  await assert.rejects(fetchGeocodeJson("https://test.invalid/geocode?latlng=1,2"));
+  await assert.rejects(fetchGeocodeJson("https://test.invalid/geocode?latlng=1,2"));
+  await assert.rejects(fetchGeocodeJson("https://test.invalid/geocode?latlng=2,3"));
+  assert.equal(fetches, 3);
+});
+
+test("diagnostics distinguish map remounts from unique instances and expose counts only", () => {
+  const browser = {};
+  const { observeMapInstance, countMapCost } = load("lib/maps/cost-diagnostics.ts", {}, {
+    window: browser, process: { env: { NODE_ENV: "development" } },
+  });
+  const map = {};
+  observeMapInstance(map, "main");
+  observeMapInstance(map, "main");
+  observeMapInstance({}, "main");
+  countMapCost("geocodingRequests", "javascript");
+  const snapshot = browser.__mapCostDiagnostics.snapshot();
+  assert.equal(snapshot.totals.mapMounts, 3);
+  assert.equal(snapshot.totals.mapInstancesSeen, 2);
+  assert.equal(snapshot.bySurface.main.mapInstancesSeen, 2);
+  assert.equal(snapshot.totals.geocodingRequests, 1);
+  snapshot.totals.mapMounts = 999;
+  assert.equal(browser.__mapCostDiagnostics.snapshot().totals.mapMounts, 3);
+  browser.__mapCostDiagnostics.reset();
+  assert.equal(browser.__mapCostDiagnostics.snapshot().totals.mapMounts, 0);
+});
+
+test("diagnostics are disabled in production unless explicitly enabled", () => {
+  const browser = {};
+  const { observeMapInstance } = load("lib/maps/cost-diagnostics.ts", {}, {
+    window: browser, process: { env: { NODE_ENV: "production" } },
+  });
+  observeMapInstance({}, "main");
+  assert.equal(browser.__mapCostDiagnostics, undefined);
 });

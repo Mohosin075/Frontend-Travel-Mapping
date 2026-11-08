@@ -1,4 +1,5 @@
 "use client";
+import { MapCostObserver } from "@/components/shared/maps/map-cost-observer";
 
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -119,6 +120,7 @@ function SpotLocationMapInner({
       mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID || "DEMO_MAP_ID"}
       onClick={handleMapClick}
     >
+      <MapCostObserver surface="recommend-spot" />
       <CustomLocationButton
         onLocated={(lat, lng) => {
           onPick({ lat, lng });
@@ -167,12 +169,12 @@ function SpotLocationPicker({
       <div className="h-60 sm:h-64 w-full rounded-2xl overflow-hidden relative border border-gray-200 dark:border-slate-800 shadow-inner bg-slate-100 dark:bg-slate-900">
         {apiKey ? (
           <APIProvider apiKey={apiKey}>
-            <SpotLocationMapInner
+            {mounted && <SpotLocationMapInner
               position={position}
               onPick={onLocationSelect}
               defaultCenter={defaultCenter}
               isDark={isDark}
-            />
+            />}
           </APIProvider>
         ) : (
           <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
