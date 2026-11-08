@@ -71,7 +71,7 @@ export default function DealsSection() {
       name: t("landing.deal1_business"),
       badge: t("landing.deal1_badge"),
       description: t("landing.deal1_desc"),
-      image: "/offer/Adventure & Water Sport.png",
+      image: "/offer/adventure-water-sport.png",
     },
     {
       id: "dokas",
