@@ -2,6 +2,10 @@ import { baseApi } from "@/redux/api/baseApi";
 
 const offerApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    getManagedOffers: builder.query({
+      query: (params: Record<string, any> = {}) => ({ url: '/offer/managed', params }),
+      providesTags: ['Offer'],
+    }),
     getOffers: builder.query({
       query: (params: Record<string, any> = {}) => {
         const queryParams = new URLSearchParams();
@@ -66,6 +70,7 @@ const offerApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useGetManagedOffersQuery,
   useGetOffersQuery,
   useGetSingleOfferQuery,
   useGetOffersByPlaceOrBusinessIdQuery,

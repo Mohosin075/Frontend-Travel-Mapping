@@ -11,6 +11,7 @@ import { useGetProfileQuery } from "@/redux/features/user/userApi";
 import { useGetFavouritesQuery } from "@/redux/features/favourite/favouriteApi";
 import { useGetOffersQuery } from "@/redux/features/offer/offerApi";
 import { useGetMapsQuery } from "@/redux/features/map/mapApi";
+import { offerMatchesSearch } from "@/lib/offer-search";
 import { resolveOfferMap, offerMatchesCountry } from "@/lib/offer-country";
 import { getLocalized } from "@/lib/utils";
 import { useAppSelector } from "@/redux/hook";
@@ -46,17 +47,21 @@ export default function OfferSection() {
 
   useEffect(() => {
     try {
-      setSelectedCountry(localStorage.getItem("selectedCountryFilter") || "");
-      setSelectedMapId(localStorage.getItem("selectedMapId") || "");
+      const country = localStorage.getItem("selectedCountryFilter") || "";
+      const mapId = localStorage.getItem("selectedMapId") || "";
+      setSelectedCountry(country);
+      setSelectedMapId(mapId);
+      setShowAllCountries(!country && !mapId);
     } catch {
-      // Storage may be unavailable; the first available map remains the default.
+      // Without a saved selection, show offers from all countries.
+      setShowAllCountries(true);
     } finally {
       setSelectionRestored(true);
     }
   }, []);
 
   const scopeReady = selectionRestored && !isLoadingMaps;
-  const { currentData: offersRes, isFetching } = useGetOffersQuery({
+  const { currentData: offersRes, isFetching, isError, refetch } = useGetOffersQuery({
     map: selectedMap?._id || selectedMap?.id || (!showAllCountries ? selectedMapId || undefined : undefined),
     country: !selectedMap && !showAllCountries ? selectedCountry || undefined : undefined,
     limit: 100,
@@ -68,7 +73,7 @@ export default function OfferSection() {
   );
 
   // Fetch the user's full favourites list — persists across reloads
-  const { data: favouritesRes } = useGetFavouritesQuery();
+  const { data: favouritesRes } = useGetFavouritesQuery(undefined, { skip: !accessToken });
   const favouritesList: any[] = favouritesRes?.data || [];
 
   // Only filters that are actually implemented
@@ -87,19 +92,7 @@ export default function OfferSection() {
     );
 
   const filteredOffers = offersData.filter((offer: any) => {
-    const term = searchTerm.trim().toLowerCase();
-    const matchesSearch =
-      !term ||
-      offer.title?.toLowerCase().includes(term) ||
-      (typeof offer.place === "object" &&
-        (offer.place?.name?.toLowerCase().includes(term) ||
-          offer.place?.address?.toLowerCase().includes(term) ||
-          offer.place?.country?.toLowerCase().includes(term))) ||
-      (typeof offer.business === "object" &&
-        (offer.business?.name?.toLowerCase().includes(term) ||
-          offer.business?.location?.address?.toLowerCase().includes(term) ||
-          offer.business?.location?.city?.toLowerCase().includes(term) ||
-          offer.business?.location?.country?.toLowerCase().includes(term)));
+    const matchesSearch = offerMatchesSearch(offer, searchTerm);
 
     const matchesFilter =
       activeFilter === "All" ||
@@ -109,35 +102,7 @@ export default function OfferSection() {
   });
 
   const offerSuggestions = offersData
-    .filter((offer: any) => {
-      const q = searchTerm.trim().toLowerCase();
-      if (q.length < 2) return false;
-      const title = String(offer.title || "").toLowerCase();
-      const placeName =
-        typeof offer.place === "object"
-          ? String(offer.place?.name || "").toLowerCase()
-          : "";
-      const placeAddress =
-        typeof offer.place === "object"
-          ? String(offer.place?.address || "").toLowerCase()
-          : "";
-      const businessName =
-        typeof offer.business === "object"
-          ? String(offer.business?.name || "").toLowerCase()
-          : "";
-      const businessAddress =
-        typeof offer.business === "object"
-          ? String(offer.business?.location?.address || "").toLowerCase()
-          : "";
-
-      return (
-        title.includes(q) ||
-        placeName.includes(q) ||
-        placeAddress.includes(q) ||
-        businessName.includes(q) ||
-        businessAddress.includes(q)
-      );
-    })
+    .filter((offer: any) => searchTerm.trim().length >= 2 && offerMatchesSearch(offer, searchTerm))
     .slice(0, 6);
 
   if (!scopeReady || isFetching) {
@@ -156,6 +121,17 @@ export default function OfferSection() {
             ))}
           </div>
         </div>
+      </section>
+    );
+  }
+
+  if (isError) {
+    return (
+      <section className="min-h-screen p-8 text-center text-gray-900 dark:text-slate-100">
+        <p>{language === 'es' ? 'No se pudieron cargar las ofertas.' : 'Offers could not be loaded.'}</p>
+        <Button type="button" onClick={() => refetch()} className="mt-4">
+          {language === 'es' ? 'Reintentar' : 'Retry'}
+        </Button>
       </section>
     );
   }
@@ -189,7 +165,7 @@ export default function OfferSection() {
                   <div className="max-h-64 overflow-y-auto">
                     {offerSuggestions.map((offer: any) => {
                       const placeName =
-                        typeof offer.place === "object" ? offer.place?.name : "";
+                        typeof offer.place === "object" ? getLocalized(offer.place?.name, language) : "";
                       return (
                         <button
                           key={offer._id}
@@ -197,12 +173,12 @@ export default function OfferSection() {
                           className="flex w-full flex-col items-start gap-0.5 border-b border-gray-50 dark:border-slate-800/80 px-4 py-3 text-left last:border-0 hover:bg-gray-50 dark:hover:bg-slate-800/60"
                           onMouseDown={(e) => e.preventDefault()}
                           onClick={() => {
-                            setSearchTerm(offer.title);
+                            setSearchTerm(getLocalized(offer.title, language));
                             setSearchFocused(false);
                           }}
                         >
                           <span className="text-sm font-semibold text-gray-900 dark:text-slate-100">
-                            {offer.title}
+                            {getLocalized(offer.title, language)}
                           </span>
                           {placeName && (
                             <span className="truncate text-xs text-gray-500 dark:text-slate-400">
@@ -356,7 +332,7 @@ export default function OfferSection() {
                   <div className="relative h-36 sm:h-48 md:h-72 w-full overflow-hidden bg-slate-100 dark:bg-slate-900 shrink-0">
                     <Image
                       src={getImageUrl(offer?.images || offer?.photo || offer?.photos)}
-                      alt={offer.title}
+                      alt={getLocalized(offer.title, language)}
                       width={500}
                       height={500}
                       priority={index < 6}
@@ -398,7 +374,7 @@ export default function OfferSection() {
                   <div className="p-2.5 md:p-4 flex-1 flex flex-col justify-between">
                     <div>
                       <h3 className="font-semibold text-sm md:text-base line-clamp-2 min-h-[2.5rem] md:min-h-[2.75rem] leading-snug text-gray-900 dark:text-slate-100">
-                        {offer.title}
+                        {getLocalized(offer.title, language)}
                       </h3>
                     </div>
                     <p className="text-xs md:text-sm text-gray-500 dark:text-slate-400 truncate mt-1.5">

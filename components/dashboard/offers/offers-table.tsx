@@ -4,17 +4,12 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   useDeleteOfferMutation,
-  useGetOffersQuery,
+  useGetManagedOffersQuery,
 } from "@/redux/features/offer/offerApi";
 import { useGetProfileQuery } from "@/redux/features/user/userApi";
 import {
   useGetAvailableCountriesQuery,
-  useGetMapsQuery,
 } from "@/redux/features/map/mapApi";
-import {
-  editorCanAccessBusiness,
-  editorCanAccessMap,
-} from "@/lib/editor-access";
 import { formatOfferDiscountLabel } from "@/lib/offer-label";
 import { Input } from "@/components/ui/input";
 import { Edit, Play, Search, Trash2 } from "lucide-react";
@@ -42,40 +37,20 @@ export function OffersTable({ onEdit }: { onEdit?: (offer: any) => void }) {
   }, [urlSearch]);
 
   const { data: user } = useGetProfileQuery({});
-  const { data: mapsRes } = useGetMapsQuery({ limit: 100 });
   const { data: countries } = useGetAvailableCountriesQuery(undefined);
-  const { data: offersRes, isLoading } = useGetOffersQuery({
+  const { currentData: offersRes, isFetching: isLoading, isError, refetch } = useGetManagedOffersQuery({
     page,
     limit,
     searchTerm,
     country,
     status,
-  });
+  }, { refetchOnMountOrArgChange: true });
   const [deleteOffer] = useDeleteOfferMutation();
 
   const offersData = offersRes?.data || [];
   const meta = offersRes?.meta;
-  const allMaps = mapsRes?.data || [];
-  
-  const displayedOffers =
-    user?.role === "map_editor"
-      ? offersData.filter((offer: any) => {
-          if (offer.place) {
-            const place = offer.place;
-            return editorCanAccessMap(
-              user,
-              place?.map?._id || place?.map,
-              place?.country || place?.map?.country,
-            );
-          }
-          const business = offer.business;
-          return editorCanAccessBusiness(
-            user,
-            business?.location?.country || business?.country,
-            allMaps,
-          );
-        })
-      : offersData;
+  // Permission scoping happens on the server before pagination/counting.
+  const displayedOffers = offersData;
 
   const handleDelete = (id: string, title?: string) => {
     appAlert.fire({
@@ -214,6 +189,13 @@ export function OffersTable({ onEdit }: { onEdit?: (offer: any) => void }) {
                   </div>
                 </td>
               </tr>
+            ) : isError ? (
+              <tr><td colSpan={7} className="px-6 py-10 text-center text-red-600 dark:text-red-400">
+                <p>{language === 'es' ? 'No se pudieron cargar las ofertas.' : 'Offers could not be loaded.'}</p>
+                <button type="button" onClick={() => refetch()} className="mt-2 underline cursor-pointer">
+                  {language === 'es' ? 'Reintentar' : 'Retry'}
+                </button>
+              </td></tr>
             ) : displayedOffers.length === 0 ? (
               <tr>
                 <td
