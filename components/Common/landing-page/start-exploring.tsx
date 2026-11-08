@@ -2,7 +2,8 @@
 
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import bgImg from "@/public/exploring-today.jpg";
+import bgImg from "@/public/landing/Playa-Vacia-Talega.png";
+import Image from "next/image";
 import Link from "next/link";
 import { LazyMotion, m as motion } from "motion/react";
 
@@ -18,19 +19,21 @@ export default function StartExploring() {
     <section className="w-full py-14 sm:py-18 lg:py-20 overflow-hidden font-inter">
       <div className="max-w-360 mx-auto px-3 sm:px-6 w-full">
         <motion.div
-          className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl"
-          style={{
-            backgroundImage: `url(${bgImg.src})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
+          className="relative isolate w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 shadow-xl"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.7, ease: "easeOut" }}
         >
-        {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-black/75" />
+        <Image
+          src={bgImg}
+          alt=""
+          fill
+          sizes="(max-width: 639px) calc(100vw - 24px), (max-width: 1440px) calc(100vw - 48px), 1392px"
+          className="object-cover object-[center_45%] sm:object-[center_40%]"
+        />
+        {/* Keep the beach visible while maintaining readable text. */}
+        <div className="absolute inset-0 bg-black/60" />
 
         {/* Content */}
         <div className="relative z-10 flex flex-col items-center text-center py-14 sm:py-20 px-6 sm:px-10 text-white">
