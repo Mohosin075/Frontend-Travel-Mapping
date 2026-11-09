@@ -14,6 +14,7 @@ import { decodeJwtPayload, getLocalized } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { baseApi } from "@/redux/api/baseApi";
 import { persistor } from "@/redux/store";
+import { ArrowLeft, ArrowRight, Loader2, Mail, MapPin } from "lucide-react";
 
 export default function MapCheckout() {
   const params = useSearchParams();
@@ -133,11 +134,28 @@ export default function MapCheckout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, accessToken, profile, profileLoading, map, validMap]);
 
-  return <main className="min-h-[70vh] flex items-center justify-center px-4 py-12">
-    <section className="w-full max-w-md rounded-2xl border bg-white p-6 shadow-sm dark:bg-slate-900 dark:border-slate-800 space-y-5">
-      <h1 className="text-2xl font-bold">{es ? "Compra tu mapa" : "Purchase your map"}</h1>
+  return <main className="min-h-[75vh] flex items-center justify-center bg-slate-50/70 px-4 py-10 sm:py-16 dark:bg-slate-950/30">
+    <section className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_32px_-16px_rgba(15,23,42,0.2)] sm:p-8 dark:bg-slate-900 dark:border-slate-800 space-y-6">
+      <div className="space-y-3">
+        <h1 className="text-2xl font-bold leading-tight tracking-tight text-slate-950 dark:text-slate-50">
+          {!accessToken && !sessionId ? (es ? "Introduce tu email para comprar" : "Enter your email to purchase") : (es ? "Compra tu mapa" : "Purchase your map")}
+        </h1>
+        {!accessToken && !sessionId && <p id="checkout-email-help" className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+          {es ? "Usaremos este email para tu cuenta y el acceso a tu mapa." : "This email will be used for your account and map access."}
+        </p>}
+      </div>
       {!validMap || (!mapLoading && !map) ? <p role="alert">{es ? "Mapa no disponible." : "Map unavailable."}</p> : <>
-        <p className="font-medium">{mapLoading ? (es ? "Cargando…" : "Loading…") : getLocalized(map.name, language)}</p>
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300"><MapPin className="size-5" aria-hidden="true" /></span>
+          <div className="min-w-0 flex-1">
+            <p className="mb-1 text-xs font-medium text-slate-500 dark:text-slate-400">{es ? "Tu mapa" : "Your map"}</p>
+            <p className="font-semibold leading-snug text-slate-950 dark:text-slate-100">{mapLoading ? (es ? "Cargando…" : "Loading…") : getLocalized(map.name, language)}</p>
+          </div>
+          {!mapLoading && map?.isPaid && typeof map.price === "number" && <p className="shrink-0 text-right text-lg font-bold tabular-nums text-slate-950 dark:text-slate-100">
+            {new Intl.NumberFormat(es ? "es-US" : "en-US", { style: "currency", currency: "USD" }).format(map.price)}
+            <span className="block text-xs font-normal text-slate-500 dark:text-slate-400">USD</span>
+          </p>}
+        </div>
         {params.get("cancelled") && <p>{es ? "Pago cancelado. Puedes volver a intentarlo; tu cuenta se ha guardado." : "Payment cancelled. Your account is saved; you can try again."}</p>}
         {completed ? <>
           <p>{es ? "Tu compra está lista. Verifica tu email para crear una contraseña y recuperar el acceso más adelante." : "Your purchase is ready. Verify your email to set a password and return later."}</p>
@@ -148,25 +166,37 @@ export default function MapCheckout() {
           {sessionId ? <>
             <p>{es ? "Comprobamos tu pago antes de abrir el mapa." : "We verify your payment before opening the map."}</p>
             <Button className="w-full" disabled={busy} onClick={finish}>{busy ? (es ? "Verificando…" : "Verifying…") : (es ? "Reintentar verificación" : "Retry verification")}</Button>
-          </> : <form className="space-y-4" onSubmit={event => { event.preventDefault(); void buy(); }}>
+          </> : <form className="space-y-5" onSubmit={event => { event.preventDefault(); void buy(); }}>
             {!accessToken && <>
-              <label htmlFor="purchase-email" className="block">Email</label>
-              <Input id="purchase-email" type="email" autoComplete="email" required maxLength={254} value={email}
+              <div className="space-y-2">
+              <label htmlFor="purchase-email" className="block text-sm font-semibold text-slate-800 dark:text-slate-200">{es ? "Correo electrónico" : "Email address"}</label>
+              <div className="relative">
+              <Mail className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-slate-400" aria-hidden="true" />
+              <Input id="purchase-email" type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required maxLength={254} value={email}
+                placeholder="you@example.com" aria-describedby="checkout-email-help"
+                className="h-12 rounded-xl border-slate-300 bg-white pl-11 pr-4 shadow-none focus-visible:border-amber-400 focus-visible:ring-amber-400/25 dark:border-slate-700 dark:bg-slate-950/40"
                 onInvalid={() => setError(es ? "Introduce un email válido para continuar." : "Enter a valid email to continue.")}
                 onChange={event => { setEmail(event.target.value); setNeedsLogin(false); setError(""); }} />
-              <p className="text-sm text-gray-500">{es ? "Crearemos tu cuenta antes del pago. Podrás crear una contraseña después de verificar tu email." : "We create your account before payment. You can set a password after verifying your email."}</p>
+              </div>
+              </div>
             </>}
-            <Button type="submit" className="w-full" disabled={busy || mapLoading || (!!accessToken && profileLoading)}>{busy ? (es ? "Cargando…" : "Loading…") : ownsMap || map?.isPaid === false ? (es ? "Abrir mapa" : "Open Map") : (es ? "Continuar al pago" : "Continue to payment")}</Button>
+            <Button type="submit" className="h-12 w-full gap-3 rounded-xl bg-[#FFC107] text-base font-semibold text-slate-950 hover:bg-[#efb400] disabled:opacity-60" disabled={busy || mapLoading || (!!accessToken && profileLoading)}>
+              {busy && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+              {busy ? (es ? "Preparando tu pago…" : "Preparing your checkout…") : ownsMap || map?.isPaid === false ? (es ? "Abrir mapa" : "Open Map") : (es ? "Continuar al pago" : "Continue to payment")}
+              {!busy && <ArrowRight className="size-4" aria-hidden="true" />}
+            </Button>
+            {!ownsMap && map?.isPaid !== false && <p className="text-center text-xs text-slate-500 dark:text-slate-400">{es ? "El siguiente paso es el pago seguro con Stripe." : "Next, you’ll pay securely with Stripe."}</p>}
             {error && <p role="alert" aria-live="polite" className="text-red-600">{error}</p>}
           </form>}
           {needsLogin && <p>{es ? "Esta cuenta ya existe. Inicia sesión o verifica tu email para continuar." : "This account already exists. Sign in or verify your email to continue."}</p>}
-          <div className="flex flex-col gap-3 text-sm">
-            <Link className="underline" href={loginUrl}>{es ? "Iniciar sesión / Continuar con Google" : "Sign in / Continue with Google"}</Link>
-            <Link className="underline" href={recoverUrl}>{es ? "¿Sin contraseña? Verificar email y crear contraseña" : "No password? Verify email and set password"}</Link>
-          </div>
         </>}
       </>}
-      <Link className="block text-sm underline" href={validMap ? `/catalog/${mapId}` : "/catalog"}>{es ? "Volver al catálogo" : "Back to catalog"}</Link>
+      <div className="border-t border-slate-100 pt-4 text-center dark:border-slate-800">
+        <Link className="inline-flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-slate-950 dark:text-slate-400 dark:hover:text-slate-100" href={validMap ? `/catalog/${mapId}` : "/catalog"}>
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          {validMap ? (es ? "Volver a los detalles del mapa" : "Back to map details") : (es ? "Volver al catálogo" : "Back to catalog")}
+        </Link>
+      </div>
     </section>
   </main>;
 }
