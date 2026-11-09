@@ -17,6 +17,7 @@ const PUBLIC_EXACT = new Set([
   "/login",
   "/register",
   "/forgot-password",
+  "/set-password",
   "/reset-password",
   "/otp-verify",
 ]);

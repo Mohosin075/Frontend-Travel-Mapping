@@ -62,6 +62,7 @@ function isPublicPath(pathname: string): boolean {
     "/login",
     "/register",
     "/forgot-password",
+    "/set-password",
     "/otp-verify",
     "/reset-password",
     "/privacy-policy",

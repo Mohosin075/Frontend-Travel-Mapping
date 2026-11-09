@@ -10,7 +10,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { useForgetPasswordMutation } from "@/redux/features/auth/authApi";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 
@@ -22,15 +22,19 @@ const forgotPasswordSchema = z.object({
 
 type FormValues = z.infer<typeof forgotPasswordSchema>;
 
-export const ForgotPasswordForm = () => {
+export const ForgotPasswordForm = ({ mode = "reset" }: { mode?: "reset" | "setup" } = {}) => {
   const { t } = useLanguage();
+  const isSetup = mode === "setup";
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: searchParams.get("email") || "" },
   });
 
   const [forgetPassword, { isLoading }] = useForgetPasswordMutation();
@@ -40,12 +44,12 @@ export const ForgotPasswordForm = () => {
       const res = await forgetPassword({ email: data.email }).unwrap();
 
       if (res?.success) {
-        toast.success(res.message || "Reset OTP sent successfully!");
+        toast.success(isSetup ? t("auth.setup_code_sent") : res.message || "Reset OTP sent successfully!");
         router.push(
-          `/otp-verify?email=${encodeURIComponent(data.email)}&authType=resetPassword`,
+          `/otp-verify?email=${encodeURIComponent(data.email)}&authType=${isSetup ? "setPassword" : "resetPassword"}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ""}`,
         );
       } else {
-        toast.error(res?.message || "Failed to send reset link.");
+        toast.error(res?.message || (isSetup ? t("auth.setup_code_failed") : "Failed to send reset link."));
       }
     } catch (error: unknown) {
       toast.error(getApiErrorMessage(error));
@@ -57,10 +61,10 @@ export const ForgotPasswordForm = () => {
       {/* Header */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-[#1A1A1A] dark:text-slate-100 mb-2">
-          {t("auth.forgot_password")}
+          {t(isSetup ? "auth.setup_verify_heading" : "auth.forgot_password")}
         </h2>
         <p className="text-sm text-[#757575] dark:text-slate-400">
-          {t("auth.forgot_subtitle")}
+          {t(isSetup ? "auth.setup_verify_subtitle" : "auth.forgot_subtitle")}
         </p>
       </div>
 
@@ -97,14 +101,14 @@ export const ForgotPasswordForm = () => {
               {t("common.loading")}
             </>
           ) : (
-            t("auth.send_reset_link")
+            t(isSetup ? "auth.send_verification_code" : "auth.send_reset_link")
           )}
         </Button>
       </form>
 
       {/* Footer */}
       <div className="text-sm text-center mt-6">
-        <span className="text-[#0A0A0A] dark:text-slate-300">{t("auth.remember_password_prompt")}{" "}</span>
+        {!isSetup && <span className="text-[#0A0A0A] dark:text-slate-300">{t("auth.remember_password_prompt")}{" "}</span>}
         <Link
           href="/login"
           className="text-base font-semibold text-primary font-public-sans hover:underline"

@@ -96,8 +96,13 @@ export function syncAuthCookies(
 }
 
 export function navigateAfterAuth(path: string) {
-  const next =
-    path.startsWith("/") && !path.startsWith("//") ? path : "/maps";
+  let next = "/maps";
+  try {
+    const target = new URL(path, window.location.origin);
+    if (path.startsWith("/") && !path.startsWith("//") && target.origin === window.location.origin) {
+      next = `${target.pathname}${target.search}${target.hash}`;
+    }
+  } catch { /* invalid return paths use the default destination */ }
   window.location.assign(next);
 }
 
@@ -118,7 +123,9 @@ const authSlice = createSlice({
     },
     setAccessToken: (state, action: PayloadAction<string>) => {
       state.accessToken = action.payload;
-      syncAuthCookies(action.payload, state.user?.role);
+      const decoded = decodeJwtPayload(action.payload);
+      if (state.user && decoded?.role) state.user.role = decoded.role;
+      syncAuthCookies(action.payload, decoded?.role || state.user?.role);
     },
     updateUserRole: (state, action: PayloadAction<string>) => {
       if (state.user) {

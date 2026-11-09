@@ -14,8 +14,10 @@ import { Input } from "../ui/input";
 import { decodeJwtPayload } from "@/lib/utils";
 import { isDashboardRole } from "@/lib/roles";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { baseApi } from "@/redux/api/baseApi";
+import { persistor } from "@/redux/store";
 
-type AuthFlow = "createAccount" | "resetPassword" | "invite";
+type AuthFlow = "createAccount" | "resetPassword" | "invite" | "setPassword";
 
 export default function OtpVerify() {
   const { t } = useLanguage();
@@ -27,7 +29,7 @@ export default function OtpVerify() {
 
   const authFlow: AuthFlow = useMemo(() => {
     const raw = (searchParams.get("authType") || "").trim();
-    if (raw === "resetPassword" || raw === "invite" || raw === "createAccount") {
+    if (raw === "resetPassword" || raw === "invite" || raw === "createAccount" || raw === "setPassword") {
       return raw;
     }
     return "createAccount";
@@ -35,7 +37,7 @@ export default function OtpVerify() {
 
   // Invite uses the same verify API as signup; password is set on the next page.
   const resendAuthType =
-    authFlow === "resetPassword" ? "resetPassword" : "createAccount";
+    authFlow === "resetPassword" || authFlow === "setPassword" ? "resetPassword" : "createAccount";
 
   const [otp, setOtp] = useState(Array(6).fill(""));
   const [countdown, setCountdown] = useState(60);
@@ -161,19 +163,23 @@ export default function OtpVerify() {
       // Invite / forgot-password: OTP ok → go set password (step 2)
       if (userData?.token && !userData?.accessToken) {
         const nextPath =
-          authFlow === "invite"
+          authFlow === "setPassword"
+            ? `/reset-password?token=${userData.token}&flow=setup`
+            : authFlow === "invite"
             ? `/reset-password?token=${userData.token}&flow=invite`
             : `/reset-password?token=${userData.token}`;
 
         toast.success(
-          authFlow === "invite"
+          authFlow === "setPassword"
+            ? t("auth.setup_code_verified")
+            : authFlow === "invite"
             ? "Code verified! Set your password to finish."
             : authFlow === "resetPassword"
               ? "OTP verified! Please reset your password."
               : "OTP verified! Please set your password.",
           { id: toastId },
         );
-        router.push(nextPath);
+        router.push(nextPath + (redirect ? `&redirect=${encodeURIComponent(redirect)}` : ""));
         return;
       }
 
@@ -198,6 +204,8 @@ export default function OtpVerify() {
             accessToken: userData.accessToken,
           }),
         );
+        dispatch(baseApi.util.resetApiState());
+        await persistor.flush();
 
         toast.success(
           authFlow === "resetPassword"
@@ -279,21 +287,27 @@ export default function OtpVerify() {
   const isLoading = isVerifying;
 
   const title =
-    authFlow === "resetPassword"
+    authFlow === "setPassword"
+      ? t("auth.setup_verify_heading")
+      : authFlow === "resetPassword"
       ? t("auth.otp_title_reset")
       : authFlow === "invite"
         ? t("auth.otp_title_invite")
         : t("auth.otp_title_create");
 
   const subtitle =
-    authFlow === "resetPassword"
+    authFlow === "setPassword"
+      ? t("auth.setup_otp_subtitle")
+      : authFlow === "resetPassword"
       ? t("auth.otp_subtitle_reset")
       : authFlow === "invite"
         ? t("auth.otp_subtitle_invite")
         : t("auth.otp_subtitle_create");
 
   const buttonLabel =
-    authFlow === "invite"
+    authFlow === "setPassword"
+      ? t("auth.verify_code")
+      : authFlow === "invite"
       ? t("auth.continue")
       : authFlow === "resetPassword"
         ? t("auth.verify_code")
@@ -327,7 +341,7 @@ export default function OtpVerify() {
         </div>
       )}
 
-      {(authFlow === "resetPassword" || authFlow === "createAccount") && (
+      {(authFlow === "resetPassword" || authFlow === "createAccount" || authFlow === "setPassword") && (
         <div className="flex items-center gap-2 mb-6 text-xs font-semibold">
           <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFC107] text-black">
             1
@@ -335,13 +349,13 @@ export default function OtpVerify() {
           <span className="text-[#1A1A1A] dark:text-slate-200">
             {authFlow === "resetPassword" ? t("auth.verify_code_step") : t("auth.verify_email_step")}
           </span>
-          {authFlow === "resetPassword" && (
+          {(authFlow === "resetPassword" || authFlow === "setPassword") && (
             <>
               <span className="text-[#BDBDBD] dark:text-slate-600 mx-1">—</span>
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 dark:bg-slate-800 text-[#757575] dark:text-slate-400">
                 2
               </span>
-              <span className="text-[#9E9E9E] dark:text-slate-500">{t("auth.new_password_step")}</span>
+              <span className="text-[#9E9E9E] dark:text-slate-500">{t(authFlow === "setPassword" ? "auth.set_password_step" : "auth.new_password_step")}</span>
             </>
           )}
         </div>

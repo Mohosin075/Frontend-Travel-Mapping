@@ -9,6 +9,7 @@ import {
   useVerifyPromoCodeQuery,
   useClaimFreePromoMutation,
   useCreatePromoCheckoutSessionMutation,
+  useVerifyPromoPaymentMutation,
 } from "@/redux/features/promo/promoApi";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -37,15 +38,29 @@ import {
 
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getLocalized } from "@/lib/utils";
+import { useGetMapsQuery } from "@/redux/features/map/mapApi";
+import { useLogoutMutation } from "@/redux/features/auth/authApi";
+import { baseApi } from "@/redux/api/baseApi";
+import { persistor } from "@/redux/store";
+import { broadcastLogout } from "@/components/shared/cross-tab-logout-listener";
 
 function ClaimPromoContent() {
   const { t, language } = useLanguage();
   const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const [logoutApi, logoutState] = useLogoutMutation();
   const code = searchParams.get("code") || "";
+  const selectedPromoMap = searchParams.get("mapId") || "";
+  const claimPath = `/claim-promo?code=${encodeURIComponent(code)}${selectedPromoMap ? `&mapId=${encodeURIComponent(selectedPromoMap)}` : ""}`;
+  const [mapPage, setMapPage] = useState(1);
   const success = searchParams.get("success") === "true";
   const cancelled = searchParams.get("cancelled") === "true";
+  const sessionId = searchParams.get("session_id") || undefined;
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
+  const [verifyPromoPayment, paymentVerification] = useVerifyPromoPaymentMutation();
+  const verifiedPaymentRef = React.useRef("");
 
   const accessToken = useAppSelector(selectAccessToken);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -62,7 +77,7 @@ function ClaimPromoContent() {
     error: verifyError,
     refetch: refetchVerification,
   } = useVerifyPromoCodeQuery(
-    { code },
+    { code, mapId: selectedPromoMap || undefined },
     { skip: !code || success }
   );
 
@@ -70,6 +85,9 @@ function ClaimPromoContent() {
   const [createPromoCheckoutSession] = useCreatePromoCheckoutSessionMutation();
 
   const promoData = verifyRes?.data;
+  const { data: mapOptions, isFetching: mapsLoading, isError: mapsError, refetch: retryMaps } = useGetMapsQuery(
+    { page: mapPage, limit: 50 }, { skip: !promoData || !!promoData.mapId || !!selectedPromoMap || success }
+  );
   const promoPrice = typeof promoData?.price === "number" ? promoData.price : Number(promoData?.price || 0);
   const isFree = promoData ? promoPrice === 0 : false;
   const rawMapName = typeof promoData?.mapId === "object" ? promoData?.mapId?.name : promoData?.mapName;
@@ -82,7 +100,7 @@ function ClaimPromoContent() {
 
   // Validate if logged-in user already owns this map safely (null-safe check)
   const purchasedMaps = Array.isArray(userProfile?.purchasedMaps) ? userProfile.purchasedMaps : [];
-  const promoMapId = typeof promoData?.mapId === "object" ? promoData?.mapId?._id : promoData?.mapId;
+  const promoMapId = (typeof promoData?.mapId === "object" ? promoData?.mapId?._id : promoData?.mapId) || selectedPromoMap;
   const alreadyOwnsMap =
     Boolean(promoMapId) &&
     purchasedMaps.some((m: any) => {
@@ -99,6 +117,24 @@ function ClaimPromoContent() {
     Boolean(recipientEmailStr) &&
     Boolean(userEmailStr) &&
     userEmailStr !== recipientEmailStr;
+  const needsEmailVerification = Boolean(recipientEmailStr && userProfile && !userProfile.verified && !emailMismatch);
+  const verifyEmailUrl = `/set-password?email=${encodeURIComponent(userProfile?.email || "")}&redirect=${encodeURIComponent(claimPath)}`;
+
+  const checkPayment = async () => {
+    setPaymentError("");
+    try {
+      await verifyPromoPayment({ code, sessionId }).unwrap();
+      setPaymentConfirmed(true);
+    } catch (error: any) { setPaymentError(error?.data?.message || "Unable to verify payment. Please retry."); }
+  };
+  useEffect(() => {
+    const key = `${accessToken}:${code}:${sessionId || ""}`;
+    if (!success || !accessToken || !code || verifiedPaymentRef.current === key) return;
+    verifiedPaymentRef.current = key;
+    setPaymentConfirmed(false);
+    void checkPayment();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [success, accessToken, code, sessionId]);
 
   // Auto claim free invitation immediately after user signs in / registers
   const hasAutoClaimedRef = React.useRef(false);
@@ -112,10 +148,12 @@ function ClaimPromoContent() {
   useEffect(() => {
     // Only auto-claim if user is authenticated, has a valid code, promo is loaded and free
     if (!accessToken || !code || success || isClaimedSuccess || alreadyOwnsMap) return;
+    if (!promoMapId) return;
     if (isLoadingVerify || !promoData) return;
     if (promoData.recipientEmail && !userProfile) return;
     if (!isFree) return;
     if (emailMismatch) return;
+    if (needsEmailVerification) return;
 
     if (!hasAutoClaimedRef.current && !isProcessing) {
       hasAutoClaimedRef.current = true;
@@ -132,13 +170,15 @@ function ClaimPromoContent() {
     userProfile,
     isFree,
     emailMismatch,
+    needsEmailVerification,
+    promoMapId,
     isProcessing,
   ]);
 
   // Handle Free Claiming
   const handleFreeClaim = async () => {
     if (!accessToken) {
-      const redirectUrl = `/login?redirect=${encodeURIComponent(`/claim-promo?code=${code}`)}`;
+      const redirectUrl = `/login?redirect=${encodeURIComponent(claimPath)}`;
       router.push(redirectUrl);
       return;
     }
@@ -152,7 +192,7 @@ function ClaimPromoContent() {
 
     setIsProcessing(true);
     try {
-      const res = await claimFreePromo({ code }).unwrap();
+      const res = await claimFreePromo({ code, mapId: selectedPromoMap || undefined }).unwrap();
       setIsClaimedSuccess(true);
       toast.success(res?.message || "Invitation claimed successfully!");
       setTimeout(() => {
@@ -174,7 +214,7 @@ function ClaimPromoContent() {
   // Handle Paid Upgrade Stripe Checkout redirection
   const handlePaidCheckout = async () => {
     if (!accessToken) {
-      const redirectUrl = `/login?redirect=${encodeURIComponent(`/claim-promo?code=${code}`)}`;
+      const redirectUrl = `/login?redirect=${encodeURIComponent(claimPath)}`;
       router.push(redirectUrl);
       return;
     }
@@ -188,7 +228,7 @@ function ClaimPromoContent() {
 
     setIsProcessing(true);
     try {
-      const result = await createPromoCheckoutSession({ code }).unwrap();
+      const result = await createPromoCheckoutSession({ code, mapId: selectedPromoMap || undefined }).unwrap();
       if (result?.data?.url) {
         toast.loading("Redirecting to payment gateway...");
         window.location.href = result.data.url;
@@ -213,7 +253,7 @@ function ClaimPromoContent() {
       ? `&email=${encodeURIComponent(promoData.recipientEmail)}`
       : "";
     router.push(
-      `/register?redirect=${encodeURIComponent(`/claim-promo?code=${code}`)}${emailParam}`
+      `/register?redirect=${encodeURIComponent(claimPath)}${emailParam}`
     );
   };
 
@@ -222,7 +262,7 @@ function ClaimPromoContent() {
       ? `&email=${encodeURIComponent(promoData.recipientEmail)}`
       : "";
     router.push(
-      `/login?redirect=${encodeURIComponent(`/claim-promo?code=${code}`)}${emailParam}`
+      `/login?redirect=${encodeURIComponent(claimPath)}${emailParam}`
     );
   };
 
@@ -280,6 +320,40 @@ function ClaimPromoContent() {
   }
 
   // Case A: Stripe Checkout SUCCESS Redirect
+  if (!success && promoData && !promoData.mapId && !selectedPromoMap) {
+    return <section className="mx-auto max-w-md px-4 py-16 space-y-5">
+      <h1 className="text-2xl font-bold">{language === "es" ? "Elige tu mapa" : "Choose your map"}</h1>
+      {mapsError ? <Button onClick={() => retryMaps()}>{language === "es" ? "Reintentar" : "Retry"}</Button> :
+        <select aria-label={language === "es" ? "Mapa" : "Map"} className="w-full border rounded p-3" value="" disabled={mapsLoading} onChange={event => {
+          if (event.target.value) router.replace(`/claim-promo?code=${encodeURIComponent(code)}&mapId=${encodeURIComponent(event.target.value)}`);
+        }}>
+          <option value="">{mapsLoading ? "Loading…" : (language === "es" ? "Selecciona un mapa" : "Select a map")}</option>
+          {(mapOptions?.data || []).filter((map: any) => map.isPaid && map.isActive !== false).map((map: any) => <option key={map._id} value={map._id}>{getLocalized(map.name, language)}</option>)}
+        </select>}
+      <div className="flex justify-between gap-4">
+        <Button variant="outline" disabled={mapPage <= 1 || mapsLoading} onClick={() => setMapPage(page => page - 1)}>{language === "es" ? "Anterior" : "Previous"}</Button>
+        <Button variant="outline" disabled={mapsLoading || mapPage >= (mapOptions?.meta?.totalPage || 1)} onClick={() => setMapPage(page => page + 1)}>{language === "es" ? "Siguiente" : "Next"}</Button>
+      </div>
+    </section>;
+  }
+  if (!success && needsEmailVerification) {
+    return <section className="mx-auto max-w-md px-4 py-16 space-y-5 text-center">
+      <h1 className="text-2xl font-bold">{language === "es" ? "Verifica tu email" : "Verify your email"}</h1>
+      <p>{language === "es" ? "Esta invitación está reservada para tu email. Verifica que te pertenece antes de canjearla." : "This invitation is reserved for your email. Verify ownership before redeeming it."}</p>
+      <Button asChild><a href={verifyEmailUrl}>{language === "es" ? "Verificar email" : "Verify email"}</a></Button>
+    </section>;
+  }
+  if (success && !paymentConfirmed) {
+    return <section className="mx-auto max-w-md px-4 py-16 space-y-5 text-center">
+      <h1 className="text-2xl font-bold">{language === "es" ? "Verificar pago" : "Verify payment"}</h1>
+      {paymentError && <p role="alert">{paymentError}</p>}
+      {accessToken ? <Button disabled={paymentVerification.isLoading} onClick={checkPayment}>
+        {paymentVerification.isLoading ? (language === "es" ? "Verificando…" : "Verifying…") : (language === "es" ? "Reintentar verificación" : "Retry verification")}
+      </Button> : <Button asChild><a href={`/login?redirect=${encodeURIComponent(`/claim-promo?code=${encodeURIComponent(code)}&success=true${sessionId ? `&session_id=${encodeURIComponent(sessionId)}` : ""}`)}`}>
+        {language === "es" ? "Iniciar sesión para verificar" : "Sign in to verify"}
+      </a></Button>}
+    </section>;
+  }
   if (success) {
     return (
       <section className="relative min-h-[75vh] py-16 flex items-center justify-center overflow-hidden font-inter bg-[#F9FAFB] dark:bg-[#0b0f19] text-gray-900 dark:text-slate-100">
@@ -378,7 +452,7 @@ function ClaimPromoContent() {
     const isExpiredMsg = typeof errorMsg === "string" && /expired/i.test(errorMsg);
 
     // If already used and current logged-in user already has purchased maps
-    if (isAlreadyUsed && accessToken && purchasedMaps.length > 0) {
+    if (isAlreadyUsed && accessToken && alreadyOwnsMap) {
       return (
         <section className="relative min-h-[75vh] py-16 flex items-center justify-center overflow-hidden font-inter bg-[#F9FAFB] dark:bg-[#0b0f19] text-gray-900 dark:text-slate-100">
           <div className="max-w-md w-full bg-white dark:bg-[#131b2e] rounded-2xl border border-gray-100 dark:border-slate-800 shadow-xl p-8 text-center space-y-6 relative z-10">
@@ -922,14 +996,20 @@ function ClaimPromoContent() {
             <div className="flex flex-col gap-2.5 pt-2">
               <Button
                 type="button"
-                onClick={() => {
+                disabled={logoutState.isLoading}
+                onClick={async () => {
+                  try { await logoutApi({}).unwrap(); }
+                  catch (error: any) { toast.error(error?.data?.message || "Unable to sign out. Please retry."); return; }
                   setShowMismatchModal(false);
+                  broadcastLogout();
                   dispatch(logout());
+                  dispatch(baseApi.util.resetApiState());
+                  await persistor.flush();
                   const targetEmail = promoData?.recipientEmail
                     ? `&email=${encodeURIComponent(promoData.recipientEmail)}`
                     : "";
                   router.push(
-                    `/login?redirect=${encodeURIComponent(`/claim-promo?code=${code}`)}${targetEmail}`
+                    `/login?redirect=${encodeURIComponent(claimPath)}${targetEmail}`
                   );
                   toast.info(
                     t("auth.logged_out_invite") ||

@@ -2,6 +2,13 @@ import { baseApi } from "@/redux/api/baseApi";
 
 export const paymentApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    startGuestMapCheckout: builder.mutation({
+      query: (body) => ({ url: "/payment/guest/start", method: "POST", body, timeout: 20000 }),
+    }),
+    completeGuestMapCheckout: builder.mutation({
+      query: (body) => ({ url: "/payment/guest/complete", method: "POST", body, timeout: 20000 }),
+      invalidatesTags: ["User", "Map", "Place", "Offer"],
+    }),
     createMapCheckoutSession: builder.mutation({
       query: (data) => ({
         url: "/payment/create-checkout-session",
@@ -30,6 +37,8 @@ export const paymentApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useStartGuestMapCheckoutMutation,
+  useCompleteGuestMapCheckoutMutation,
   useCreateMapCheckoutSessionMutation,
   useVerifyCheckoutSessionQuery,
 } = paymentApi;

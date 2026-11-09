@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLoginMutation } from "@/redux/features/auth/authApi";
 import { setUser, navigateAfterAuth } from "@/redux/features/auth/authSlice";
 import { Lock, Mail, Loader2 } from "lucide-react";
@@ -18,6 +18,7 @@ import { Label } from "../ui/label";
 import { decodeJwtPayload, getApiErrorMessage } from "@/lib/utils";
 import { isDashboardRole } from "@/lib/roles";
 import { persistor } from "@/redux/store";
+import { baseApi } from "@/redux/api/baseApi";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const loginSchema = z.object({
@@ -36,11 +37,13 @@ export const LoginForm = () => {
   const dispatch = useDispatch();
   const { t } = useLanguage();
   const [login, { isLoading }] = useLoginMutation();
+  const [passwordSetupEmail, setPasswordSetupEmail] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(loginSchema),
@@ -68,6 +71,7 @@ export const LoginForm = () => {
       }),
     );
 
+    dispatch(baseApi.util.resetApiState());
     await persistor.flush();
     toast.success(successMessage || "Logged in successfully!");
 
@@ -110,6 +114,12 @@ export const LoginForm = () => {
         rememberMe: data.rememberMe,
       }).unwrap();
 
+      if (res?.data?.passwordSetupRequired) {
+        setPasswordSetupEmail(data.email.trim().toLowerCase());
+        setValue("password", "");
+        return;
+      }
+
       if (data.rememberMe) {
         localStorage.setItem("rememberedEmail", data.email);
       } else {
@@ -127,12 +137,12 @@ export const LoginForm = () => {
         toast.success(message);
         const authType = res?.data?.needPassword ? "invite" : "createAccount";
         router.push(
-          `/otp-verify?email=${encodeURIComponent(data.email)}&authType=${authType}`,
+          `/otp-verify?email=${encodeURIComponent(data.email)}&authType=${authType}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ""}`,
         );
         return;
       }
 
-      completeLogin(accessToken, res.message || "Logged in successfully!");
+      await completeLogin(accessToken, res.message || "Logged in successfully!");
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err));
     }
@@ -149,7 +159,15 @@ export const LoginForm = () => {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-5">
+      {passwordSetupEmail ? <div className="space-y-4">
+        <p role="status" className="text-sm text-gray-700 dark:text-slate-300">{t("auth.login_password_not_set")}</p>
+        <Button asChild className="w-full bg-[#FFC107] hover:bg-[#FFB300] text-black font-bold h-14">
+          <Link href={`/set-password?email=${encodeURIComponent(passwordSetupEmail)}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ""}`}>
+            {t("auth.login_verify_to_set_password")}
+          </Link>
+        </Button>
+        <Button type="button" variant="ghost" onClick={() => setPasswordSetupEmail(null)}>{t("auth.login_use_another_email")}</Button>
+      </div> : <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-5">
         {/* Email */}
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-[#424242] dark:text-slate-300 ml-1">
@@ -199,7 +217,7 @@ export const LoginForm = () => {
             <span className="text-sm text-[#757575] dark:text-slate-400">{t("auth.remember_me")}</span>
           </label>
           <Link
-            href="/forgot-password"
+            href={`/forgot-password?email=${encodeURIComponent(emailParam || "")}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ""}`}
             className="font-semibold text-primary font-public-sans cursor-pointer hover:underline text-sm"
           >
             {t("auth.forgot_password")}
@@ -221,7 +239,11 @@ export const LoginForm = () => {
             t("nav.login")
           )}
         </Button>
-      </form>
+        <Link className="block text-center text-sm font-semibold text-primary hover:underline"
+          href={`/set-password?email=${encodeURIComponent(watch("email") || "")}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ""}`}>
+          {t("auth.login_no_password_yet")}
+        </Link>
+      </form>}
 
       {/* Footer */}
       <div className="text-sm text-center mt-6">

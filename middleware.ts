@@ -20,6 +20,7 @@ const guestAllowedExact = new Set([
   "/login",
   "/register",
   "/forgot-password",
+  "/set-password",
   "/otp-verify",
   "/reset-password",
   "/privacy-policy",

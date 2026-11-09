@@ -11,6 +11,10 @@ type GetPromoLinksArgs = {
 
 const promoApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    verifyPromoPayment: builder.mutation<any, { code: string; sessionId?: string }>({
+      query: (body) => ({ url: "/promo-links/verify-payment", method: "POST", body }),
+      invalidatesTags: ["User", "Map", "Place", "Offer", "Promo"],
+    }),
     getPromoLinks: builder.query<any, GetPromoLinksArgs>({
       query: ({ page = 1, limit = 10, searchTerm = "", isUsed = "", mapId = "", promoType = "" } = {}) => ({
         url: `/promo-links?page=${page}&limit=${limit}&searchTerm=${searchTerm}&isUsed=${isUsed}&mapId=${mapId}&promoType=${promoType}`,
@@ -33,7 +37,7 @@ const promoApi = baseApi.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["Map", "User"], // invalidates maps and user profile to refresh list of purchased maps
+      invalidatesTags: ["Map", "User", "Place", "Offer", "Promo"],
     }),
 
     createPromoCheckoutSession: builder.mutation<any, { code: string; mapId?: string }>({
@@ -42,7 +46,7 @@ const promoApi = baseApi.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["Promo"],
+      invalidatesTags: ["Promo", "User", "Map", "Place", "Offer"],
     }),
 
     bulkGeneratePromos: builder.mutation<any, {
@@ -90,6 +94,7 @@ const promoApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useVerifyPromoPaymentMutation,
   useGetPromoLinksQuery,
   useLazyVerifyPromoCodeQuery,
   useVerifyPromoCodeQuery,

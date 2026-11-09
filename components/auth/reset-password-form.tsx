@@ -35,6 +35,8 @@ export const ResetPasswordForm = () => {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const isInvite = searchParams.get("flow") === "invite";
+  const isSetup = searchParams.get("flow") === "setup";
+  const isSettingPassword = isInvite || isSetup;
 
   const {
     register,
@@ -53,7 +55,7 @@ export const ResetPasswordForm = () => {
     }
 
     const toastId = toast.loading(
-      isInvite ? "Setting your password..." : "Resetting password...",
+      isSettingPassword ? "Setting your password..." : "Resetting password...",
     );
 
     try {
@@ -65,17 +67,18 @@ export const ResetPasswordForm = () => {
 
       if (response.success) {
         toast.success(
-          response.message ||
-            (isInvite
+          (isSetup ? t("auth.setup_password_saved") : response.message) ||
+            (isSettingPassword
               ? "Password set successfully! You can log in now."
               : "Password reset successfully!"),
           { id: toastId },
         );
-        router.push("/login");
+        const redirect = searchParams.get("redirect");
+        router.push(redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : "/login");
       } else {
         toast.error(
           response.message ||
-            (isInvite
+            (isSettingPassword
               ? "Failed to set password."
               : "Failed to reset password."),
           { id: toastId },
@@ -90,16 +93,16 @@ export const ResetPasswordForm = () => {
     <div className="flex flex-col justify-center">
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-[#1A1A1A] dark:text-slate-100 mb-2">
-          {isInvite ? t("auth.set_password_heading") : t("auth.reset_password_heading")}
+          {isSettingPassword ? t("auth.set_password_heading") : t("auth.reset_password_heading")}
         </h2>
         <p className="text-sm text-[#757575] dark:text-slate-400">
-          {isInvite
+          {isSetup ? t("auth.setup_password_subtitle") : isInvite
             ? t("auth.set_password_subtitle")
             : t("auth.reset_password_subtitle")}
         </p>
       </div>
 
-      {isInvite && (
+      {isSettingPassword && (
         <div className="flex items-center gap-2 mb-6 text-xs font-semibold">
           <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 dark:bg-slate-800 text-[#757575] dark:text-slate-400">
             1
@@ -116,7 +119,7 @@ export const ResetPasswordForm = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-5">
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-[#424242] dark:text-slate-300 ml-1">
-            {isInvite ? t("auth.password") : t("auth.new_password")}
+            {isSettingPassword ? t("auth.password") : t("auth.new_password")}
           </Label>
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9E9E9E] dark:text-slate-500" />
@@ -163,9 +166,9 @@ export const ResetPasswordForm = () => {
           {isLoading ? (
             <>
               <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-              {isInvite ? t("auth.setting_password_btn") : t("auth.resetting_password_btn")}
+              {isSettingPassword ? t("auth.setting_password_btn") : t("auth.resetting_password_btn")}
             </>
-          ) : isInvite ? (
+          ) : isSettingPassword ? (
             t("auth.set_password_btn")
           ) : (
             t("auth.reset_password_btn")

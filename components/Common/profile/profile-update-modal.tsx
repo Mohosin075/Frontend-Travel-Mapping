@@ -550,6 +550,13 @@ export default function ProfileUpdateModal({
             </div>
 
             {/* Password & Security Section */}
+            {data?.provider === "guest_purchase" && !data?.verified && (
+              <p className="text-sm rounded-lg border border-yellow-300 p-4">
+                <Link className="underline" href={`/set-password?email=${encodeURIComponent(data?.email || "")}&redirect=${encodeURIComponent("/profile")}`}>
+                  {isEs ? "Verifica tu email y crea una contraseña para volver a acceder a tu cuenta." : "Verify your email and set a password to access your account again later."}
+                </Link>
+              </p>
+            )}
             <div className="space-y-3 pt-3 border-t border-gray-100 dark:border-slate-800/80">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
