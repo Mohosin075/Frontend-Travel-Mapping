@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CategoryIcon } from "@/components/shared/categories/category-icon";
 import {
   Accordion,
@@ -70,6 +70,28 @@ export function MapFilters({
   const showEmpty = !isLoading && fetchedCategories.length === 0;
   const mapLabel = getSafeString(selectedCountry, language) || "this map";
   const [mobileOpen, setMobileOpen] = useState(false);
+  const categoryButtonRef = useRef<HTMLButtonElement>(null);
+  const categoryPanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isMobile || !mobileOpen) return;
+
+    const closeOutside = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target || categoryButtonRef.current?.contains(target) || categoryPanelRef.current?.contains(target)) return;
+      setMobileOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeOutside, true);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside, true);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isMobile, mobileOpen]);
 
   const panelWidth = isMobile ? "min(92vw, 320px)" : "350px";
   const listHeight = isMobile
@@ -85,7 +107,9 @@ export function MapFilters({
       {isMobile && (
         <div className="flex items-center gap-2 max-w-full">
           <button
+            ref={categoryButtonRef}
             type="button"
+            aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((o) => !o)}
             className="flex-1 max-w-[145px] min-w-0 flex items-center justify-between gap-1 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-800 px-3 py-2 text-xs font-bold text-gray-900 dark:text-zinc-100"
           >
@@ -138,6 +162,7 @@ export function MapFilters({
 
       {/* Category Filter */}
       <div
+        ref={categoryPanelRef}
         className={`${
           isMobile 
             ? `absolute top-full left-0 z-50 mt-1.5 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden w-[340px] max-w-[92vw] transition-all duration-200 ease-out origin-top ${
