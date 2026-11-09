@@ -340,10 +340,6 @@ export default function ExplorePlaces() {
             }}
             className="h-10 px-3 sm:px-4 max-w-[130px] sm:max-w-[180px] truncate border border-gray-200 dark:border-slate-800 rounded-full focus:outline-none focus:ring-2 focus:ring-[#fabf13] text-sm bg-white dark:bg-[#131b2e] font-semibold text-gray-700 dark:text-slate-200 cursor-pointer shadow-sm hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors shrink-0"
           >
-            <option value="">
-              {t("filters.all_countries") ||
-                (language === "es" ? "Todos los Países" : "All Countries")}
-            </option>
             {mapsResponse?.data?.map((map: any) => {
               const nameStr = getMapName(map);
               return (

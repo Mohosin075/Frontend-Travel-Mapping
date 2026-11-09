@@ -221,10 +221,6 @@ export default function OfferSection() {
             }}
             className="h-10 px-3 sm:px-4 max-w-[140px] sm:max-w-[200px] truncate border border-gray-200 dark:border-slate-800 rounded-full focus:outline-none focus:ring-2 focus:ring-[#fabf13] text-sm bg-white dark:bg-[#131b2e] font-semibold text-gray-700 dark:text-slate-200 cursor-pointer shadow-sm hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors shrink-0"
           >
-            <option value="">
-              {t("filters.all_countries") ||
-                (language === "es" ? "Todos los Países" : "All Countries")}
-            </option>
             {mapsResponse?.data?.map((map: any) => {
               const nameStr = getMapName(map);
               return (
