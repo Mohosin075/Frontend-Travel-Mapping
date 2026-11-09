@@ -1,4 +1,12 @@
 {
+  "map_access": {
+    "purchase_required_title": "Unlock your map",
+    "purchase_required_description": "Purchase this map to explore its locations. Already purchased? Sign in with your account email.",
+    "access_check_failed": "Unable to verify map access. Please try again.",
+    "view_map_purchase": "View map",
+    "select_map": "Select map",
+    "retry": "Retry"
+  },
   "nav": {
     "map": "Map",
     "places": "Places",

@@ -32,7 +32,7 @@ import { editorCanAccessMap } from "@/lib/editor-access";
 import { canRevealPlace } from "@/lib/place-access";
 import { getUsableMediaUrl, getLocalized } from "@/lib/utils";
 import { geocodeInFlight } from "@/lib/maps/geocode";
-import { X } from "lucide-react";
+import { Lock, X } from "lucide-react";
 
 export function getCategoryColor(cat: any) {
   return cat?.color || "#FF9800";
@@ -841,10 +841,10 @@ export default function MapPage() {
     setPendingFocus(null);
     setFocusReady(true);
     setSelectedLocation(null);
-    if (searchQuery || requestedMapId) router.replace("/maps", { scroll: false });
+    if (searchQuery || requestedMapId || searchParams.get("map")) router.replace("/maps", { scroll: false });
     requestedMapAppliedRef.current = requestedMapId;
 
-    const rawList = Array.isArray(mapsResponse?.data) ? mapsResponse.data : [];
+    const rawList = rawMapsList;
     const matched = rawList.find(
       (m: any) =>
         String(m._id) === val ||
@@ -900,6 +900,8 @@ export default function MapPage() {
     data: userProfile,
     isLoading: isLoadingUser,
     isFetching: isFetchingUser,
+    isError: isProfileError,
+    refetch: refetchProfile,
   } = useGetProfileQuery({}, { skip: !accessToken });
   const { data: visitedRes } = useGetMyVisitedPlacesQuery(undefined, {
     skip: !accessToken,
@@ -945,7 +947,10 @@ export default function MapPage() {
     limit: 100,
   });
   const catalogueMaps = Array.isArray(mapsResponse?.data) ? mapsResponse.data : [];
-  const mapLookupId = requestedMapId || selectedMapId;
+  // View-on-map links must take precedence before effects update saved selection.
+  const focusMapTarget = searchParams.get("map") || (!focusMapAppliedRef.current ? pendingFocus?.map || "" : "");
+  const focusMapId = /^[a-f\d]{24}$/i.test(focusMapTarget) ? focusMapTarget : "";
+  const mapLookupId = requestedMapId || focusMapId || selectedMapId;
   const { data: selectedMapResponse } = useGetMapByIdQuery(mapLookupId, {
     skip: !mapLookupId || catalogueMaps.some((item: any) => String(item._id) === mapLookupId),
   });
@@ -963,6 +968,11 @@ export default function MapPage() {
   const selectedMapObj = useMemo(() => {
     if (!rawMapsList.length) return null;
     if (requestedMapId) return rawMapsList.find((m: any) => String(m._id) === requestedMapId) || null;
+    if (focusMapTarget) return rawMapsList.find((m: any) =>
+      String(m._id) === focusMapTarget ||
+      normalizeAccents(m.name).toLowerCase() === normalizeAccents(focusMapTarget).toLowerCase() ||
+      isSameCountry(m.name, focusMapTarget) || isSameCountry(m.country, focusMapTarget)
+    ) || null;
     if (selectedMapId) {
       const byId = rawMapsList.find((m: any) => String(m._id) === String(selectedMapId));
       if (byId) return byId;
@@ -977,7 +987,7 @@ export default function MapPage() {
       if (byName) return byName;
     }
     return null;
-  }, [rawMapsList, requestedMapId, selectedMapId, selectedCountry]);
+  }, [rawMapsList, requestedMapId, focusMapTarget, selectedMapId, selectedCountry]);
 
   useEffect(() => {
     if (!requestedMapId) { requestedMapAppliedRef.current = ""; return; }
@@ -1014,12 +1024,21 @@ export default function MapPage() {
     }
   }, [selectedMapObj, selectedMapId, selectedCountry]);
 
-  const mapIdFilter = requestedMapId || (selectedMapObj ? String(selectedMapObj._id) : (selectedMapId || ""));
-  const canFetchPlaces = Boolean(mapIdFilter);
+  const mapIdFilter = requestedMapId || (selectedMapObj ? String(selectedMapObj._id) : (focusMapTarget ? "" : selectedMapId || ""));
+  // Read entitlements from the authenticated profile, never persisted role hints.
+  // Staff may open the explorer; existing editor restrictions still protect pins.
+  const canLoadSelectedMap = Boolean(accessToken && userProfile && mapIdFilter && (
+    ["super_admin", "admin", "map_editor"].includes(userProfile.role) ||
+    (Array.isArray(userProfile.purchasedMaps) && userProfile.purchasedMaps.some((item: any) => {
+      const id = typeof item === "object" ? item?._id || item?.id : item;
+      return id && String(id) === mapIdFilter;
+    }))
+  ));
+  const canFetchPlaces = canLoadSelectedMap;
   useEffect(() => {
-    if (!mapIdFilter) return;
+    if (!canLoadSelectedMap) return;
     trackUsage("map", mapIdFilter);
-  }, [mapIdFilter, accessToken]);
+  }, [mapIdFilter, accessToken, canLoadSelectedMap]);
 
   const {
     currentData: placesRes,
@@ -1257,7 +1276,7 @@ export default function MapPage() {
 
   // Set initial selectedCountry based on saved id, country, profile, or default
   useEffect(() => {
-    if (requestedMapId) return;
+    if (requestedMapId || focusMapTarget) return;
     if (rawMapsList.length === 0) return;
     if (selectedMapId && selectedCountry) return;
 
@@ -1289,7 +1308,7 @@ export default function MapPage() {
       localStorage.setItem("selectedCountryFilter", chosen.name);
       setIsManualSelection(true);
     }
-  }, [userProfile, selectedMapId, selectedCountry, rawMapsList, requestedMapId]);
+  }, [userProfile, selectedMapId, selectedCountry, rawMapsList, requestedMapId, focusMapTarget]);
 
   useEffect(() => {
     if (selectedCountry) {
@@ -1425,6 +1444,39 @@ export default function MapPage() {
     : [];
 
   if (!hasMounted) return null;
+
+  // Do not mount APIProvider or Map until access is known. An overlay would
+  // still create a billable Google Maps load behind the purchase prompt.
+  if (!isMapsSettled || (accessToken && !userProfile && (isLoadingUser || isFetchingUser)) || (!mapIdFilter && rawMapsList.length > 0 && !focusMapTarget)) {
+    return <div className="flex min-h-[60vh] items-center justify-center bg-gray-50 dark:bg-[#0b0f19]" role="status" aria-label={t("common.loading", "Loading...")}>
+      <div className="h-10 w-10 animate-spin rounded-full border-2 border-yellow-400 border-t-transparent" />
+    </div>;
+  }
+
+  if (!canLoadSelectedMap) {
+    return <section className="flex min-h-[calc(100vh-90px)] items-center justify-center bg-gray-50 dark:bg-[#0b0f19] px-4 py-12">
+      <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 text-center shadow-sm">
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"><Lock size={26} /></div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("map_access.purchase_required_title", "Unlock your map")}</h1>
+        <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-slate-400">{t("map_access.purchase_required_description", "Purchase this map to explore its locations. Already purchased? Sign in with your account email.")}</p>
+        {rawMapsList.length > 0 && <select
+          aria-label={t("map_access.select_map", "Select map")}
+          value={mapIdFilter}
+          onChange={event => handleSelectCountry(event.target.value)}
+          className="mt-6 h-11 w-full rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-gray-900 dark:text-white"
+        >
+          {!rawMapsList.some((item: any) => String(item._id) === mapIdFilter) && <option value={mapIdFilter} disabled>{t("map_access.select_map", "Select map")}</option>}
+          {rawMapsList.map((item: any) => <option key={String(item._id)} value={String(item._id)}>{item.name}</option>)}
+        </select>}
+        {isProfileError && accessToken && <div role="alert" className="mt-4 text-sm text-red-600 dark:text-red-400">
+          <p>{t("map_access.access_check_failed", "Unable to verify map access. Please try again.")}</p>
+          <button type="button" onClick={() => refetchProfile()} className="mt-2 underline">{t("map_access.retry", "Retry")}</button>
+        </div>}
+        <button type="button" onClick={() => router.push(mapIdFilter ? `/catalog/${encodeURIComponent(mapIdFilter)}` : "/catalog")} className="mt-6 w-full rounded-lg bg-[#FFC107] px-4 py-3 font-bold text-black hover:bg-[#FFB300]">{t("map_access.view_map_purchase", "View map")}</button>
+        {!accessToken && <button type="button" onClick={() => router.push(`/login?redirect=${encodeURIComponent(mapIdFilter ? `/maps?mapId=${mapIdFilter}` : "/maps")}`)} className="mt-4 text-sm font-semibold text-gray-700 underline dark:text-slate-200">{t("auth.sign_in", "Sign in")}</button>}
+      </div>
+    </section>;
+  }
 
   return (
     <div className="">

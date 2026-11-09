@@ -1,4 +1,12 @@
 {
+  "map_access": {
+    "purchase_required_title": "Desbloquea tu mapa",
+    "purchase_required_description": "Compra este mapa para explorar sus lugares. ¿Ya lo compraste? Inicia sesión con el correo de tu cuenta.",
+    "access_check_failed": "No se pudo verificar el acceso al mapa. Inténtalo de nuevo.",
+    "view_map_purchase": "Ver mapa",
+    "select_map": "Seleccionar mapa",
+    "retry": "Reintentar"
+  },
   "nav": {
     "map": "Mapa",
     "places": "Lugares",
