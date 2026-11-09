@@ -7,7 +7,7 @@ import { CategoryMarker } from "@/components/shared/maps/category-marker";
 import { GeolocationOnLoad } from "@/components/shared/maps/geolocation-on-load";
 import { UserLocationMarker } from "@/components/shared/maps/user-location-marker";
 import { useGetCategoriesQuery } from "@/redux/features/category/categoryApi";
-import { useGetMapsQuery } from "@/redux/features/map/mapApi";
+import { useGetMapsQuery, useGetMapByIdQuery } from "@/redux/features/map/mapApi";
 import { normalizePinType, trackUsage } from "@/lib/record-visit";
 import { useGetPublicPlacesBusinessQuery } from "@/redux/features/public/publicApi";
 import { useGetProfileQuery } from "@/redux/features/user/userApi";
@@ -30,7 +30,7 @@ import { MapFilters, SelectedMapFilter } from "./MapFilters";
 import LocationDialog from "./location-dialog";
 import { editorCanAccessMap } from "@/lib/editor-access";
 import { canRevealPlace } from "@/lib/place-access";
-import { getUsableMediaUrl } from "@/lib/utils";
+import { getUsableMediaUrl, getLocalized } from "@/lib/utils";
 import { geocodeInFlight } from "@/lib/maps/geocode";
 import { X } from "lucide-react";
 
@@ -741,6 +741,7 @@ function SearchPanner({
 export default function MapPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const requestedMapId = /^[a-f\d]{24}$/i.test(searchParams.get("mapId") || "") ? searchParams.get("mapId")! : "";
   const searchQuery = (searchParams.get("q") || searchParams.get("search") || "").trim();
 
   // Puerto Rico center as natural default coordinates
@@ -762,12 +763,14 @@ export default function MapPage() {
 
   const { t, language } = useLanguage();
   const [selectedMapId, setSelectedMapId] = useState<string>(() => {
+    if (requestedMapId) return requestedMapId;
     if (typeof window !== "undefined") {
       return localStorage.getItem("selectedMapId") || "";
     }
     return "";
   });
   const [selectedCountry, setSelectedCountry] = useState<string>(() => {
+    if (requestedMapId) return "";
     if (typeof window !== "undefined") {
       return localStorage.getItem("selectedCountryFilter") || "";
     }
@@ -792,6 +795,14 @@ export default function MapPage() {
   const isDark = hasMounted && resolvedTheme === "dark";
   const [initialMapState, setInitialMapState] = useState<{ center: { lat: number, lng: number }, zoom: number } | null>(null);
   const focusMapAppliedRef = useRef(false);
+  const requestedMapAppliedRef = useRef("");
+
+  useEffect(() => {
+    if (!requestedMapId || requestedMapAppliedRef.current === requestedMapId || selectedMapId === requestedMapId) return;
+    setSelectedMapId(requestedMapId);
+    setSelectedCountry("");
+    setIsManualSelection(true);
+  }, [requestedMapId, selectedMapId]);
 
   // Capture View-on-Map / search deep-link whenever focus params appear
   useEffect(() => {
@@ -830,7 +841,8 @@ export default function MapPage() {
     setPendingFocus(null);
     setFocusReady(true);
     setSelectedLocation(null);
-    if (searchQuery) router.replace("/maps", { scroll: false });
+    if (searchQuery || requestedMapId) router.replace("/maps", { scroll: false });
+    requestedMapAppliedRef.current = requestedMapId;
 
     const rawList = Array.isArray(mapsResponse?.data) ? mapsResponse.data : [];
     const matched = rawList.find(
@@ -932,11 +944,25 @@ export default function MapPage() {
   } = useGetMapsQuery({
     limit: 100,
   });
-  const rawMapsList = Array.isArray(mapsResponse?.data) ? mapsResponse.data : [];
+  const catalogueMaps = Array.isArray(mapsResponse?.data) ? mapsResponse.data : [];
+  const mapLookupId = requestedMapId || selectedMapId;
+  const { data: selectedMapResponse } = useGetMapByIdQuery(mapLookupId, {
+    skip: !mapLookupId || catalogueMaps.some((item: any) => String(item._id) === mapLookupId),
+  });
+  const rawMapsList = useMemo(() => {
+    const list = Array.isArray(mapsResponse?.data) ? mapsResponse.data : [];
+    const detail = selectedMapResponse?.data;
+    // A purchased map may be outside the first catalogue page.
+    if (detail && String(detail._id) === mapLookupId && !list.some((item: any) => String(item._id) === mapLookupId)) {
+      return [...list, { ...detail, name: getLocalized(detail.name, language) }];
+    }
+    return list;
+  }, [mapsResponse?.data, selectedMapResponse?.data, mapLookupId, language]);
   const availableCountries = rawMapsList.map((m: any) => m.name) || [];
 
   const selectedMapObj = useMemo(() => {
     if (!rawMapsList.length) return null;
+    if (requestedMapId) return rawMapsList.find((m: any) => String(m._id) === requestedMapId) || null;
     if (selectedMapId) {
       const byId = rawMapsList.find((m: any) => String(m._id) === String(selectedMapId));
       if (byId) return byId;
@@ -951,7 +977,27 @@ export default function MapPage() {
       if (byName) return byName;
     }
     return null;
-  }, [rawMapsList, selectedMapId, selectedCountry]);
+  }, [rawMapsList, requestedMapId, selectedMapId, selectedCountry]);
+
+  useEffect(() => {
+    if (!requestedMapId) { requestedMapAppliedRef.current = ""; return; }
+    if (requestedMapAppliedRef.current === requestedMapId || String(selectedMapObj?._id) !== requestedMapId) return;
+    requestedMapAppliedRef.current = requestedMapId;
+    setSelectedMapId(requestedMapId);
+    setSelectedCountry(selectedMapObj.name);
+    localStorage.setItem("selectedMapId", requestedMapId);
+    localStorage.setItem("selectedCountryFilter", selectedMapObj.name);
+    setIsManualSelection(true);
+    setCountrySelectionRevision(revision => revision + 1);
+    focusMapAppliedRef.current = true;
+    setPendingFocus(null);
+    setSelectedLocation(null);
+    setFocusReady(true);
+    setInitialMapState(null);
+    sessionStorage.removeItem("mapCameraState");
+    sessionStorage.removeItem("mapSelectedLocation");
+    router.replace("/maps", { scroll: false });
+  }, [requestedMapId, selectedMapObj, router]);
 
   // Keep selectedCountry and selectedMapId in sync whenever selectedMapObj resolves or changes language
   useEffect(() => {
@@ -968,7 +1014,7 @@ export default function MapPage() {
     }
   }, [selectedMapObj, selectedMapId, selectedCountry]);
 
-  const mapIdFilter = selectedMapObj ? String(selectedMapObj._id) : (selectedMapId || "");
+  const mapIdFilter = requestedMapId || (selectedMapObj ? String(selectedMapObj._id) : (selectedMapId || ""));
   const canFetchPlaces = Boolean(mapIdFilter);
   useEffect(() => {
     if (!mapIdFilter) return;
@@ -1211,6 +1257,7 @@ export default function MapPage() {
 
   // Set initial selectedCountry based on saved id, country, profile, or default
   useEffect(() => {
+    if (requestedMapId) return;
     if (rawMapsList.length === 0) return;
     if (selectedMapId && selectedCountry) return;
 
@@ -1242,7 +1289,7 @@ export default function MapPage() {
       localStorage.setItem("selectedCountryFilter", chosen.name);
       setIsManualSelection(true);
     }
-  }, [userProfile, selectedMapId, selectedCountry, rawMapsList]);
+  }, [userProfile, selectedMapId, selectedCountry, rawMapsList, requestedMapId]);
 
   useEffect(() => {
     if (selectedCountry) {

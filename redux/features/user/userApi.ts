@@ -1,6 +1,6 @@
 import { baseApi } from "@/redux/api/baseApi";
 
-const userApi = baseApi.injectEndpoints({
+export const userApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getProfile: builder.query({
       query: () => "/user/profile",

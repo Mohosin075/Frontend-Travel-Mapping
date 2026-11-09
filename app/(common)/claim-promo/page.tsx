@@ -4,7 +4,7 @@ import React, { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAppSelector, useAppDispatch } from "@/redux/hook";
 import { selectAccessToken, logout } from "@/redux/features/auth/authSlice";
-import { useGetProfileQuery } from "@/redux/features/user/userApi";
+import { userApi, useGetProfileQuery } from "@/redux/features/user/userApi";
 import {
   useVerifyPromoCodeQuery,
   useClaimFreePromoMutation,
@@ -61,6 +61,7 @@ function ClaimPromoContent() {
   const [paymentError, setPaymentError] = useState("");
   const [verifyPromoPayment, paymentVerification] = useVerifyPromoPaymentMutation();
   const verifiedPaymentRef = React.useRef("");
+  const fulfilledMapRef = React.useRef<{ id: string; name?: string } | null>(null);
 
   const accessToken = useAppSelector(selectAccessToken);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -69,7 +70,7 @@ function ClaimPromoContent() {
   const [mismatchMessage, setMismatchMessage] = useState("");
 
   // RTK Query calls
-  const { data: userProfile } = useGetProfileQuery({}, { skip: !accessToken });
+  const { data: userProfile, refetch: refetchProfile } = useGetProfileQuery({}, { skip: !accessToken });
   const {
     data: verifyRes,
     isLoading: isLoadingVerify,
@@ -120,10 +121,33 @@ function ClaimPromoContent() {
   const needsEmailVerification = Boolean(recipientEmailStr && userProfile && !userProfile.verified && !emailMismatch);
   const verifyEmailUrl = `/set-password?email=${encodeURIComponent(userProfile?.email || "")}&redirect=${encodeURIComponent(claimPath)}`;
 
+  const rememberFulfilledMap = async (id: string, name?: string) => {
+    if (!id) return;
+    fulfilledMapRef.current = { id: String(id), name };
+    // Server fulfilment has committed. Make the new entitlement visible even
+    // while an older profile request is still in flight or being invalidated.
+    const updateEntitlement = () => dispatch(userApi.util.updateQueryData("getProfile", {}, (profile: any) => {
+      profile.purchasedMaps ||= [];
+      const exists = profile.purchasedMaps.some((item: any) => String(typeof item === "object" ? item?._id || item?.id : item) === String(id));
+      if (!exists) profile.purchasedMaps.push(String(id));
+    }));
+    updateEntitlement();
+    try {
+      const fresh = await refetchProfile().unwrap();
+      // A request started before the claim can still be running. If it lacks
+      // the just-confirmed entitlement, request once more after it settles.
+      if (!fresh?.purchasedMaps?.some((item: any) => String(typeof item === "object" ? item?._id || item?.id : item) === String(id))) {
+        await refetchProfile().unwrap();
+      }
+    } catch { /* the confirmed entitlement remains available while refresh retries */ }
+    updateEntitlement();
+  };
+
   const checkPayment = async () => {
     setPaymentError("");
     try {
-      await verifyPromoPayment({ code, sessionId }).unwrap();
+      const result = await verifyPromoPayment({ code, sessionId }).unwrap();
+      await rememberFulfilledMap(result.data?.mapId || promoMapId, mapName !== "Selected Map" ? mapName : undefined);
       setPaymentConfirmed(true);
     } catch (error: any) { setPaymentError(error?.data?.message || "Unable to verify payment. Please retry."); }
   };
@@ -193,6 +217,7 @@ function ClaimPromoContent() {
     setIsProcessing(true);
     try {
       const res = await claimFreePromo({ code, mapId: selectedPromoMap || undefined }).unwrap();
+      await rememberFulfilledMap(res.data?.mapId || promoMapId, res.data?.mapName || mapName);
       setIsClaimedSuccess(true);
       toast.success(res?.message || "Invitation claimed successfully!");
       setTimeout(() => {
@@ -276,20 +301,20 @@ function ClaimPromoContent() {
 
   const handleGoToMap = () => {
     if (typeof window !== "undefined") {
-      const targetMapId =
-        promoMapId ||
-        (purchasedMaps[0]
-          ? typeof purchasedMaps[0] === "object"
-            ? purchasedMaps[0]._id || purchasedMaps[0].id
-            : purchasedMaps[0]
-          : null);
+      const targetMapId = fulfilledMapRef.current?.id || promoMapId;
+      if (!targetMapId) { router.push("/profile/purchased-maps"); return; }
 
       if (targetMapId) {
         localStorage.setItem("selectedMapId", String(targetMapId));
       }
-      if (mapName && mapName !== "Selected Map") {
-        localStorage.setItem("selectedCountryFilter", mapName);
+      const targetName = fulfilledMapRef.current?.name || mapName;
+      if (targetName && targetName !== "Selected Map") {
+        localStorage.setItem("selectedCountryFilter", targetName);
+      } else {
+        localStorage.removeItem("selectedCountryFilter");
       }
+      router.push(`/maps?mapId=${encodeURIComponent(String(targetMapId))}`);
+      return;
     }
     router.push("/maps");
   };
@@ -369,10 +394,10 @@ function ClaimPromoContent() {
             {t("promo_claim.lifetime_granted") || "Status: Lifetime Access Granted ✅"}
           </div>
           <Button
-            onClick={handleGoToPurchasedMaps}
+            onClick={handleGoToMap}
             className="w-full h-14 bg-[#FFC107] hover:bg-[#FFB300] text-black font-bold rounded-lg transition-all shadow-lg shadow-yellow-500/20 text-base"
           >
-            {t("promo_claim.view_purchased_maps") || "View My Purchased Maps"} <ArrowRight size={18} className="ml-1 inline" />
+            {t("promo_claim.open_map") || "Open Map"} <ArrowRight size={18} className="ml-1 inline" />
           </Button>
         </div>
       </section>
