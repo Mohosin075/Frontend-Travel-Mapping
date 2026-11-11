@@ -1,12 +1,12 @@
 "use client";
 
+import { useMapPurchase } from "@/hooks/use-map-purchase";
 import { FavouriteButton } from "@/components/shared/favourite-button";
 import { Button } from "@/components/ui/button";
 import { getImageUrl, getLocalized } from "@/lib/utils";
 import { useGetMapsQuery } from "@/redux/features/map/mapApi";
 import { motion } from "motion/react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/redux/hook";
 import { MapLocation } from "@/lib/types/place/map";
@@ -16,6 +16,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 function FeaturedMapsInner() {
   const { language } = useLanguage();
   const router = useRouter();
+  const purchase = useMapPurchase();
   const searchParams = useSearchParams();
   const accessToken = useAppSelector((state) => state.auth.accessToken);
   const redeemFreeMap = accessToken
@@ -109,13 +110,17 @@ function FeaturedMapsInner() {
                         <span className="text-base sm:text-lg md:text-xl font-bold text-[#1A1A1A] dark:text-slate-100 block mb-2">
                           ${map.price || "0.00"}
                         </span>
-                        <Link href={mapHref(map._id)} onClick={(e) => e.stopPropagation()}>
-                          <Button className="w-full text-black py-2.5 md:py-4 text-xs md:text-base bg-primary hover:bg-[#fabf13]/90 font-bold rounded-lg transition-colors shadow-sm cursor-pointer border-none">
-                            {redeemFreeMap
-                              ? (language === "es" ? "Reclamar este mapa" : "Claim this map")
-                              : (language === "es" ? "Ver detalles" : "View details")}
-                          </Button>
-                        </Link>
+                        <Button type="button" disabled={purchase.isBusy}
+                          aria-busy={purchase.pendingMapId === map._id}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void purchase.buyMap(map, { redeemFreeIntent: redeemFreeMap, loginRedirect: mapHref(map._id) });
+                          }}
+                          className="w-full text-black py-2.5 md:py-4 text-xs md:text-base bg-primary hover:bg-[#fabf13]/90 font-bold rounded-lg transition-colors shadow-sm cursor-pointer border-none">
+                          {redeemFreeMap
+                            ? (language === "es" ? "Reclamar este mapa" : "Claim this map")
+                            : (language === "es" ? "Comprar ahora" : "Buy Now")}
+                        </Button>
                       </div>
                     </div>
                   </motion.div>

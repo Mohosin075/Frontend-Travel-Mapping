@@ -1,5 +1,6 @@
 "use client";
 
+import { useMapPurchase } from "@/hooks/use-map-purchase";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -10,28 +11,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getImageUrl, getLocalized } from "@/lib/utils";
 import { useGetMapByIdQuery } from "@/redux/features/map/mapApi";
 import { trackUsage } from "@/lib/record-visit";
-import { useCreateMapCheckoutSessionMutation } from "@/redux/features/payment/paymentApi";
-import { useGetProfileQuery } from "@/redux/features/user/userApi";
-import {
-  useGetAwardsQuery,
-  useRedeemFreeMapMutation,
-} from "@/redux/features/award/awardApi";
 import { useAppSelector } from "@/redux/hook";
 import { selectAccessToken } from "@/redux/features/auth/authSlice";
-import { Check } from "lucide-react";
 import Link from "next/link";
-import { useLoginRequired } from "@/components/shared/login-required-modal";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { useParams, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function FeatureMapDetailPage() {
   const { t, language } = useLanguage();
   const params = useParams();
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const { openLoginRequired } = useLoginRequired();
   const rawId = params?.id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
   const redeemFreeIntent = searchParams.get("redeemFreeMap") === "1";
@@ -48,110 +38,16 @@ export default function FeatureMapDetailPage() {
     trackUsage("map", String(id));
   }, [id, accessToken]);
 
-
-  const { data: userProfile, isLoading: isProfileLoading } = useGetProfileQuery({}, { skip: !accessToken });
-  const { data: awardsRes } = useGetAwardsQuery(
-    { page: 1, limit: 50 },
-    { skip: !accessToken },
-  );
-  const purchasedMaps = userProfile?.purchasedMaps || [];
-
-  const isPurchased = purchasedMaps.some((m: any) => {
-    const mapId = typeof m === "object" ? m._id || m.id : m;
-    return String(mapId) === String(id);
-  });
-
-  const hasAccess = mapData?.isPaid === false || isPurchased;
-
-  const canClaimFreeMap = useMemo(() => {
-    if (!accessToken || isProfileLoading || !userProfile || !mapData?.isPaid) {
-      return false;
-    }
-    const awards = awardsRes?.data || [];
-    const totalAllowed = awards
-      .filter((a: any) => a.type === "Free Map" && a.isUnlocked)
-      .reduce((acc: number, a: any) => acc + (Number(a.config?.mapCount) || 1), 0);
-
-    const redeemedCount = Array.isArray(userProfile?.redeemedFreeMaps) && userProfile.redeemedFreeMaps.length > 0
-      ? userProfile.redeemedFreeMaps.length
-      : (userProfile?.redeemedFreeMap ? 1 : 0);
-
-    return totalAllowed > redeemedCount;
-  }, [accessToken, isProfileLoading, userProfile, mapData?.isPaid, awardsRes?.data]);
-
-  const handleViewMap = () => {
-    if (mapData?.name) {
-      localStorage.setItem("selectedCountryFilter", mapData.name);
-    }
-    router.push("/maps");
-  };
-
-  const [createCheckout, { isLoading: isCheckingOut }] =
-    useCreateMapCheckoutSessionMutation();
-  const [redeemFreeMap, { isLoading: isRedeemingFree }] =
-    useRedeemFreeMapMutation();
+  const purchase = useMapPurchase();
+  const purchaseMap = { ...mapData, _id: String(id || "") };
+  const hasAccess = purchase.hasAccess(purchaseMap);
+  const canClaimFreeMap = purchase.canClaimFreeMap(purchaseMap);
   const [mainImage, setMainImage] = useState<string | null>(null);
-
-  const handleClaimFreeMap = async () => {
-    if (!accessToken) {
-      openLoginRequired(window.location.pathname + window.location.search);
-      return;
-    }
-    try {
-      await redeemFreeMap({ mapId: String(id) }).unwrap();
-      toast.success(t("maps.free_map_claimed"));
-      if (mapData?.name) {
-        localStorage.setItem("selectedCountryFilter", mapData.name);
-      }
-      router.push("/maps");
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to claim free map.");
-    }
-  };
-
-  const handleBuyNow = async () => {
-    if (!accessToken) {
-      openLoginRequired(window.location.pathname + window.location.search);
-      return;
-    }
-
-    // Prefer free redeem when Free Map award is unlocked
-    if (canClaimFreeMap) {
-      await handleClaimFreeMap();
-      return;
-    }
-
-    if (redeemFreeIntent) {
-      const redeemedCount = Array.isArray(userProfile?.redeemedFreeMaps) && userProfile.redeemedFreeMaps.length > 0
-        ? userProfile.redeemedFreeMaps.length
-        : (userProfile?.redeemedFreeMap ? 1 : 0);
-      if (redeemedCount > 0) {
-        toast.error(t("maps.already_redeemed_free"));
-      } else {
-        toast.error(t("maps.unlock_free_first"));
-      }
-      return;
-    }
-
-    try {
-      // Amount is resolved server-side from Map.price
-      const res = await createCheckout({
-        mapId: id,
-        successUrl: `${window.location.origin}?session_id={CHECKOUT_SESSION_ID}&success=true`,
-        cancelUrl: `${window.location.origin}/payment-failed?success=false`,
-      }).unwrap();
-
-      if (res?.data?.url) {
-        window.location.href = res.data.url;
-      } else {
-        toast.error(t("payment.checkout_url_failed"));
-      }
-    } catch (error: any) {
-      toast.error(
-        error?.data?.message || "Something went wrong during checkout.",
-      );
-    }
-  };
+  const handleViewMap = () => purchase.openMap(purchaseMap);
+  const handleBuyNow = () => purchase.buyMap(purchaseMap, {
+    redeemFreeIntent,
+    loginRedirect: window.location.pathname + window.location.search,
+  });
 
   useEffect(() => {
     if (mapData?.images?.length > 0) {
@@ -287,11 +183,11 @@ export default function FeatureMapDetailPage() {
               </Button>
             ) : (
               <Button
-                onClick={canClaimFreeMap ? handleClaimFreeMap : handleBuyNow}
-                disabled={isCheckingOut || isRedeemingFree}
+                onClick={handleBuyNow}
+                disabled={purchase.isBusy}
                 className="w-full text-black py-6 px-13.5 text-lg bg-yellow-400 hover:bg-yellow-500 font-bold rounded-lg transition-colors shadow-lg shadow-yellow-500/20 cursor-pointer border-none disabled:opacity-70"
               >
-                {isCheckingOut || isRedeemingFree
+                {purchase.isBusy
                   ? t("common.loading")
                   : canClaimFreeMap
                     ? t("map.claim_free_map")
