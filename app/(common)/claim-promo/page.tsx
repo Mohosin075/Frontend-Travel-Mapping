@@ -57,15 +57,20 @@ function ClaimPromoContent() {
   const success = searchParams.get("success") === "true";
   const cancelled = searchParams.get("cancelled") === "true";
   const sessionId = searchParams.get("session_id") || undefined;
-  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [confirmedPaymentKey, setConfirmedPaymentKey] = useState("");
   const [paymentError, setPaymentError] = useState("");
   const [verifyPromoPayment, paymentVerification] = useVerifyPromoPaymentMutation();
   const verifiedPaymentRef = React.useRef("");
-  const fulfilledMapRef = React.useRef<{ id: string; name?: string } | null>(null);
+  const fulfilledMapRef = React.useRef<{ id: string; name?: string; context: string } | null>(null);
 
   const accessToken = useAppSelector(selectAccessToken);
+  const promoContextKey = `${accessToken || ""}:${code}:${selectedPromoMap}:${sessionId || ""}`;
+  const activePromoContext = React.useRef(promoContextKey);
+  const paymentConfirmed = Boolean(accessToken && confirmedPaymentKey === promoContextKey);
+  useEffect(() => { activePromoContext.current = promoContextKey; }, [promoContextKey]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isClaimedSuccess, setIsClaimedSuccess] = useState(false);
+  const [claimedPromoKey, setClaimedPromoKey] = useState("");
+  const isClaimedSuccess = Boolean(accessToken && claimedPromoKey === promoContextKey);
   const [showMismatchModal, setShowMismatchModal] = useState(false);
   const [mismatchMessage, setMismatchMessage] = useState("");
 
@@ -122,18 +127,22 @@ function ClaimPromoContent() {
   const verifyEmailUrl = `/set-password?email=${encodeURIComponent(userProfile?.email || "")}&redirect=${encodeURIComponent(claimPath)}`;
 
   const rememberFulfilledMap = async (id: string, name?: string) => {
-    if (!id) return;
-    fulfilledMapRef.current = { id: String(id), name };
+    if (!id || activePromoContext.current !== promoContextKey) return;
+    fulfilledMapRef.current = { id: String(id), name, context: promoContextKey };
     // Server fulfilment has committed. Make the new entitlement visible even
     // while an older profile request is still in flight or being invalidated.
-    const updateEntitlement = () => dispatch(userApi.util.updateQueryData("getProfile", {}, (profile: any) => {
-      profile.purchasedMaps ||= [];
-      const exists = profile.purchasedMaps.some((item: any) => String(typeof item === "object" ? item?._id || item?.id : item) === String(id));
-      if (!exists) profile.purchasedMaps.push(String(id));
-    }));
+    const updateEntitlement = () => {
+      if (activePromoContext.current !== promoContextKey) return;
+      dispatch(userApi.util.updateQueryData("getProfile", {}, (profile: any) => {
+        profile.purchasedMaps ||= [];
+        const exists = profile.purchasedMaps.some((item: any) => String(typeof item === "object" ? item?._id || item?.id : item) === String(id));
+        if (!exists) profile.purchasedMaps.push(String(id));
+      }));
+    };
     updateEntitlement();
     try {
       const fresh = await refetchProfile().unwrap();
+      if (activePromoContext.current !== promoContextKey) return;
       // A request started before the claim can still be running. If it lacks
       // the just-confirmed entitlement, request once more after it settles.
       if (!fresh?.purchasedMaps?.some((item: any) => String(typeof item === "object" ? item?._id || item?.id : item) === String(id))) {
@@ -147,21 +156,24 @@ function ClaimPromoContent() {
     setPaymentError("");
     try {
       const result = await verifyPromoPayment({ code, sessionId }).unwrap();
+      if (activePromoContext.current !== promoContextKey) return;
       await rememberFulfilledMap(result.data?.mapId || promoMapId, mapName !== "Selected Map" ? mapName : undefined);
-      setPaymentConfirmed(true);
-    } catch (error: any) { setPaymentError(error?.data?.message || "Unable to verify payment. Please retry."); }
+      if (activePromoContext.current === promoContextKey) setConfirmedPaymentKey(promoContextKey);
+    } catch (error: any) {
+      if (activePromoContext.current === promoContextKey) setPaymentError(error?.data?.message || "Unable to verify payment. Please retry.");
+    }
   };
   useEffect(() => {
-    const key = `${accessToken}:${code}:${sessionId || ""}`;
+    const key = promoContextKey;
     if (!success || !accessToken || !code || verifiedPaymentRef.current === key) return;
     verifiedPaymentRef.current = key;
-    setPaymentConfirmed(false);
+    setConfirmedPaymentKey("");
     void checkPayment();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [success, accessToken, code, sessionId]);
+  }, [success, accessToken, code, sessionId, promoContextKey]);
 
   // Auto claim free invitation immediately after user signs in / registers
-  const hasAutoClaimedRef = React.useRef(false);
+  const hasAutoClaimedRef = React.useRef("");
 
   useEffect(() => {
     if (accessToken && code && !success) {
@@ -179,8 +191,8 @@ function ClaimPromoContent() {
     if (emailMismatch) return;
     if (needsEmailVerification) return;
 
-    if (!hasAutoClaimedRef.current && !isProcessing) {
-      hasAutoClaimedRef.current = true;
+    if (hasAutoClaimedRef.current !== promoContextKey && !isProcessing) {
+      hasAutoClaimedRef.current = promoContextKey;
       handleFreeClaim();
     }
   }, [
@@ -197,6 +209,7 @@ function ClaimPromoContent() {
     needsEmailVerification,
     promoMapId,
     isProcessing,
+    promoContextKey,
   ]);
 
   // Handle Free Claiming
@@ -217,11 +230,13 @@ function ClaimPromoContent() {
     setIsProcessing(true);
     try {
       const res = await claimFreePromo({ code, mapId: selectedPromoMap || undefined }).unwrap();
+      if (activePromoContext.current !== promoContextKey) return;
       await rememberFulfilledMap(res.data?.mapId || promoMapId, res.data?.mapName || mapName);
-      setIsClaimedSuccess(true);
+      if (activePromoContext.current !== promoContextKey) return;
+      setClaimedPromoKey(promoContextKey);
       toast.success(res?.message || "Invitation claimed successfully!");
       setTimeout(() => {
-        handleGoToMap();
+        if (activePromoContext.current === promoContextKey) handleGoToMap();
       }, 2000);
     } catch (error: any) {
       const errMsg = error?.data?.message || error?.message || "";
@@ -254,6 +269,7 @@ function ClaimPromoContent() {
     setIsProcessing(true);
     try {
       const result = await createPromoCheckoutSession({ code, mapId: selectedPromoMap || undefined }).unwrap();
+      if (activePromoContext.current !== promoContextKey) { setIsProcessing(false); return; }
       if (result?.data?.url) {
         toast.loading("Redirecting to payment gateway...");
         window.location.href = result.data.url;
@@ -301,13 +317,14 @@ function ClaimPromoContent() {
 
   const handleGoToMap = () => {
     if (typeof window !== "undefined") {
-      const targetMapId = fulfilledMapRef.current?.id || promoMapId;
+      const fulfilled = fulfilledMapRef.current?.context === promoContextKey ? fulfilledMapRef.current : null;
+      const targetMapId = fulfilled?.id || promoMapId;
       if (!targetMapId) { router.push("/profile/purchased-maps"); return; }
 
       if (targetMapId) {
         localStorage.setItem("selectedMapId", String(targetMapId));
       }
-      const targetName = fulfilledMapRef.current?.name || mapName;
+      const targetName = fulfilled?.name || mapName;
       if (targetName && targetName !== "Selected Map") {
         localStorage.setItem("selectedCountryFilter", targetName);
       } else {
@@ -372,7 +389,7 @@ function ClaimPromoContent() {
       {paymentError && <p role="alert">{paymentError}</p>}
       {accessToken ? <Button disabled={paymentVerification.isLoading} onClick={checkPayment}>
         {paymentVerification.isLoading ? (language === "es" ? "Verificando…" : "Verifying…") : (language === "es" ? "Reintentar verificación" : "Retry verification")}
-      </Button> : <Button asChild><a href={`/login?redirect=${encodeURIComponent(`/claim-promo?code=${encodeURIComponent(code)}&success=true${sessionId ? `&session_id=${encodeURIComponent(sessionId)}` : ""}`)}`}>
+      </Button> : <Button asChild><a href={`/login?redirect=${encodeURIComponent(`${claimPath}&success=true${sessionId ? `&session_id=${encodeURIComponent(sessionId)}` : ""}`)}`}>
         {language === "es" ? "Iniciar sesión para verificar" : "Sign in to verify"}
       </a></Button>}
     </section>;
@@ -533,7 +550,7 @@ function ClaimPromoContent() {
             </div>
             <div className="space-y-3 pt-2">
               <Button
-                onClick={() => router.push(`/login?redirect=${encodeURIComponent("/maps")}`)}
+                onClick={() => router.push(`/login?redirect=${encodeURIComponent("/profile/purchased-maps")}`)}
                 className="w-full h-14 bg-[#FFC107] hover:bg-[#FFB300] text-black font-bold rounded-lg shadow-lg shadow-yellow-500/20 text-base cursor-pointer"
               >
                 <LogIn size={18} className="mr-2 inline" />

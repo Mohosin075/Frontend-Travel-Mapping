@@ -111,7 +111,7 @@ export default function FeatureMapDetailPage() {
 
   const handleBuyNow = async () => {
     if (!accessToken) {
-      router.push(`/catalog/checkout?mapId=${encodeURIComponent(String(id))}`);
+      openLoginRequired(window.location.pathname + window.location.search);
       return;
     }
 

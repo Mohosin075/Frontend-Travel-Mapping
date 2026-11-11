@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { selectAccessToken, setUser } from "@/redux/features/auth/authSlice";
 import { useStartGuestMapCheckoutMutation, useCompleteGuestMapCheckoutMutation, useCreateMapCheckoutSessionMutation } from "@/redux/features/payment/paymentApi";
@@ -15,6 +14,19 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { baseApi } from "@/redux/api/baseApi";
 import { persistor } from "@/redux/store";
 import { ArrowLeft, ArrowRight, Loader2, Mail, MapPin } from "lucide-react";
+
+type SavedCheckout = { email: string; token: string };
+
+function readSavedCheckout(storageKey: string): SavedCheckout | null {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(storageKey) || "{}");
+    return typeof saved?.email === "string" && /^[a-f\d]{64}$/.test(saved?.token || "")
+      ? { email: saved.email, token: saved.token }
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 export default function MapCheckout() {
   const params = useSearchParams();
@@ -29,6 +41,8 @@ export default function MapCheckout() {
   const validMap = /^[a-f\d]{24}$/i.test(mapId);
   const storageKey = `map-checkout:${mapId}`;
   const [email, setEmail] = useState("");
+  const [hasSavedAttempt, setHasSavedAttempt] = useState(false);
+  const [storageReady, setStorageReady] = useState(false);
   const [error, setError] = useState("");
   const [needsLogin, setNeedsLogin] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -41,13 +55,29 @@ export default function MapCheckout() {
   const map = mapResponse?.data;
   const ownsMap = profile?.purchasedMaps?.some((item: any) => String(typeof item === "object" ? item._id || item.id : item) === mapId);
   const busy = startState.isLoading || completeState.isLoading || checkoutState.isLoading;
-  const resume = `/catalog/checkout?mapId=${encodeURIComponent(mapId)}&resume=1`;
-  const loginUrl = `/login?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(resume)}`;
-  const recoverUrl = `/set-password?email=${encodeURIComponent(email || currentUser?.email || "")}&redirect=${encodeURIComponent(resume)}`;
+  const detailUrl = `/catalog/${encodeURIComponent(mapId)}`;
+  const loginFirstUrl = `${detailUrl}?loginRequired=1&redirect=${encodeURIComponent(detailUrl)}`;
+  // Recovery must never automatically start another payment. A returned order
+  // goes to purchased maps; an unfinished attempt returns to its map details.
+  const recoveryDestination = sessionId ? "/profile/purchased-maps" : detailUrl;
+  const loginUrlFor = (checkoutEmail: string) => `/login?email=${encodeURIComponent(checkoutEmail)}&redirect=${encodeURIComponent(recoveryDestination)}`;
+  const loginUrl = loginUrlFor(email || currentUser?.email || "");
+  const recoverUrl = `/set-password?email=${encodeURIComponent(email || currentUser?.email || "")}&redirect=${encodeURIComponent(recoveryDestination)}`;
 
   useEffect(() => {
-    try { setEmail(JSON.parse(sessionStorage.getItem(storageKey) || "{}").email || ""); } catch { /* recovery links remain available */ }
+    // Read legacy capabilities only. New visitors must register or log in first.
+    const saved = readSavedCheckout(storageKey);
+    setEmail(saved?.email || "");
+    setHasSavedAttempt(Boolean(saved));
+    setStorageReady(true);
   }, [storageKey]);
+
+  useEffect(() => {
+    // Stripe returns must reach verification even after storage is lost.
+    if (validMap && storageReady && !accessToken && !sessionId && !hasSavedAttempt) {
+      router.replace(loginFirstUrl);
+    }
+  }, [validMap, storageReady, accessToken, sessionId, hasSavedAttempt, loginFirstUrl, router]);
 
   const openMap = () => {
     localStorage.setItem("selectedMapId", mapId);
@@ -64,14 +94,14 @@ export default function MapCheckout() {
   const finish = async () => {
     setError("");
     try {
-      const saved = JSON.parse(sessionStorage.getItem(storageKey) || "{}");
-      if (!saved.token) throw new Error(es ? "Verifica tu email para acceder a tu compra." : "Verify your email to access your purchase.");
+      const saved = readSavedCheckout(storageKey);
+      if (!saved) throw new Error(es ? "Verifica tu email para acceder a tu compra." : "Verify your email to access your purchase.");
       // Do not replace another account that signed in while Stripe was open.
       if (accessToken && currentUser?.email?.toLowerCase() !== saved.email) {
         throw new Error(es ? "Has iniciado sesión con otra cuenta. Cierra sesión y verifica el email de compra." : "You are signed in with another account. Sign out and verify the purchase email.");
       }
       const response = await completeGuest({ sessionId, checkoutToken: saved.token }).unwrap();
-      if (response.data?.loginRequired) { setNeedsLogin(true); router.push(loginUrl); return; }
+      if (response.data?.loginRequired) { setNeedsLogin(true); router.push(loginUrlFor(saved.email)); return; }
       const token = response.data?.accessToken;
       if (!token) throw new Error("Please sign in to access your purchase.");
       const decoded = decodeJwtPayload(token);
@@ -104,16 +134,13 @@ export default function MapCheckout() {
         window.location.assign(response.data.url);
         return;
       }
-      const normalizedEmail = email.trim().toLowerCase();
-      let saved = JSON.parse(sessionStorage.getItem(storageKey) || "{}");
-      if (!saved.token || saved.email !== normalizedEmail) {
-        const bytes = crypto.getRandomValues(new Uint8Array(32));
-        saved = { email: normalizedEmail, token: Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("") };
-        // Persist before sending: an interrupted request can safely resume.
-        sessionStorage.setItem(storageKey, JSON.stringify(saved));
+      const saved = readSavedCheckout(storageKey);
+      if (!saved) {
+        router.replace(loginFirstUrl);
+        return;
       }
-      const response = await startGuest({ email: normalizedEmail, mapId, checkoutToken: saved.token }).unwrap();
-      if (response.data?.loginRequired) { setNeedsLogin(true); router.push(loginUrl); return; }
+      const response = await startGuest({ email: saved.email, mapId, checkoutToken: saved.token }).unwrap();
+      if (response.data?.loginRequired) { setNeedsLogin(true); router.push(loginUrlFor(saved.email)); return; }
       if (!response.data?.url) throw new Error("Unable to open checkout.");
       window.location.assign(response.data.url);
     } catch (err: any) {
@@ -134,14 +161,20 @@ export default function MapCheckout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, accessToken, profile, profileLoading, map, validMap]);
 
+  if (validMap && !sessionId && !accessToken && (!storageReady || !hasSavedAttempt)) {
+    return <main className="min-h-[75vh] flex items-center justify-center" aria-busy="true">
+      <Loader2 className="size-6 animate-spin" aria-label={es ? "Cargando…" : "Loading…"} />
+    </main>;
+  }
+
   return <main className="min-h-[75vh] flex items-center justify-center bg-slate-50/70 px-4 py-10 sm:py-16 dark:bg-slate-950/30">
     <section className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_32px_-16px_rgba(15,23,42,0.2)] sm:p-8 dark:bg-slate-900 dark:border-slate-800 space-y-6">
       <div className="space-y-3">
         <h1 className="text-2xl font-bold leading-tight tracking-tight text-slate-950 dark:text-slate-50">
-          {!accessToken && !sessionId ? (es ? "Introduce tu email para comprar" : "Enter your email to purchase") : (es ? "Compra tu mapa" : "Purchase your map")}
+          {!accessToken && !sessionId ? (es ? "Continúa tu compra" : "Resume your purchase") : (es ? "Compra tu mapa" : "Purchase your map")}
         </h1>
         {!accessToken && !sessionId && <p id="checkout-email-help" className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          {es ? "Usaremos este email para tu cuenta y el acceso a tu mapa." : "This email will be used for your account and map access."}
+          {es ? "Continúa el pago que ya habías iniciado con este email." : "Continue the checkout you previously started with this email."}
         </p>}
       </div>
       {!validMap || (!mapLoading && !map) ? <p role="alert">{es ? "Mapa no disponible." : "Map unavailable."}</p> : <>
@@ -162,21 +195,23 @@ export default function MapCheckout() {
           <Button className="w-full" onClick={openMap}>{es ? "Abrir mapa" : "Open Map"}</Button>
           <Link className="block underline" href={recoverUrl}>{es ? "Verificar email y crear contraseña" : "Verify email and set password"}</Link>
         </> : <>
-          {sessionId && error && <p role="alert" className="text-red-600">{error}</p>}
+          {sessionId && error && <>
+            <p role="alert" className="text-red-600">{error}</p>
+            <div className="flex flex-wrap gap-4 text-sm font-medium">
+              <Link className="underline" href={loginUrl}>{es ? "Iniciar sesión" : "Sign in"}</Link>
+              <Link className="underline" href={recoverUrl}>{es ? "Verificar email y crear contraseña" : "Verify email and set password"}</Link>
+            </div>
+          </>}
           {sessionId ? <>
             <p>{es ? "Comprobamos tu pago antes de abrir el mapa." : "We verify your payment before opening the map."}</p>
             <Button className="w-full" disabled={busy} onClick={finish}>{busy ? (es ? "Verificando…" : "Verifying…") : (es ? "Reintentar verificación" : "Retry verification")}</Button>
           </> : <form className="space-y-5" onSubmit={event => { event.preventDefault(); void buy(); }}>
             {!accessToken && <>
               <div className="space-y-2">
-              <label htmlFor="purchase-email" className="block text-sm font-semibold text-slate-800 dark:text-slate-200">{es ? "Correo electrónico" : "Email address"}</label>
+              <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200">{es ? "Correo electrónico" : "Email address"}</span>
               <div className="relative">
               <Mail className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-slate-400" aria-hidden="true" />
-              <Input id="purchase-email" type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required maxLength={254} value={email}
-                placeholder="you@example.com" aria-describedby="checkout-email-help"
-                className="h-12 rounded-xl border-slate-300 bg-white pl-11 pr-4 shadow-none focus-visible:border-amber-400 focus-visible:ring-amber-400/25 dark:border-slate-700 dark:bg-slate-950/40"
-                onInvalid={() => setError(es ? "Introduce un email válido para continuar." : "Enter a valid email to continue.")}
-                onChange={event => { setEmail(event.target.value); setNeedsLogin(false); setError(""); }} />
+              <p id="purchase-email" aria-describedby="checkout-email-help" className="min-h-12 break-all rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-4 dark:border-slate-700 dark:bg-slate-950/40">{email}</p>
               </div>
               </div>
             </>}
