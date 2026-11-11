@@ -38,6 +38,7 @@ export default function MapCheckout() {
   const es = language === "es";
   const mapId = params.get("mapId") || "";
   const sessionId = params.get("session_id");
+  const autoCheckout = params.get("resume") === "1" && !sessionId && !params.has("cancelled");
   const validMap = /^[a-f\d]{24}$/i.test(mapId);
   const storageKey = `map-checkout:${mapId}`;
   const [email, setEmail] = useState("");
@@ -51,8 +52,8 @@ export default function MapCheckout() {
   const [startGuest, startState] = useStartGuestMapCheckoutMutation();
   const [completeGuest, completeState] = useCompleteGuestMapCheckoutMutation();
   const [createCheckout, checkoutState] = useCreateMapCheckoutSessionMutation();
-  const { data: mapResponse, isLoading: mapLoading } = useGetMapByIdQuery(mapId, { skip: !validMap });
-  const { data: profile, isFetching: profileLoading } = useGetProfileQuery({}, { skip: !accessToken });
+  const { data: mapResponse, isLoading: mapLoading, isError: mapError } = useGetMapByIdQuery(mapId, { skip: !validMap });
+  const { data: profile, isFetching: profileLoading, isError: profileError } = useGetProfileQuery({}, { skip: !accessToken });
   const map = mapResponse?.data;
   const ownsMap = profile?.purchasedMaps?.some((item: any) => String(typeof item === "object" ? item._id || item.id : item) === mapId);
   const busy = startState.isLoading || completeState.isLoading || checkoutState.isLoading;
@@ -159,12 +160,20 @@ export default function MapCheckout() {
   useEffect(() => {
     if (started.current || !validMap) return;
     if (sessionId) { started.current = true; void finish(); }
-    else if (params.get("resume") === "1" && accessToken && profile && !profileLoading && map) {
+    else if (autoCheckout && accessToken && profile && !profileLoading && map) {
       started.current = true; void buy();
     }
     // One automatic attempt; retries are explicit and never create another checkout on render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, accessToken, profile, profileLoading, map, validMap]);
+  }, [sessionId, autoCheckout, accessToken, profile, profileLoading, map, validMap]);
+
+  // Signup/login resumes payment automatically. Keep the purchase card hidden
+  // until navigation completes; show it only if the user needs to recover/retry.
+  if (autoCheckout && validMap && (mapLoading || map) && !mapError && !profileError && !error && !needsLogin && !completed) {
+    return <main className="min-h-[75vh] flex items-center justify-center" aria-busy="true">
+      <Loader2 className="size-6 animate-spin" role="status" aria-label={es ? "Preparando el pago" : "Preparing checkout"} />
+    </main>;
+  }
 
   if (validMap && !sessionId && !accessToken && (!storageReady || !hasSavedAttempt)) {
     return <main className="min-h-[75vh] flex items-center justify-center" aria-busy="true">
