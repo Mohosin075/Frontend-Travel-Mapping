@@ -23,14 +23,9 @@ const registerSchema = z
     fullName: z.string().min(2, "Full name must be at least 2 characters"),
     email: z.string().min(1, "Email is required").email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(6, "Confirm password must be at least 6 characters"),
     terms: z.boolean().refine((val) => val === true, {
       message: "You must agree to the Terms & Service and Privacy Policy",
     }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
   });
 
 type FormValues = z.infer<typeof registerSchema>;
@@ -148,27 +143,6 @@ export const RegisterForm = () => {
           </div>
           {errors.password && (
             <p className="text-xs text-red-500 ml-1">{errors.password.message}</p>
-          )}
-        </div>
-
-        {/* Confirm Password */}
-        <div className="space-y-2">
-          <Label className="text-sm font-semibold text-[#424242] dark:text-slate-300 ml-1">
-            {t("auth.confirm_password")}
-          </Label>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9E9E9E] dark:text-slate-500" />
-            <Input
-              type="password"
-              placeholder="••••••••"
-              {...register("confirmPassword")}
-              className="w-full pl-12 pr-4 py-6 bg-gray-100/80 dark:bg-slate-900/60 border border-[#E0E0E0] dark:border-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 rounded-lg focus-visible:ring-2 focus-visible:ring-[#FFC107] focus-visible:border-transparent transition-all shadow-none"
-            />
-          </div>
-          {errors.confirmPassword && (
-            <p className="text-xs text-red-500 ml-1">
-              {errors.confirmPassword.message}
-            </p>
           )}
         </div>
 
