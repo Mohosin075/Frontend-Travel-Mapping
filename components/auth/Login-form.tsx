@@ -43,7 +43,6 @@ export const LoginForm = () => {
     register,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(loginSchema),
@@ -239,10 +238,6 @@ export const LoginForm = () => {
             t("nav.login")
           )}
         </Button>
-        <Link className="block text-center text-sm font-semibold text-primary hover:underline"
-          href={`/set-password?email=${encodeURIComponent(watch("email") || "")}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ""}`}>
-          {t("auth.login_no_password_yet")}
-        </Link>
       </form>}
 
       {/* Footer */}
