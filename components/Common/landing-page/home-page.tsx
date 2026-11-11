@@ -23,10 +23,11 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 const loadAnimationFeatures = () => import("@/components/Common/landing-page/animation-features").then(module => module.default);
 
 export default function HomePage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
+  const openPurchasedMap = searchParams.get("open_map") === "1";
 
   const accessToken = useAppSelector(selectAccessToken);
   const currentUser = useAppSelector((state) => state.auth.user);
@@ -63,20 +64,40 @@ export default function HomePage() {
   const { data: userProfile } = useGetProfileQuery({}, { skip: !isAuthed });
 
   // Trigger verify checkout query if session_id query exists
-  const { data: verifyData, error: verifyError, isLoading: isVerifying } = useVerifyCheckoutSessionQuery(
+  const { data: verifyData, error: verifyError, isLoading: isVerifying, refetch: retryVerification } = useVerifyCheckoutSessionQuery(
     sessionId || "",
     { skip: !sessionId }
   );
 
   useEffect(() => {
     if (verifyData) {
+      if (openPurchasedMap) {
+        const payment = verifyData.data;
+        const buyerId = typeof payment?.userId === "object" ? payment.userId?._id : payment?.userId;
+        const accountId = currentUser?.id || userProfile?._id;
+        if (!accessToken || !accountId) return;
+        if (payment?.status !== "succeeded") return;
+        if (String(buyerId) !== String(accountId)) {
+          toast.error(t("payment.failed"));
+          router.replace("/profile/purchased-maps");
+          return;
+        }
+        const mapId = typeof payment.mapId === "object" ? payment.mapId?._id : payment.mapId;
+        if (mapId) {
+          localStorage.setItem("selectedMapId", String(mapId));
+          localStorage.removeItem("selectedCountryFilter");
+          router.replace(`/maps?mapId=${encodeURIComponent(String(mapId))}`);
+          return;
+        }
+      }
       toast.success(t("payment.verified_redirecting"));
       router.replace("/profile/purchased-maps");
     } else if (verifyError) {
+      if (openPurchasedMap) return;
       toast.error(t("payment.failed"));
       router.replace("/maps");
     }
-  }, [verifyData, verifyError, router, t]);
+  }, [verifyData, verifyError, router, t, openPurchasedMap, accessToken, currentUser?.id, userProfile?._id]);
 
   useEffect(() => {
     // Only auto-redirect to /maps if we are NOT currently verifying a Stripe checkout session
@@ -86,6 +107,27 @@ export default function HomePage() {
       router.replace("/maps");
     }
   }, [isAuthed, userProfile, router, sessionId, searchParams]);
+
+  // Recover the original payment without starting another checkout.
+  if (sessionId && openPurchasedMap && !isVerifying &&
+      (verifyError || (verifyData && verifyData.data?.status !== "succeeded") || !accessToken)) {
+    const returnPath = `/?session_id=${encodeURIComponent(sessionId)}&success=true&open_map=1`;
+    return <main className="min-h-[70vh] flex items-center justify-center px-4">
+      <section className="w-full max-w-md space-y-5 text-center">
+        <h1 className="text-2xl font-bold">{language === "es" ? "Verifica tu pago" : "Verify your payment"}</h1>
+        {(verifyError || (verifyData && verifyData.data?.status !== "succeeded")) &&
+          <p role="alert">{t("payment.failed")}</p>}
+        <p>{language === "es" ? "Comprueba el pago o inicia sesión con la cuenta de tu compra. No necesitas volver a pagar." : "Retry verification or sign in with your purchase account. You do not need to pay again."}</p>
+        <button type="button" className="rounded-lg bg-yellow-400 px-6 py-3 font-semibold text-black" onClick={() => retryVerification()}>
+          {language === "es" ? "Reintentar verificación" : "Retry verification"}
+        </button>
+        {!accessToken && <div className="flex flex-col gap-3">
+          <a className="underline" href={`/login?redirect=${encodeURIComponent(returnPath)}`}>{t("nav.login")}</a>
+          <a className="underline" href={`/set-password?redirect=${encodeURIComponent(returnPath)}`}>{t("auth.login_verify_to_set_password")}</a>
+        </div>}
+      </section>
+    </main>;
+  }
 
   // Loading state for checkout verification
   if (sessionId && isVerifying) {

@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useLoginRequired } from "@/components/shared/login-required-modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getLocalized } from "@/lib/utils";
 import { useAppSelector } from "@/redux/hook";
@@ -19,7 +18,6 @@ type FreeMapAward = { type: string; isUnlocked: boolean; config?: { mapCount?: n
 
 export function useMapPurchase() {
   const router = useRouter();
-  const { openLoginRequired } = useLoginRequired();
   const { t, language } = useLanguage();
   const accessToken = useAppSelector(selectAccessToken);
   const { data: profile, isFetching: profileLoading } = useGetProfileQuery({}, { skip: !accessToken });
@@ -52,7 +50,10 @@ export function useMapPurchase() {
     if (!map._id || inFlight.current) return;
     if (hasAccess(map)) { openMap(map); return; }
     if (!accessToken) {
-      openLoginRequired(options.loginRedirect || `/catalog/${map._id}`);
+      const redirect = options.redeemFreeIntent
+        ? options.loginRedirect || `/catalog/${map._id}?redeemFreeMap=1`
+        : `/catalog/checkout?mapId=${encodeURIComponent(map._id)}&resume=1`;
+      router.push(`/register?redirect=${encodeURIComponent(redirect)}`);
       return;
     }
     if (dataLoading || !profile) {
@@ -76,7 +77,7 @@ export function useMapPurchase() {
       }
       const response = await createCheckout({
         mapId: map._id,
-        successUrl: `${window.location.origin}?session_id={CHECKOUT_SESSION_ID}&success=true`,
+        successUrl: `${window.location.origin}?session_id={CHECKOUT_SESSION_ID}&success=true&open_map=1`,
         cancelUrl: `${window.location.origin}/payment-failed?success=false`,
       }).unwrap();
       if (response?.data?.url) window.location.href = response.data.url;

@@ -47,6 +47,7 @@ export default function MapCheckout() {
   const [needsLogin, setNeedsLogin] = useState(false);
   const [completed, setCompleted] = useState(false);
   const started = useRef(false);
+  const buying = useRef(false);
   const [startGuest, startState] = useStartGuestMapCheckoutMutation();
   const [completeGuest, completeState] = useCompleteGuestMapCheckoutMutation();
   const [createCheckout, checkoutState] = useCreateMapCheckoutSessionMutation();
@@ -121,13 +122,15 @@ export default function MapCheckout() {
   }, [completed, map]);
 
   const buy = async () => {
+    if (buying.current) return;
+    buying.current = true;
     setError("");
     try {
       if (accessToken) {
         if (profileLoading || !profile) throw new Error(es ? "Espera a que se cargue tu perfil." : "Please wait for your profile to load.");
         if (ownsMap || map?.isPaid === false) { openMap(); return; }
         const response = await createCheckout({ mapId,
-          successUrl: `${window.location.origin}?session_id={CHECKOUT_SESSION_ID}&success=true`,
+          successUrl: `${window.location.origin}?session_id={CHECKOUT_SESSION_ID}&success=true&open_map=1`,
           cancelUrl: `${window.location.origin}/catalog/checkout?mapId=${mapId}&cancelled=1`,
         }).unwrap();
         if (!response.data?.url) throw new Error("Unable to open checkout.");
@@ -148,6 +151,8 @@ export default function MapCheckout() {
         (err?.status === "TIMEOUT_ERROR" || err?.status === "FETCH_ERROR"
           ? (es ? "No se pudo conectar con el servidor de pagos. Vuelve a intentarlo." : "Could not reach the payment server. Please retry.")
           : err.message || "Unable to start checkout."));
+    } finally {
+      buying.current = false;
     }
   };
 
