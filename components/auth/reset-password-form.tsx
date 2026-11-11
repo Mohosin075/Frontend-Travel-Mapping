@@ -8,8 +8,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { PasswordInput } from "./password-input";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useResetPasswordMutation } from "@/redux/features/auth/authApi";
 import { getApiErrorMessage } from "@/lib/utils";
@@ -123,8 +123,7 @@ export const ResetPasswordForm = () => {
           </Label>
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9E9E9E] dark:text-slate-500" />
-            <Input
-              type="password"
+            <PasswordInput
               placeholder="••••••••"
               autoComplete="new-password"
               {...register("password")}
@@ -143,8 +142,7 @@ export const ResetPasswordForm = () => {
           </Label>
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9E9E9E] dark:text-slate-500" />
-            <Input
-              type="password"
+            <PasswordInput
               placeholder="••••••••"
               autoComplete="new-password"
               {...register("confirmPassword")}

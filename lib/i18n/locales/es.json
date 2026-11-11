@@ -575,6 +575,8 @@
     "forgot_password": "¿Olvidaste tu contraseña?",
     "email": "Correo electrónico",
     "password": "Contraseña",
+    "show_password": "Mostrar contraseña",
+    "hide_password": "Ocultar contraseña",
     "confirm_password": "Confirmar Contraseña",
     "name": "Nombre Completo",
     "remember_me": "Recordarme",

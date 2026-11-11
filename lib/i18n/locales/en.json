@@ -575,6 +575,8 @@
     "forgot_password": "Forgot password?",
     "email": "Email address",
     "password": "Password",
+    "show_password": "Show password",
+    "hide_password": "Hide password",
     "confirm_password": "Confirm Password",
     "name": "Full Name",
     "remember_me": "Remember me",

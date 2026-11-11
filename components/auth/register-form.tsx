@@ -14,6 +14,7 @@ import SocialLogin from "../shared/social-login/social-login";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import { Input } from "../ui/input";
+import { PasswordInput } from "./password-input";
 import { Label } from "../ui/label";
 import { getApiErrorMessage } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -134,8 +135,7 @@ export const RegisterForm = () => {
           </Label>
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9E9E9E] dark:text-slate-500" />
-            <Input
-              type="password"
+            <PasswordInput
               placeholder="••••••••"
               {...register("password")}
               className="w-full pl-12 pr-4 py-6 bg-gray-100/80 dark:bg-slate-900/60 border border-[#E0E0E0] dark:border-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 rounded-lg focus-visible:ring-2 focus-visible:ring-[#FFC107] focus-visible:border-transparent transition-all shadow-none"
