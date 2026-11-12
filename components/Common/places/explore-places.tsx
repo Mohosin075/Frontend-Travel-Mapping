@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGetPlacesQuery } from "@/redux/features/place/placeApi";
 import { useGetCategoriesQuery } from "@/redux/features/category/categoryApi";
-import { useGetMapsQuery } from "@/redux/features/map/mapApi";
+import { CountryFilter, useCountryFilter } from "@/components/shared/country-filter";
 import { useGetProfileQuery } from "@/redux/features/user/userApi";
 import { useGetMyVisitedPlacesQuery } from "@/redux/features/visited/visitedApi";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -69,7 +69,9 @@ export default function ExplorePlaces() {
   const [enterSearching, setEnterSearching] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
-  const [selectedCountry, setSelectedCountry] = useState<string>("");
+  const countryFilter = useCountryFilter({ allowAll: false });
+  const selectedCountry = countryFilter.country;
+  const mapIdFilter = countryFilter.mapId;
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [hasRestoredState, setHasRestoredState] = useState(false);
   const [savedScrollY, setSavedScrollY] = useState<number | null>(null);
@@ -84,15 +86,18 @@ export default function ExplorePlaces() {
       const savedStr = sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (savedStr) {
         const saved = JSON.parse(savedStr);
+        // The shared selection may have changed on another page since this visit.
+        const currentMapId = localStorage.getItem("selectedMapId") || "";
+        const currentCountry = localStorage.getItem("selectedCountryFilter") || "";
+        const sameCountry = saved.selectedMapId && currentMapId
+          ? saved.selectedMapId === currentMapId
+          : saved.selectedCountry === currentCountry;
         if (saved.selectedCategory !== undefined) setSelectedCategory(saved.selectedCategory);
         if (saved.activeFilter !== undefined) setActiveFilter(saved.activeFilter);
-        if (saved.page !== undefined) setPage(saved.page);
+        if (sameCountry && saved.page !== undefined) setPage(saved.page);
         if (saved.searchTerm !== undefined) setSearchTerm(saved.searchTerm);
         if (saved.searchInput !== undefined) setSearchInput(saved.searchInput);
-        if (saved.selectedCountry !== undefined && saved.selectedCountry) {
-          setSelectedCountry(saved.selectedCountry);
-        }
-        if (typeof saved.scrollY === "number" && saved.scrollY > 0) {
+        if (sameCountry && typeof saved.scrollY === "number" && saved.scrollY > 0) {
           setSavedScrollY(saved.scrollY);
         }
       }
@@ -115,38 +120,9 @@ export default function ExplorePlaces() {
     }
   };
 
-  const { data: mapsResponse, isLoading: isLoadingMaps } = useGetMapsQuery({
-    limit: 100,
-  });
-
-  const getMapName = (m: any) => {
-    if (!m) return "";
-    return getLocalized(m.name, language) || m.country || getLocalized(m.name, "es") || getLocalized(m.name, "en") || "";
-  };
-
-  const selectedMapObj = mapsResponse?.data?.find(
-    (m: any) =>
-      getMapName(m) === selectedCountry ||
-      m.country === selectedCountry ||
-      m._id === selectedCountry ||
-      m.name === selectedCountry
-  );
-  const mapIdFilter = selectedMapObj ? selectedMapObj._id : "";
-
-  // Load country from localStorage if available
-  useEffect(() => {
-    if (isLoadingMaps || !mapsResponse?.data?.length) return;
-    if (selectedCountry) return; // Already restored or selected
-    const maps = mapsResponse.data;
-    const saved = localStorage.getItem("selectedCountryFilter");
-    if (saved && maps.some((m: any) => getMapName(m) === saved || m.country === saved)) {
-      setSelectedCountry(saved);
-    }
-  }, [isLoadingMaps, mapsResponse, selectedCountry, language]);
-
   // Persist state to sessionStorage whenever filters change
   useEffect(() => {
-    if (!hasRestoredState) return;
+    if (!hasRestoredState || !countryFilter.ready) return;
     try {
       const prevStr = sessionStorage.getItem(SESSION_STORAGE_KEY);
       const prev = prevStr ? JSON.parse(prevStr) : {};
@@ -160,10 +136,11 @@ export default function ExplorePlaces() {
           searchTerm,
           searchInput,
           selectedCountry,
+          selectedMapId: mapIdFilter,
         })
       );
     } catch (e) {}
-  }, [hasRestoredState, selectedCategory, activeFilter, page, searchTerm, searchInput, selectedCountry]);
+  }, [hasRestoredState, countryFilter.ready, selectedCategory, activeFilter, page, searchTerm, searchInput, selectedCountry, mapIdFilter]);
 
   // Continuously keep scrollY up to date in sessionStorage
   useEffect(() => {
@@ -190,21 +167,17 @@ export default function ExplorePlaces() {
     limit,
     searchTerm,
     sort: activeFilter && activeFilter !== "Near me" ? getSortValue(activeFilter) : "",
-    map: selectedCountry ? mapIdFilter : "",
+    map: mapIdFilter || undefined,
+    country: !mapIdFilter ? selectedCountry || undefined : undefined,
     category: selectedCategory,
     lat: activeFilter === "Near me" ? userLocation?.lat : undefined,
     lng: activeFilter === "Near me" ? userLocation?.lng : undefined,
-  });
+  }, { skip: !hasRestoredState || !countryFilter.ready });
 
   const places = response?.data || [];
   const meta = response?.meta;
-  const isWaitingForMapId =
-    !!selectedCountry &&
-    !mapIdFilter &&
-    (isLoadingMaps ||
-      !!mapsResponse?.data?.some((m: any) => m.name === selectedCountry));
   const isPlacesLoading =
-    isLoading || (isFetching && !response) || isWaitingForMapId;
+    !countryFilter.ready || !hasRestoredState || isLoading || (isFetching && !response);
 
   // Restore scroll position after places have loaded
   useEffect(() => {
@@ -330,25 +303,7 @@ export default function ExplorePlaces() {
         {/* Filters — Horizontal scrollable single row on mobile, inline wrap on desktop */}
         <div className="flex items-center gap-2.5 mb-4 sm:mb-6 md:mb-8 overflow-x-auto pt-1 pb-2.5 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap no-scrollbar">
           {/* Country Filter Selector */}
-          <select
-            value={selectedCountry}
-            onChange={(e) => {
-              const val = e.target.value;
-              setSelectedCountry(val);
-              localStorage.setItem("selectedCountryFilter", val);
-              setPage(1);
-            }}
-            className="h-10 px-3 sm:px-4 max-w-[130px] sm:max-w-[180px] truncate border border-gray-200 dark:border-slate-800 rounded-full focus:outline-none focus:ring-2 focus:ring-[#fabf13] text-sm bg-white dark:bg-[#131b2e] font-semibold text-gray-700 dark:text-slate-200 cursor-pointer shadow-sm hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors shrink-0"
-          >
-            {mapsResponse?.data?.map((map: any) => {
-              const nameStr = getMapName(map);
-              return (
-                <option key={map._id} value={nameStr}>
-                  {nameStr}
-                </option>
-              );
-            })}
-          </select>
+          <CountryFilter filter={countryFilter} onChange={() => setPage(1)} />
 
           {/* Categories Selector */}
           <select
@@ -478,13 +433,6 @@ export default function ExplorePlaces() {
                   setActiveFilter(null);
                   setUserLocation(null);
                   setSelectedCategory("");
-                  const defaultCountry = mapsResponse?.data?.[0]?.name || "";
-                  setSelectedCountry(defaultCountry);
-                  if (defaultCountry) {
-                    localStorage.setItem("selectedCountryFilter", defaultCountry);
-                  } else {
-                    localStorage.removeItem("selectedCountryFilter");
-                  }
                   setPage(1);
                 }}
               >

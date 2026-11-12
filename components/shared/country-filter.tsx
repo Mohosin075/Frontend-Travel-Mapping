@@ -23,7 +23,7 @@ export function useCountryFilter({ allowAll = true }: { allowAll?: boolean } = {
   const selected = all && allowAll ? null : resolveOfferMap(maps, mapId, savedCountry)
     // A saved country can be outside this page of maps. Keep its selection
     // instead of replacing it with the first country's results.
-    || (!allowAll ? resolveOfferMap(maps, '', savedCountry) : null);
+    || (!allowAll && savedCountry ? resolveOfferMap(maps, '', savedCountry) : null);
   const country = all && allowAll ? "" : selected?.country || getLocalized(selected?.name, "en") || savedCountry;
   const value = all && allowAll ? "" : String(selected?._id || selected?.id || mapId || country);
   const options = [...maps].sort((a, b) => Number(String(b._id || b.id) === value) - Number(String(a._id || a.id) === value));
@@ -42,7 +42,7 @@ export function useCountryFilter({ allowAll = true }: { allowAll?: boolean } = {
       }
     } catch { /* Filtering still works without storage. */ }
   };
-  return { allowAll, ready: restored && !isLoading, country, value, options, change };
+  return { allowAll, ready: restored && !isLoading, country, value, mapId: String(selected?._id || selected?.id || mapId), options, change };
 }
 
 export function CountryFilter({ filter, onChange }: { filter: ReturnType<typeof useCountryFilter>; onChange?: () => void }) {

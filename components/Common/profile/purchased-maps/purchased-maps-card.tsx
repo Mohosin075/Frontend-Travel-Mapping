@@ -19,6 +19,7 @@ export default function PurchasedMapsCard({ map }: { map: PurchasedMap }) {
   const router = useRouter();
 
   const handleClick = () => {
+    localStorage.setItem("selectedMapId", String(map.id));
     localStorage.setItem("selectedCountryFilter", map.title);
     router.push("/maps");
   };

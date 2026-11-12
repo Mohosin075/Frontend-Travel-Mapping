@@ -278,7 +278,14 @@ export default function AddStopModal({
                 const val = e.target.value;
                 setSelectedCountry(val);
                 try {
-                  localStorage.setItem("selectedCountryFilter", val);
+                  const map = mapsList.find((item: any) => getMapName(item) === val);
+                  if (map) {
+                    localStorage.setItem("selectedMapId", String(map._id || map.id));
+                    localStorage.setItem("selectedCountryFilter", val);
+                  } else {
+                    localStorage.removeItem("selectedMapId");
+                    localStorage.removeItem("selectedCountryFilter");
+                  }
                 } catch {}
               }}
               className="h-9 sm:h-10 px-3 sm:px-4 max-w-[130px] sm:max-w-[170px] truncate border border-gray-200 dark:border-slate-800 rounded-full focus:outline-none focus:ring-2 focus:ring-[#fabf13] text-xs sm:text-sm bg-white dark:bg-[#131b2e] font-semibold text-gray-700 dark:text-slate-200 cursor-pointer shadow-sm hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors shrink-0"

@@ -203,7 +203,7 @@ export default function OfferSection() {
         <div className="flex items-center gap-2.5 mb-4 sm:mb-6 md:mb-8 overflow-x-auto pt-1 pb-2.5 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap no-scrollbar">
           {/* Country Filter Selector */}
           <select
-            value={showAllCountries ? "" : String(selectedMap?._id || selectedMap?.id || "")}
+            value={showAllCountries ? "" : String(selectedMap?._id || selectedMap?.id || selectedMapId || selectedCountry)}
             onChange={(e) => {
               const map = maps.find((item: any) => String(item._id || item.id) === e.target.value);
               const mapId = map ? String(map._id || map.id) : "";
@@ -221,6 +221,10 @@ export default function OfferSection() {
             }}
             className="h-10 px-3 sm:px-4 max-w-[140px] sm:max-w-[200px] truncate border border-gray-200 dark:border-slate-800 rounded-full focus:outline-none focus:ring-2 focus:ring-[#fabf13] text-sm bg-white dark:bg-[#131b2e] font-semibold text-gray-700 dark:text-slate-200 cursor-pointer shadow-sm hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors shrink-0"
           >
+            {!selectedMap && !showAllCountries && (selectedMapId || selectedCountry) && (
+              <option value={selectedMapId || selectedCountry}>{selectedCountry || selectedMapId}</option>
+            )}
+            {showAllCountries && <option value="">{t("filters.all_countries")}</option>}
             {mapsResponse?.data?.map((map: any) => {
               const nameStr = getMapName(map);
               return (
