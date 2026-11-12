@@ -6,13 +6,10 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { m as motion } from "motion/react";
-import { useAppSelector } from "@/redux/hook";
-import { selectAccessToken } from "@/redux/features/auth/authSlice";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function HeroBanner() {
   const { t } = useLanguage();
-  const accessToken = useAppSelector(selectAccessToken);
 
   return (
     <section className="relative min-h-[75vh] lg:min-h-[80vh] py-10 sm:py-16 flex items-center overflow-hidden font-inter bg-[#F9FAFB] dark:bg-[#0b0f19] transition-colors">
@@ -104,7 +101,7 @@ export default function HeroBanner() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.5 }}
           >
-            <Link href={accessToken ? "/places" : `/register?redirect=${encodeURIComponent("/places")}`} className="w-full sm:w-auto">
+            <Link href="/catalog" className="w-full sm:w-auto">
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full">
                 <span className={cn(buttonVariants(), "w-full sm:w-auto bg-[#fabf13] hover:bg-[#e0ac10] text-black font-extrabold rounded-xl px-7 sm:px-10 h-11 sm:h-14 text-sm sm:text-base shadow-lg shadow-amber-500/25 cursor-pointer")}>
                   {t("landing.hero_btn_1", t("landing.explore_places"))}
