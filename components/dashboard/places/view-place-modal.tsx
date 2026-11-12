@@ -1,4 +1,5 @@
 "use client";
+import { normalizeOperatingHours } from "@/lib/place-operating-hours";
 
 import { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +86,8 @@ export function ViewPlaceModal({
   const [selectedMenuIndex, setSelectedMenuIndex] = useState(0);
 
   const place = response?.data;
+  const operatingHours = normalizeOperatingHours(place?.operatingHours);
+  const difficulty = getLocalized(place?.difficulty, language);
 
   const handleApprove = async () => {
     if (!place) return;
@@ -194,11 +197,7 @@ export function ViewPlaceModal({
     [language]
   );
 
-  const isBusinessOrRestaurant =
-    place?.type === "Business" ||
-    categoryName.toLowerCase().includes("restaurant") ||
-    categoryName.toLowerCase().includes("cafe") ||
-    categoryName.toLowerCase().includes("bar");
+  const isBusinessOrRestaurant = place?.type === "Business";
 
   const hasMenu = isBusinessOrRestaurant && place?.menuImages && place.menuImages.length > 0;
   const hasAccessibility =
@@ -615,31 +614,25 @@ export function ViewPlaceModal({
                     )}
 
                     {/* Operating Hours or Schedules */}
-                    {place.type === "Business" && place.operatingHours ? (
+                    {place.type === "Business" && operatingHours ? (
                       <div className="bg-white dark:bg-[#131b2e] border border-gray-100 dark:border-slate-800 p-5 rounded-2xl shadow-2xs space-y-3">
                         <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-yellow-800 dark:text-yellow-400">
                           <Clock size={14} className="text-yellow-600 dark:text-yellow-400" />
                           <span>{t("place.business_hours")}</span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                          <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-800">
-                            <span className="text-gray-500 dark:text-slate-400 font-medium">{t("place.daily_hours")}</span>
-                            <span className="font-bold text-gray-900 dark:text-slate-100">
-                              {convertTo12Hour(place.operatingHours.openTime)} - {convertTo12Hour(place.operatingHours.closeTime)}
-                            </span>
-                          </div>
-                          {place.operatingHours.offDays && place.operatingHours.offDays.length > 0 && (
-                            <div className="flex items-center justify-between p-3 rounded-xl bg-red-50/50 dark:bg-rose-950/30 border border-red-100 dark:border-rose-800/40">
-                              <span className="text-red-700 dark:text-rose-300 font-medium">{t("place.closed_days")}</span>
-                              <span className="font-bold text-red-800 dark:text-rose-200">
-                                {place.operatingHours.offDays.join(", ")}
+                          {Object.entries(operatingHours).map(([day, hours]) => (
+                            <div key={day} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-800">
+                              <span className="text-gray-500 dark:text-slate-400 font-medium">{t(`for_business.step1.days.${day}`)}</span>
+                              <span className="font-bold text-gray-900 dark:text-slate-100">
+                                {hours.closed ? t("place.closed") : hours.open === "00:00" && hours.close === "00:00" ? t("place.always_open") : `${convertTo12Hour(hours.open)} - ${convertTo12Hour(hours.close)}`}
                               </span>
                             </div>
-                          )}
+                          ))}
                         </div>
                       </div>
                     ) : (
-                      hasContent(place.schedules) && (
+                      place.type !== "Business" && hasContent(place.schedules) && (
                         <div className="bg-white dark:bg-[#131b2e] border border-gray-100 dark:border-slate-800 p-5 rounded-2xl shadow-2xs space-y-2">
                           <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-yellow-800 dark:text-yellow-400">
                             <Clock size={14} className="text-yellow-600 dark:text-yellow-400" />
@@ -746,7 +739,7 @@ export function ViewPlaceModal({
                       </div>
 
                       {/* Difficulty */}
-                      {hasContent(place.difficulty) && (
+                      {place.type !== "Business" && hasContent(place.difficulty) && (
                         <div className="bg-white dark:bg-[#131b2e] border border-gray-100 dark:border-slate-800 p-4 rounded-2xl shadow-2xs space-y-1">
                           <div className="flex items-center gap-1.5 text-gray-400 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                             <Gauge size={13} className="text-emerald-600 dark:text-emerald-400" />
@@ -754,20 +747,20 @@ export function ViewPlaceModal({
                           </div>
                           <span
                             className={`inline-block text-[11px] font-bold uppercase px-2 py-0.5 rounded-md ${
-                              ["easy", "fácil", "facil"].includes(place.difficulty.toLowerCase().trim())
+                              ["easy", "fácil", "facil"].includes(difficulty.toLowerCase().trim())
                                 ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60"
-                                : ["medium", "moderate", "moderado"].includes(place.difficulty.toLowerCase().trim())
+                                : ["medium", "moderate", "moderado"].includes(difficulty.toLowerCase().trim())
                                 ? "bg-yellow-50 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-300 border border-yellow-200/60 dark:border-yellow-800/60"
                                 : "bg-red-50 dark:bg-rose-950/40 text-red-700 dark:text-rose-300 border border-red-200/60 dark:border-rose-800/60"
                             }`}
                           >
-                            {getDifficultyLabel(place.difficulty)}
+                            {getDifficultyLabel(difficulty)}
                           </span>
                         </div>
                       )}
 
                       {/* Walking / Hike Time */}
-                      {hasContent(place.hikeTime) && (
+                      {place.type !== "Business" && hasContent(place.hikeTime) && (
                         <div className="bg-white dark:bg-[#131b2e] border border-gray-100 dark:border-slate-800 p-4 rounded-2xl shadow-2xs space-y-1">
                           <div className="flex items-center gap-1.5 text-gray-400 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                             <Clock size={13} className="text-indigo-600 dark:text-indigo-400" />
@@ -780,7 +773,7 @@ export function ViewPlaceModal({
                       )}
 
                       {/* Entry Cost */}
-                      {hasContent(place.entryCost) && (
+                      {place.type !== "Business" && hasContent(place.entryCost) && (
                         <div className="bg-white dark:bg-[#131b2e] border border-gray-100 dark:border-slate-800 p-4 rounded-2xl shadow-2xs space-y-1">
                           <div className="flex items-center gap-1.5 text-gray-400 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                             <Coins size={13} className="text-yellow-600 dark:text-yellow-400" />
@@ -807,7 +800,7 @@ export function ViewPlaceModal({
                     </div>
 
                     {/* Contact & External Links */}
-                    {(hasContent(place.phone) || hasContent(place.website) || hasContent(place.instagram)) && (
+                    {place.type === "Business" && (hasContent(place.phone) || hasContent(place.website) || hasContent(place.instagram)) && (
                       <div className="bg-white dark:bg-[#131b2e] border border-gray-100 dark:border-slate-800 p-5 rounded-2xl shadow-2xs space-y-3">
                         <div className="text-xs font-bold uppercase tracking-wider text-yellow-800 dark:text-yellow-400">
                           {t("place.contact_and_links")}

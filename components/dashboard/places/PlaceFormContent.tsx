@@ -53,6 +53,7 @@ import { formatFileSize, optimizeMediaFiles } from "@/lib/image-compress";
 import { asMediaUrls, editablePlaceText, isPlaceKind, normalizePlaceType, normalizeDifficulty, normalizeService } from "./place-payload";
 
 import { isAlwaysOpenSchedule, normalizePlaceSchedule } from "@/lib/place-schedule";
+import { normalizeOperatingHours, defaultOperatingHours } from "@/lib/place-operating-hours";
 export { isAlwaysOpenSchedule } from "@/lib/place-schedule";
 
 interface PlaceFormContentProps {
@@ -67,6 +68,7 @@ interface PlaceFormContentProps {
     description: string;
     category: string;
     type?: string;
+    sourceCollection?: "business" | "place";
     address?: string;
     accessDescription?: string;
     tips?: string;
@@ -208,17 +210,7 @@ export const PlaceFormContent = ({
     phone: initialData?.phone || "",
     website: initialData?.website || "",
     instagram: initialData?.instagram || "",
-    operatingHours: (initialData?.operatingHours && Object.keys(initialData.operatingHours).length > 0
-      ? (initialData.operatingHours as Record<string, { open: string; close: string; closed: boolean }>)
-      : null) || {
-      Monday:    { open: "09:00", close: "18:00", closed: false },
-      Tuesday:   { open: "09:00", close: "18:00", closed: false },
-      Wednesday: { open: "09:00", close: "18:00", closed: false },
-      Thursday:  { open: "09:00", close: "18:00", closed: false },
-      Friday:    { open: "09:00", close: "18:00", closed: false },
-      Saturday:  { open: "10:00", close: "16:00", closed: false },
-      Sunday:    { open: "10:00", close: "16:00", closed: true },
-    },
+    operatingHours: normalizeOperatingHours(initialData?.operatingHours) || defaultOperatingHours(),
   });
 
   useEffect(() => {
@@ -262,7 +254,7 @@ export const PlaceFormContent = ({
             : prev.hikeTime,
         atmosphere: incomingChanged("atmosphere") ? editablePlaceText(initialData.atmosphere) : prev.atmosphere,
         difficulty: incomingChanged("difficulty") && initialData.difficulty ? normalizeDifficulty(initialData.difficulty) : prev.difficulty,
-        operatingHours: incomingChanged("operatingHours") ? initialData.operatingHours || prev.operatingHours : prev.operatingHours,
+        operatingHours: incomingChanged("operatingHours") ? normalizeOperatingHours(initialData.operatingHours) || prev.operatingHours : prev.operatingHours,
         services: (incomingChanged("services") && initialData.services && initialData.services.length > 0)
           ? initialData.services.map(normalizeService)
           : prev.services,
@@ -377,6 +369,11 @@ export const PlaceFormContent = ({
       return;
     }
 
+    if (initialData?.sourceCollection === "business" && existingMenuImages.length + menuFiles.length + validFiles.length > 1) {
+      toast.error(language === "es" ? "Este negocio admite un solo menú. Elimina el actual antes de reemplazarlo." : "This business supports one menu. Remove the current menu before replacing it.");
+      return;
+    }
+
     try {
       const processed = await optimizeMediaFiles(validFiles);
       setMenuFiles((prev) => [...prev, ...processed]);
@@ -454,6 +451,9 @@ export const PlaceFormContent = ({
     if (!formData.type) {
       newErrors.type = "Location type is required";
     }
+    if (initialData?.sourceCollection === "business" && !formData.phone.trim()) {
+      newErrors.phone = language === "es" ? "El teléfono es obligatorio" : "Phone number is required";
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -469,8 +469,8 @@ export const PlaceFormContent = ({
       status: publish ? "Published" : "Draft",
       mediaFiles,
       existingImages,
-      menuFiles,
-      existingMenuImages,
+      menuFiles: formData.type === "Business" ? menuFiles : [],
+      existingMenuImages: formData.type === "Business" ? existingMenuImages : [],
     });
   };
 
@@ -542,8 +542,7 @@ export const PlaceFormContent = ({
   const isBasicInfoValid = formData.name.trim() !== "" && formData.category !== "" && formData.description.trim() !== "" && formData.address.trim() !== "";
   const hasBasicInfoErrors = !!(errors.name || errors.category || errors.description || errors.address);
 
-  const isBusinessOrRestaurant = formData.type === "Business" || 
-    categories.find((c: any) => c._id === formData.category)?.name?.toLowerCase() === "restaurant";
+  const isBusinessOrRestaurant = formData.type === "Business";
 
   const dynamicTabs = [
     { label: t("places_admin.tabs.basic_info") || (language === "es" ? "Información Básica" : "Basic Info"), icon: FileText, id: 0 },
@@ -776,6 +775,7 @@ export const PlaceFormContent = ({
                 <Label className="text-sm font-medium">{t("places_admin.location_type")} <span className="text-red-500">*</span></Label>
                 <Select
                   value={formData.type}
+                  disabled={initialData?.sourceCollection === "business"}
                   onValueChange={(val) => {
                     // Keep category — same list for Regular and Business
                     if (!isPlaceKind(val)) return;
@@ -793,6 +793,9 @@ export const PlaceFormContent = ({
                   </SelectContent>
                 </Select>
                 {errors.type && <p className="text-[11px] text-red-500 font-semibold">{errors.type}</p>}
+                {initialData?.sourceCollection === "business" && (
+                  <p className="text-xs text-gray-500">{language === "es" ? "Los negocios registrados conservan su tipo de negocio." : "Registered businesses keep their business type."}</p>
+                )}
               </div>
             </div>
 
@@ -807,6 +810,7 @@ export const PlaceFormContent = ({
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="bg-white dark:bg-slate-900/60 dark:text-slate-100 border-gray-200 dark:border-slate-800 text-xs h-9"
                   />
+                  {errors.phone && <p className="text-[11px] text-red-500">{errors.phone}</p>}
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t("places_admin.website_url")}</Label>
@@ -1311,9 +1315,7 @@ export const PlaceFormContent = ({
                   />
                 </div>
 
-                {categories
-                  .find((c: any) => c._id === formData.category)
-                  ?.name?.toLowerCase() !== "restaurant" && (
+                {formData.type === "Regular" && (
                     <>
                       {/* Entry Cost */}
                       <div className="space-y-1.5">
@@ -1451,7 +1453,7 @@ export const PlaceFormContent = ({
           </div>
         )}
 
-        {activeTab === 2 && (
+        {activeTab === 2 && isBusinessOrRestaurant && (
           <div className="space-y-5 animate-in slide-in-from-bottom-2 duration-300">
             <div className="bg-white dark:bg-[#0e1424] p-5 rounded-xl border border-gray-200 dark:border-slate-800 space-y-4">
               <div className="space-y-1">
@@ -1461,6 +1463,7 @@ export const PlaceFormContent = ({
                 <p className="text-[11px] text-gray-500 dark:text-slate-400">
                   Upload images of your menu, price list, or product listings.
                 </p>
+                {initialData?.sourceCollection === "business" && <p className="text-xs text-gray-500">{language === "es" ? "Un archivo de menú por negocio." : "One menu file per registered business."}</p>}
               </div>
 
               <div

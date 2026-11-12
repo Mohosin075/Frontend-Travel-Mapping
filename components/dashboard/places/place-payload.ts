@@ -124,7 +124,7 @@ function omitEmpty(placeData: Record<string, unknown>) {
     Object.entries(placeData).filter(([key, value]) => {
       if (value === undefined || value === null) return false;
       // Empty media arrays wipe photos on save — skip unless there are files
-      if ((key === "media" || key === "menuImages") && Array.isArray(value) && value.length === 0) {
+      if (key === "media" && Array.isArray(value) && value.length === 0) {
         return false;
       }
       return true;
@@ -145,7 +145,14 @@ export function buildPlaceRequestBody(
   mediaFiles: File[] = [],
   menuFiles: File[] = [],
 ): FormData | Record<string, unknown> {
-  const compactData = omitEmpty(placeData);
+  const scopedData = { ...placeData };
+  if (scopedData.type === "Business") {
+    for (const key of ["schedules", "entryCost", "difficulty", "hikeTime"]) delete scopedData[key];
+  } else if (scopedData.type === "Regular") {
+    for (const key of ["operatingHours", "phone", "website", "instagram", "menuImages"]) delete scopedData[key];
+    menuFiles = [];
+  }
+  const compactData = omitEmpty(scopedData);
   if (mediaFiles.length === 0 && menuFiles.length === 0) {
     return compactData;
   }

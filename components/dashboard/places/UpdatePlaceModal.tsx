@@ -158,6 +158,7 @@ export function UpdatePlaceModal({
                     ? place.category?._id
                     : place.category || "",
                 type: normalizePlaceType(place),
+                sourceCollection: place.sourceCollection,
                 address: place.address || "",
                 accessDescription: place.access || place.details?.access || "",
                 tips:
