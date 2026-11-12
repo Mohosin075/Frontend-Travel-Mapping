@@ -303,7 +303,9 @@ export default function ExplorePlaces() {
         {/* Filters — Horizontal scrollable single row on mobile, inline wrap on desktop */}
         <div className="flex items-center gap-2.5 mb-4 sm:mb-6 md:mb-8 overflow-x-auto pt-1 pb-2.5 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap no-scrollbar">
           {/* Country Filter Selector */}
-          <CountryFilter filter={countryFilter} onChange={() => setPage(1)} />
+          <div className="min-w-0 shrink-0 [&>select]:max-w-[180px] [&>select]:[field-sizing:content] sm:[&>select]:max-w-[240px]">
+            <CountryFilter filter={countryFilter} onChange={() => setPage(1)} />
+          </div>
 
           {/* Categories Selector */}
           <select
@@ -312,7 +314,7 @@ export default function ExplorePlaces() {
               setSelectedCategory(e.target.value);
               setPage(1);
             }}
-            className="h-10 px-3 sm:px-4 max-w-[130px] sm:max-w-[180px] truncate border border-gray-200 dark:border-slate-800 rounded-full focus:outline-none focus:ring-2 focus:ring-[#fabf13] text-sm bg-white dark:bg-[#131b2e] font-semibold text-gray-700 dark:text-slate-200 cursor-pointer shadow-sm hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+            className="h-10 px-3 sm:px-4 [field-sizing:content] max-w-[130px] sm:max-w-[180px] truncate border border-gray-200 dark:border-slate-800 rounded-full focus:outline-none focus:ring-2 focus:ring-[#fabf13] text-sm bg-white dark:bg-[#131b2e] font-semibold text-gray-700 dark:text-slate-200 cursor-pointer shadow-sm hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors shrink-0"
           >
             <option value="">
               {t("filters.all_categories") ||
