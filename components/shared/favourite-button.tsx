@@ -22,8 +22,8 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 export function FavouriteButton({ placeId, type, Style }: Props) {
   const { t } = useLanguage();
   const [addToFavourite, { isLoading }] = useAddToFavouriteMutation();
-
-  const { data: favouritesData } = useGetFavouritesQuery();
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
+  const { currentData: favouritesData } = useGetFavouritesQuery(undefined, { skip: !accessToken });
   const favouritesList: TFavouriteItem[] = favouritesData?.data || [];
 
   const existingFav: any = favouritesList.find((fav: any) => {
@@ -42,7 +42,6 @@ export function FavouriteButton({ placeId, type, Style }: Props) {
 
   const isFavourite = Boolean(existingFav);
 
-  const accessToken = useAppSelector((state) => state.auth.accessToken);
   const router = useRouter();
 
   const handleFavourite = async (e?: React.MouseEvent) => {

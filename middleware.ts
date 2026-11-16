@@ -48,6 +48,10 @@ function safeInternalPath(pathname: string, search: string): string {
 
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  // Only Socket.IO handshakes bypass page redirects; keep all other guards.
+  if (/^\/(?:api\/)?socket\.io(?:\/|$)/.test(pathname)) {
+    return NextResponse.next();
+  }
   const accessToken = request.cookies.get("accessToken")?.value;
   const userRole = request.cookies.get("userRole")?.value;
   const loggedInFlag = request.cookies.get("loggedIn")?.value === "1";

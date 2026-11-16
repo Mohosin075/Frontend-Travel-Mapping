@@ -2,19 +2,13 @@
 
 import { env } from "@/lib/config";
 import { io, Socket } from "socket.io-client";
+import { getApiEndpoints } from "@/lib/api-endpoints";
 
 let socket: Socket | null = null;
 let flushBound = false;
 const pending: Array<{ event: string; payload: unknown }> = [];
 
-const getSocketOrigin = () => {
-  const raw = (env.NEXT_PUBLIC_BASEURL || "").trim();
-  try {
-    return new URL(raw).origin;
-  } catch {
-    return raw.replace(/\/api\/v1\/?$/, "").replace(/\/$/, "");
-  }
-};
+const endpoints = getApiEndpoints(env.NEXT_PUBLIC_BASEURL.trim());
 
 const flushPending = () => {
   if (!socket?.connected) return;
@@ -49,8 +43,8 @@ export const getSocket = (): Socket | null => {
     return socket;
   }
 
-  socket = io(getSocketOrigin(), {
-    path: "/socket.io",
+  socket = io(endpoints.socketOrigin, {
+    path: endpoints.socketPath,
     transports: ["polling", "websocket"],
     withCredentials: true,
     autoConnect: true,
