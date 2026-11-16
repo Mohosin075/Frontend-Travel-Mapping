@@ -234,7 +234,7 @@ export default function MapCheckout() {
               {busy ? (es ? "Preparando tu pago…" : "Preparing your checkout…") : ownsMap || map?.isPaid === false ? (es ? "Abrir mapa" : "Open Map") : (es ? "Continuar al pago" : "Continue to payment")}
               {!busy && <ArrowRight className="size-4" aria-hidden="true" />}
             </Button>
-            {!ownsMap && map?.isPaid !== false && <p className="text-center text-xs text-slate-500 dark:text-slate-400">{es ? "El siguiente paso es el pago seguro con Stripe." : "Next, you’ll pay securely with Stripe."}</p>}
+            {!ownsMap && map?.isPaid !== false && <p className="text-center text-xs text-slate-500 dark:text-slate-400">{es ? "El siguiente paso es el pago seguro con Stripe. Los impuestos aplicables se calculan al pagar." : "Next, you’ll pay securely with Stripe. Applicable taxes are calculated at checkout."}</p>}
             {error && <p role="alert" aria-live="polite" className="text-red-600">{error}</p>}
           </form>}
           {needsLogin && <p>{es ? "Esta cuenta ya existe. Inicia sesión o verifica tu email para continuar." : "This account already exists. Sign in or verify your email to continue."}</p>}

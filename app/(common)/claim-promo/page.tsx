@@ -815,6 +815,12 @@ function ClaimPromoContent() {
                 )}
               </div>
 
+              {!isFree && !alreadyOwnsMap && (
+                <p className="text-xs text-gray-500 dark:text-slate-400">
+                  {language === "es" ? "Los impuestos aplicables se calculan al pagar." : "Applicable taxes are calculated at checkout."}
+                </p>
+              )}
+
               {/* Warnings / notices */}
               
               {/* Warning A: User already owns the map */}
