@@ -25,6 +25,7 @@ import { getSocket, emitWhenReady } from "@/lib/socket";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { toast } from "sonner";
 import { useGetProfileQuery } from "@/redux/features/user/userApi";
+import { useVisiblePollingInterval } from "@/hooks/use-visible-polling-interval";
 import {
   formatRelativeTime,
   getNotificationText,
@@ -43,6 +44,7 @@ export default function NotificationBellDropdown({
   viewAllHref = "/notifications",
   className = "",
 }: NotificationBellDropdownProps) {
+  const notificationPollingInterval = useVisiblePollingInterval(30000);
   const router = useRouter();
   const { currentData: user } = useGetProfileQuery({}, { skip: !userId });
   const { t, language } = useLanguage();
@@ -50,7 +52,8 @@ export default function NotificationBellDropdown({
   const [filterUnread, setFilterUnread] = useState(false);
 
   const { data: unreadData, refetch: refetchUnread } = useGetUnreadCountQuery(undefined, {
-    pollingInterval: 30000,
+    pollingInterval: notificationPollingInterval,
+    skipPollingIfUnfocused: true,
     refetchOnFocus: true,
     refetchOnReconnect: true,
   });

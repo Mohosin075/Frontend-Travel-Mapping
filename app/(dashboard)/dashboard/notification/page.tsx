@@ -10,11 +10,13 @@ import { useGetProfileQuery } from "@/redux/features/user/userApi";
 import { useGetMyNotificationsQuery, useGetUnreadCountQuery, useMarkAsReadMutation, useMarkAllAsReadMutation } from "@/redux/features/notification/notificationApi";
 import { formatRelativeTime, getNotificationText, getVisibleNotification, getNotificationIconConfig } from "@/components/shared/notifications/notification-helpers";
 import { toast } from "sonner";
+import { useVisiblePollingInterval } from "@/hooks/use-visible-polling-interval";
 
 type Category = "all" | "account" | "roadtripeado";
 const PAGE_SIZE = 15;
 
 export default function Page() {
+  const pollingInterval = useVisiblePollingInterval(30000);
   const { t, language } = useLanguage();
   const copy = (en: string, es: string) => language === "es" ? es : en;
   const [category, setCategory] = useState<Category>("all");
@@ -30,13 +32,13 @@ export default function Page() {
   }, [search]);
 
   const { currentData: profile } = useGetProfileQuery({});
-  const { data: counts } = useGetUnreadCountQuery(undefined, { pollingInterval: 30000, refetchOnFocus: true, refetchOnReconnect: true });
+  const { data: counts } = useGetUnreadCountQuery(undefined, { pollingInterval, skipPollingIfUnfocused: true, refetchOnFocus: true, refetchOnReconnect: true });
   const { currentData: response, isLoading, isFetching, isError, refetch } = useGetMyNotificationsQuery({
     category: category === "all" ? undefined : category,
     isRead: unreadOnly ? false : undefined,
     searchTerm: debouncedSearch || undefined,
     page, limit: PAGE_SIZE,
-  }, { pollingInterval: 30000, refetchOnFocus: true, refetchOnReconnect: true });
+  }, { pollingInterval, skipPollingIfUnfocused: true, refetchOnFocus: true, refetchOnReconnect: true });
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead, { isLoading: isMarkingAll }] = useMarkAllAsReadMutation();
   const notifications = (response?.data ?? []).map(item => getVisibleNotification(item, profile));

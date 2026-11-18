@@ -63,6 +63,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import LanguageSwitcher from "@/components/shared/language-switcher";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import NotificationBellDropdown from "@/components/shared/notification-bell-dropdown";
+import { useVisiblePollingInterval } from "@/hooks/use-visible-polling-interval";
 
 const ProfileUpdateModal = dynamic(() => import("@/components/Common/profile/profile-update-modal"), { ssr: false });
 
@@ -101,6 +102,7 @@ function getPlaceSearchHref(place: any, onMapsPage: boolean) {
 // menuItems moved inside Header component to support dynamic translation
 
 export default function Header() {
+  const notificationPollingInterval = useVisiblePollingInterval(30000);
   const pathname = usePathname();
   const hideHeaderSearch = pathname === "/places" || pathname === "/offer";
   const onMapsPage = pathname === "/maps";
@@ -212,7 +214,8 @@ export default function Header() {
     undefined,
     {
       skip: !isAuthenticated,
-      pollingInterval: 30000,
+      pollingInterval: notificationPollingInterval,
+      skipPollingIfUnfocused: true,
       refetchOnFocus: true,
       refetchOnReconnect: true,
     }
