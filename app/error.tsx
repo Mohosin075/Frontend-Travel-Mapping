@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { reportClientError } from "@/lib/report-client-error";
 
 export default function GlobalError({
   error,
@@ -15,6 +16,7 @@ export default function GlobalError({
   const { t } = useLanguage();
   useEffect(() => {
     console.error("Global Error Caught by Boundary:", error);
+    reportClientError(error);
     // If it's a stale deployment chunk error, automatically reload to fetch the new build
     const msg = error?.message || "";
     const name = error?.name || "";

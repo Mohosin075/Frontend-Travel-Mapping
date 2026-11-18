@@ -20,7 +20,7 @@ import { persistor } from "@/redux/store";
 type AuthFlow = "createAccount" | "resetPassword" | "invite" | "setPassword";
 
 export default function OtpVerify() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
@@ -41,6 +41,11 @@ export default function OtpVerify() {
 
   const [otp, setOtp] = useState(Array(6).fill(""));
   const [countdown, setCountdown] = useState(60);
+  const [verifyCooldown, setVerifyCooldown] = useState(0);
+  const [verificationError, setVerificationError] = useState("");
+  const resendAvailableAt = useRef(Date.now() + 60_000);
+  const verifyAvailableAt = useRef(0);
+  const requestPending = useRef(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const [verifyAccount, { isLoading: isVerifying }] =
@@ -66,10 +71,21 @@ export default function OtpVerify() {
 
   useEffect(() => {
     if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      const timer = setTimeout(() => setCountdown(Math.max(0, Math.ceil((resendAvailableAt.current - Date.now()) / 1000))), 1000);
       return () => clearTimeout(timer);
     }
   }, [countdown]);
+
+  useEffect(() => {
+    if (verifyCooldown <= 0) return;
+    const timer = setTimeout(() => setVerifyCooldown(Math.max(0, Math.ceil((verifyAvailableAt.current - Date.now()) / 1000))), 1000);
+    return () => clearTimeout(timer);
+  }, [verifyCooldown]);
+
+  const retrySeconds = (err: any) => {
+    const seconds = Number(err?.data?.retryAfter);
+    return Number.isFinite(seconds) && seconds > 0 ? Math.min(900, Math.ceil(seconds)) : 900;
+  };
 
   const handlePaste = (index: number, e: React.ClipboardEvent) => {
     e.preventDefault();
@@ -135,6 +151,7 @@ export default function OtpVerify() {
   };
 
   const handleVerify = async () => {
+    if (requestPending.current || isVerifying || isResending || verifyAvailableAt.current > Date.now()) return;
     const otpCode = otp.join("");
 
     if (otpCode.length !== 6) {
@@ -143,6 +160,8 @@ export default function OtpVerify() {
     }
 
     const toastId = toast.loading("Verifying OTP...");
+    setVerificationError("");
+    requestPending.current = true;
 
     try {
       const response = await verifyAccount({
@@ -232,10 +251,19 @@ export default function OtpVerify() {
       });
     } catch (err: any) {
       console.error("Verification error:", err);
-      const errorMessage =
-        err?.data?.message ||
-        err?.data?.error ||
-        "Verification failed. Please try again.";
+      const errorMessage = typeof err?.data?.message === "string"
+        ? err.data.message
+        : "Verification failed. Please try again.";
+      setVerificationError(errorMessage);
+      if (err?.status === 429) {
+        const seconds = retrySeconds(err);
+        verifyAvailableAt.current = Date.now() + seconds * 1000;
+        setVerifyCooldown(seconds);
+      }
+      if (/expired|expir|caduc/i.test(errorMessage)) {
+        resendAvailableAt.current = 0;
+        setCountdown(0);
+      }
       toast.error(errorMessage, { id: toastId });
       // Stale code from an older invite email — clear so user can type the latest
       if (
@@ -245,11 +273,15 @@ export default function OtpVerify() {
         setOtp(Array(6).fill(""));
         inputRefs.current[0]?.focus();
       }
+    } finally {
+      requestPending.current = false;
     }
   };
 
   const handleResend = async () => {
+    if (requestPending.current || isResending || isVerifying || resendAvailableAt.current > Date.now()) return;
     const toastId = toast.loading("Resending OTP...");
+    requestPending.current = true;
 
     try {
       const response = await resendOtp({
@@ -258,12 +290,14 @@ export default function OtpVerify() {
       }).unwrap();
 
       if (response.success) {
+        setVerificationError("");
         toast.success("OTP resent successfully!", {
           id: toastId,
           description: "Please check your email.",
         });
 
         setOtp(Array(6).fill(""));
+        resendAvailableAt.current = Date.now() + 60_000;
         setCountdown(60);
         inputRefs.current[0]?.focus();
       } else {
@@ -274,12 +308,19 @@ export default function OtpVerify() {
     } catch (err: any) {
       console.error("Resend failed:", err);
 
-      const errorMessage =
-        err?.data?.message ||
-        err?.data?.error ||
-        "Failed to resend OTP. Please try again.";
+      const errorMessage = typeof err?.data?.message === "string"
+        ? err.data.message
+        : "Failed to resend OTP. Please try again.";
+      setVerificationError(errorMessage);
+      if (err?.status === 429) {
+        const seconds = retrySeconds(err);
+        resendAvailableAt.current = Date.now() + seconds * 1000;
+        setCountdown(seconds);
+      }
 
       toast.error(errorMessage, { id: toastId });
+    } finally {
+      requestPending.current = false;
     }
   };
 
@@ -383,25 +424,36 @@ export default function OtpVerify() {
 
       <Button
         onClick={handleVerify}
-        disabled={!isOtpComplete || isLoading}
+        disabled={!isOtpComplete || isLoading || isResending || verifyCooldown > 0}
         className="w-full bg-[#FFC107] hover:bg-[#FFB300] text-black font-bold rounded-lg px-10 h-14 text-base shadow-lg shadow-yellow-500/20 mb-4"
       >
-        {isLoading ? t("auth.verifying") : buttonLabel}
+        <span>{isLoading ? t("auth.verifying") : buttonLabel}</span>
       </Button>
+
+      {verificationError && (
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400 text-center mb-4">
+          {verificationError}
+        </p>
+      )}
+      {verifyCooldown > 0 && (
+        <p role="status" className="text-sm text-center mb-4" translate="no">
+          {language === "es" ? "Podrás verificar de nuevo en" : "You can verify again in"} {verifyCooldown}s
+        </p>
+      )}
 
       {countdown > 0 ? (
         <p className="text-sm text-[#757575] dark:text-slate-400 text-center">
-          {t("auth.resend_code_in")} {countdown}s
+          <span>{t("auth.resend_code_in")}</span>{" "}<span translate="no">{countdown}s</span>
         </p>
       ) : (
         <div className="text-center">
           <p className="text-sm text-[#757575] dark:text-slate-400 mb-2">{t("auth.didnt_receive_code")}</p>
           <button
             onClick={handleResend}
-            disabled={isResending}
+            disabled={isResending || isVerifying}
             className="font-semibold text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isResending ? t("auth.resending") : t("auth.resend_code")}
+            <span>{isResending ? t("auth.resending") : t("auth.resend_code")}</span>
           </button>
         </div>
       )}
